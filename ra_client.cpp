@@ -3,9 +3,12 @@
 rc_client_t* g_client = NULL;
 bool loggedin = false;
 Usb2Snes* usb2snes = nullptr;
-uint32_t validAddressCount = -1;
-uint32_t readMemoryCount = 0;
-//bool readingMemory = false;
+uint32_t readMemoryOffset = 0;
+QList<AddressPair> memoryAddresses;
+uint8_t* snesMemory = nullptr;
+size_t snesMemorySize = 0;
+uint32_t currentAddressIndex = 0;
+
 /*MemoryRegion addresses[] = {
     {0x000000, 2 * 1024 * 1024},  // 2MB ROM space (banked)
     {0x7E0000, 256 * 1024},       // 256KB Work RAM (WRAM)
@@ -40,70 +43,26 @@ static uint32_t read_memory(uint32_t address, uint8_t* buffer, uint32_t num_byte
 {
     qDebug() << "Address: " << QString::number(address + 0xF50000, 16) << "Address: " << address << " Num of Bytes: " << num_bytes;
 
-    QPointer<QEventLoop> loop = new QEventLoop; //Prevents Segmentation Fault
-
-    if (usb2snes->state() != Usb2Snes::Ready) {
-        QTimer* timer = new QTimer(loop);
-        auto stateChecker = QObject::connect(usb2snes, &Usb2Snes::stateChanged, usb2snes, [loop] {
-            if (usb2snes->state() == Usb2Snes::Ready && loop) {
-                loop->quit();
-            }
-        });
-        auto stateCheckerTimer = QObject::connect(timer, &QTimer::timeout, loop, [loop]() {
-            if (loop) {
-                loop->quit();
-            }
-        });
-        timer->start(1000);
-        loop->exec();
-
-        QObject::disconnect(stateChecker);
-        QObject::disconnect(stateCheckerTimer);
-        if (usb2snes->state() != Usb2Snes::Ready) {
-            qDebug() << "Error: usb2snes not ready";
-            qDebug() << usb2snes->state();
-            return 0;
-        }
+    if(snesMemorySize != 0)
+    {
+        qDebug() << "Currently Reading: " << snesMemory[readMemoryOffset] << "Current Offset: " << readMemoryOffset;
+        memcpy(buffer, &snesMemory[readMemoryOffset], num_bytes);
+        readMemoryOffset += memoryAddresses.at(currentAddressIndex).second;
+        currentAddressIndex++;
+    }
+    else
+    {
+        memoryAddresses.append(qMakePair(address,num_bytes));
+        readMemoryOffset += num_bytes;
     }
 
-    auto getAchievementAddr = QObject::connect(usb2snes, &Usb2Snes::getAddressGet, usb2snes, [loop, buffer, num_bytes] (QByteArray data) mutable {
-        if (loop) {
-            memcpy(buffer, data.data(), num_bytes);
-            loop->quit();
-        }
-    });
+    if(readMemoryOffset == snesMemorySize)
+    {
+        readMemoryOffset = 0;
+        currentAddressIndex = 0;
+        rc_client_do_frame(g_client);
+    }
 
-    usb2snes->getAddress(address + 0xF50000, num_bytes);
-    loop->exec();
-
-    QObject::disconnect(getAchievementAddr);
-    readMemoryCount++;
-
-    auto result = std::make_shared<bool>();
-
-    auto resetChecker = QObject::connect(usb2snes, &Usb2Snes::getAddressGet, usb2snes, [loop, result] (QByteArray data) mutable {
-        if (loop) {
-            if(data[0] != '\x00')
-                *result = true;
-            else
-                *result = false;
-            loop->quit();
-        }
-    });
-
-    usb2snes->getAddress(0x2A00, 1, Usb2Snes::CMD);
-    loop->exec();
-
-    QObject::disconnect(resetChecker);
-
-    qDebug() << "Result: " << *result;
-    if(*result)
-        rc_client_reset(g_client);
-
-    qDebug() << "Read Mem Count: " << readMemoryCount;
-    qDebug() << "Address Count: " << validAddressCount;
-    if(readMemoryCount == validAddressCount)
-        usb2snes->infos();
     return num_bytes;
 }
 
@@ -431,7 +390,6 @@ static void event_handler(const rc_client_event_t* event, rc_client_t* client)
         qDebug() << "Unhandled event %d\n" << event->type;
         break;
     }
-    usb2snes->infos();
 }
 
 void initialize_retroachievements_client(void)
@@ -504,8 +462,16 @@ static void load_game_callback(int result, const char* error_message, rc_client_
     // announce that the game is ready. we'll cover this in the next section.
     qDebug() << result << "Success!";
     show_game_placard();
-    validAddressCount = readMemoryCount;
-    usb2snes->infos();
+    snesMemorySize = readMemoryOffset;
+    readMemoryOffset = 0;
+    if(snesMemorySize > 0)
+    {
+        snesMemory = new uint8_t[snesMemorySize];
+        usb2snes->getAddresses(memoryAddresses);
+        rc_client_do_frame(g_client);
+    }
+    else
+        usb2snes->infos();
 }
 
 void load_snes_game(const uint8_t* rom, size_t rom_size)

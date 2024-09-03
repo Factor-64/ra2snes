@@ -22,19 +22,12 @@ public:
 
 private slots:
     void on_signin_button_clicked();
-    void processFrame();
-
-signals:
-    void doFrame();
 
 private:
     Ui::ra2snes *ui;
     QString currentGame;
     bool isGB;
-    QTimer *frameTimer;
 
     void resizeWindow(int width, int height);
-    void refreshStatus();
-    void onUsb2SnesStateChange();
 };
 #endif // RA2SNES_H

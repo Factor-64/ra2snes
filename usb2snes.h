@@ -21,7 +21,8 @@
 #include <QtWebSockets/QtWebSockets>
 
 
-#define USB2SNESURL "ws://localhost:8080/"
+#define USB2SNESLEGACYURL "ws://localhost:8080/"
+#define USB2SNESURL "ws://localhost:23074"
 
 class Usb2Snes : public QObject
 {
@@ -40,8 +41,7 @@ public:
         ReceivingFile,
         GettingAddress,
         CheckingReset,
-        GettingInfo,
-        //GettingSnesMemory
+        GettingInfo
     };
     enum sd2snesState {
         sd2menu,
@@ -105,9 +105,9 @@ public:
     void                    setAppName(QString name);
     void                    attach(QString deviceName);
     void                    getAddress(unsigned int addr, unsigned int size, Space space = SNES);
+    void                    getAddresses(QList<QPair<uint32_t,uint32_t>> addresses);
     void                    setAddress(unsigned int addr, QByteArray data, Space space = SNES);
     void                    checkReset();
-    //void                    getSnesMemory();
     void                    sendFile(QString path, QByteArray data);
     void                    getFile(QString path);
     void                    renameFile(QString oldPath, QString newPath);
@@ -117,8 +117,6 @@ public:
     void                    reset();
     void                    menu();
     State                   state();
-    void                    resetState();
-    void                    queueInfos();
     void                    infos();
     int                     fileDataSize() const;
     void                    ls(QString path);
@@ -127,6 +125,7 @@ public:
     void                    deviceList();
     QVersionNumber          serverVersion();
     bool                    patchROM(QString patch);
+    QByteArray              getBinaryData();
 
 signals:
     void    stateChanged();
@@ -139,10 +138,10 @@ signals:
     void    fileSendProgress(int size);
     void    fileSent();
     void    getFileSizeGet(unsigned int);
-    void    getFileDataGet(QByteArray data);
+    void    getFileDataReceived();
     void    getAddressGet(QByteArray data);
+    void    getAddressDataReceived();
     void    resetOccurred(QByteArray data);
-    //void    getSnesMemoryComplete();
     void    deviceListDone(QStringList listDevice);
     void    infoDone(Usb2Snes::DeviceInfo info);
     void    lsDone(QList<Usb2Snes::FileInfo> filesInfo);
@@ -157,7 +156,6 @@ private slots:
     void    onWebSocketError(QAbstractSocket::SocketError err);
     void    onTimerTick();
 
-
 private:
     bool            m_autoAttach;
     QWebSocket      m_webSocket;
@@ -170,13 +168,12 @@ private:
     InternalState   m_istate;
     QStringList     m_deviceList;
     int             m_fileSize;
-    int             m_fileGetDataSent;
+    unsigned int    binaryDataSent;
     Usb2SnesCommand m_currentCommand;
     QByteArray      lastBinaryMessage;
     QString         lastTextMessage;
     unsigned int    requestedBinaryReadSize;
     QMetaEnum       metaCommands;
-    bool            m_queueInfo;
 
     QByteArray      fileDataToSend;
 

@@ -11,6 +11,8 @@
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
 #include <QEventLoop>
+#include <QPair>
+#include <QList>
 #include "ra2snes.h"
 
 #define RC_CLIENT_SUPPORTS_HASH 1
@@ -40,16 +42,15 @@ typedef struct {
     unsigned int size;
 } MemoryRegion;*/
 
-//extern MemoryRegion addresses[];
-//extern uint8_t* snesMemory;
-//extern size_t snesMemorySize;
+typedef QPair<uint32_t, uint32_t> AddressPair;
 
+extern QList<AddressPair> memoryAddresses;
 extern rc_client_t* g_client;
 extern bool loggedin;
 extern Usb2Snes* usb2snes;
-extern uint32_t validAddressCount;
-extern uint32_t readMemoryCount;
-//extern bool readingMemory;
+extern uint32_t readMemoryOffset;
+extern uint8_t* snesMemory;
+extern size_t snesMemorySize;
 
 typedef void (*http_callback_t)(int status_code, const char* response_data, size_t response_size, void* userdata, const char* error_message);
 
