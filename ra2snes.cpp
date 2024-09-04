@@ -2,22 +2,30 @@
 #include "./ui_ra2snes.h"
 #include <QMessageBox>
 #include <QCryptographicHash>
-#include "ra_client.h"
 #include "usb2snes.h"
-#include "rc_client.h"
+#include "rawebclient.h"
 
 ra2snes::ra2snes(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::ra2snes)
+    , webclient(new RAWebClient(this))
+    , usb2snes(new Usb2Snes(false))
 {
     ui->setupUi(this);
     ui->profile->setEnabled(false);
     ui->profile->setVisible(false);
 
     currentGame = "/sd2snes/m3nu.bin";
-    usb2snes = new Usb2Snes(false);
+    loggedin = false;
+    gameLoaded = false;
 
-    initialize_retroachievements_client();
+    connect(webclient, &RAWebClient::loginSuccess, this, &ra2snes::onLoginSuccess);
+    connect(webclient, &RAWebClient::requestFailed, this, &ra2snes::onLoginFailed);
+    connect(webclient, &RAWebClient::requestError, this, &ra2snes::onRequestError);
+    connect(webclient, &RAWebClient::gotGameID, this, [=] (int id){
+        webclient->checkAchievements(id);
+        gameLoaded = true;
+    });
 
     connect(usb2snes, &Usb2Snes::connected, this, [=]() {
         usb2snes->setAppName("ra2snes");
@@ -45,7 +53,6 @@ ra2snes::ra2snes(QWidget *parent)
     });
 
     connect(usb2snes, &Usb2Snes::infoDone, this, [=] (Usb2Snes::DeviceInfo infos) {
-        bool gameLoaded = rc_client_is_game_loaded(g_client);
         if (infos.flags.contains("NO_FILE_CMD"))
         {
             QMessageBox::information(this, tr("Device error"), tr("The device does not support file operation"));
@@ -55,13 +62,7 @@ ra2snes::ra2snes(QWidget *parent)
             currentGame = infos.romPlaying.remove(QChar('\u0000'));
             ui->currentGame->setText(QString(tr("Firmware version : %1 - Rom Playing : %2")).arg(infos.firmwareVersion, currentGame));
             if(currentGame.contains("m3nu.bin") || currentGame.contains("menu.bin"))
-            {
-                if(gameLoaded)
-                {
-                    rc_client_unload_game(g_client);
-                    gameLoaded = false;
-                }
-            }
+                usb2snes->infos();
             else
             {
                 if(!gameLoaded && loggedin)
@@ -72,33 +73,22 @@ ra2snes::ra2snes(QWidget *parent)
                     });
                 }
                 else
-                    if(snesMemory != nullptr)
-                        QTimer::singleShot(0, this, [=] {
-                            rc_client_do_frame(g_client);
-                        });
-                    else
-                        QTimer::singleShot(0, this, [=] {
-                            usb2snes->infos();
-                        });
+                    usb2snes->infos();
             }
         }
     });
 
     connect(usb2snes, &Usb2Snes::getFileDataReceived, this, [=] {
-        QByteArray data = usb2snes->getBinaryData();
-        const uint8_t* romData = reinterpret_cast<const uint8_t*>(data.constData());
-        size_t size = static_cast<size_t>(data.size());
-        qDebug() << currentGame;
-        if(currentGame.contains(".gb"))
-            load_gameboy_game(romData, size);
-        else
-            load_snes_game(romData, size);
+        QByteArray romData = usb2snes->getBinaryData();
+        QByteArray md5Hash = QCryptographicHash::hash(romData, QCryptographicHash::Md5);
+        webclient->loadGame(md5Hash.toHex());
     });
 
-    connect(usb2snes, &Usb2Snes::getAddressDataReceived, this, [=] {
+    /*connect(usb2snes, &Usb2Snes::getAddressDataReceived, this, [=] {
         QByteArray data = usb2snes->getBinaryData();
         memcpy(snesMemory, data.data(), data.size());
-    });
+        usb2snes->infos();
+    });*/
 
     QTimer::singleShot(0, this, [=] {
         usb2snes->connect();
@@ -109,17 +99,29 @@ ra2snes::ra2snes(QWidget *parent)
 ra2snes::~ra2snes()
 {
     delete ui;
-    delete[] snesMemory;
 }
 
 void ra2snes::on_signin_button_clicked()
 {
     QString username = ui->username_input->text();
     QString password = ui->password_input->text();
-
-    login_retroachievements_user(username.toStdString().c_str(), password.toStdString().c_str());
+    webclient->login_password(username, password);
 }
 
+void ra2snes::onLoginSuccess()
+{
+    qDebug() << "logged in";
+    usb2snes->infos();
+    loggedin = true;
+}
+void ra2snes::onLoginFailed()
+{
+    qDebug() << "login failed";
+}
+void ra2snes::onRequestError()
+{
+    qDebug() << "request error";
+}
 
 void ra2snes::resizeWindow(int width, int height)
 {

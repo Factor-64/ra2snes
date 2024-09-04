@@ -1,5 +1,6 @@
-#include "ra_client.h"
-
+#include "ra_client_old.h"
+#include <QtConcurrent/QtConcurrent>
+#include <QThread>
 rc_client_t* g_client = NULL;
 bool loggedin = false;
 Usb2Snes* usb2snes = nullptr;
@@ -8,6 +9,7 @@ QList<AddressPair> memoryAddresses;
 uint8_t* snesMemory = nullptr;
 size_t snesMemorySize = 0;
 uint32_t currentAddressIndex = 0;
+extern ra2snes* mainWindow;
 
 /*MemoryRegion addresses[] = {
     {0x000000, 2 * 1024 * 1024},  // 2MB ROM space (banked)
@@ -60,7 +62,6 @@ static uint32_t read_memory(uint32_t address, uint8_t* buffer, uint32_t num_byte
     {
         readMemoryOffset = 0;
         currentAddressIndex = 0;
-        rc_client_do_frame(g_client);
     }
 
     return num_bytes;

@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include "usb2snes.h"
+#include "rawebclient.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,9 +26,15 @@ private slots:
 
 private:
     Ui::ra2snes *ui;
+    Usb2Snes *usb2snes;
+    RAWebClient *webclient;
     QString currentGame;
-    bool isGB;
+    bool loggedin;
+    bool gameLoaded;
 
+    void onLoginSuccess();
+    void onLoginFailed();
+    void onRequestError();
     void resizeWindow(int width, int height);
 };
 #endif // RA2SNES_H

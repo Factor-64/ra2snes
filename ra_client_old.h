@@ -1,5 +1,5 @@
-#ifndef RA_CLIENT_H
-#define RA_CLIENT_H
+#ifndef RA_CLIENT_OLD_H
+#define RA_CLIENT_OLD_H
 
 #include <QCoreApplication>
 #include <QWebSocket>
@@ -13,6 +13,9 @@
 #include <QEventLoop>
 #include <QPair>
 #include <QList>
+#include <QThread>
+#include <QWaitCondition>
+#include <QMutex>
 #include "ra2snes.h"
 
 #define RC_CLIENT_SUPPORTS_HASH 1
@@ -36,11 +39,6 @@ typedef struct {
     rc_client_server_callback_t callback;
     void* callback_data;
 } async_callback_data;
-
-/*typedef struct {
-    unsigned int address;
-    unsigned int size;
-} MemoryRegion;*/
 
 typedef QPair<uint32_t, uint32_t> AddressPair;
 
@@ -85,4 +83,4 @@ void load_snes_game(const uint8_t* rom, size_t rom_size);
 void load_gameboy_game(const uint8_t* rom, size_t rom_size);
 static void show_game_placard();
 
-#endif // RA_CLIENT_H
+#endif // RA_CLIENT_OLD_H

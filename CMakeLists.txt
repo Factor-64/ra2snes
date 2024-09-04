@@ -38,8 +38,10 @@ set(PROJECT_SOURCES
         ${TS_FILES}
         usb2snes.cpp
         usb2snes.h
-        ra_client.cpp
-        ra_client.h
+        ra_client_old.cpp
+        ra_client_old.h
+        rawebclient.cpp
+        rawebclient.h
         ${RCHEEVOS_SOURCES}
         ${RCHEEVOS_INCLUDE}
         ${RCHEEVOS_SOURCES_RCHEEVOS}
@@ -53,6 +55,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ra2snes
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        rawebclient.h rawebclient.cpp
     )
     qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 else()
