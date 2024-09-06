@@ -468,7 +468,7 @@ static void load_game_callback(int result, const char* error_message, rc_client_
     if(snesMemorySize > 0)
     {
         snesMemory = new uint8_t[snesMemorySize];
-        usb2snes->getAddresses(memoryAddresses);
+        //usb2snes->getAddresses(memoryAddresses);
         rc_client_do_frame(g_client);
     }
     else

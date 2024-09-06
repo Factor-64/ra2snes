@@ -2,14 +2,13 @@
 #include "./ui_ra2snes.h"
 #include <QMessageBox>
 #include <QCryptographicHash>
-#include "usb2snes.h"
-#include "rawebclient.h"
 
 ra2snes::ra2snes(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::ra2snes)
-    , webclient(new RAWebClient(this))
+    , raclient(new RAClient(this))
     , usb2snes(new Usb2Snes(false))
+    , reader(new MemoryReader(this))
 {
     ui->setupUi(this);
     ui->profile->setEnabled(false);
@@ -18,14 +17,6 @@ ra2snes::ra2snes(QWidget *parent)
     currentGame = "/sd2snes/m3nu.bin";
     loggedin = false;
     gameLoaded = false;
-
-    connect(webclient, &RAWebClient::loginSuccess, this, &ra2snes::onLoginSuccess);
-    connect(webclient, &RAWebClient::requestFailed, this, &ra2snes::onLoginFailed);
-    connect(webclient, &RAWebClient::requestError, this, &ra2snes::onRequestError);
-    connect(webclient, &RAWebClient::gotGameID, this, [=] (int id){
-        webclient->checkAchievements(id);
-        gameLoaded = true;
-    });
 
     connect(usb2snes, &Usb2Snes::connected, this, [=]() {
         usb2snes->setAppName("ra2snes");
@@ -73,7 +64,10 @@ ra2snes::ra2snes(QWidget *parent)
                     });
                 }
                 else
-                    usb2snes->infos();
+                    if(gameLoaded && loggedin)
+                        usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
+                    else
+                        usb2snes->infos();
             }
         }
     });
@@ -81,18 +75,54 @@ ra2snes::ra2snes(QWidget *parent)
     connect(usb2snes, &Usb2Snes::getFileDataReceived, this, [=] {
         QByteArray romData = usb2snes->getBinaryData();
         QByteArray md5Hash = QCryptographicHash::hash(romData, QCryptographicHash::Md5);
-        webclient->loadGame(md5Hash.toHex());
+        raclient->loadGame(md5Hash.toHex());
     });
 
-    /*connect(usb2snes, &Usb2Snes::getAddressDataReceived, this, [=] {
+    connect(usb2snes, &Usb2Snes::getAddressDataReceived, this, [=] {
         QByteArray data = usb2snes->getBinaryData();
-        memcpy(snesMemory, data.data(), data.size());
-        usb2snes->infos();
-    });*/
+        memcpy(reader->getConsoleMemory(), data.data(), data.size());
+        reader->checkAchievements();
+        //usb2snes->infos();
+    });
 
     QTimer::singleShot(0, this, [=] {
         usb2snes->connect();
     });
+
+    connect(raclient, &RAClient::loginSuccess, this, &ra2snes::onLoginSuccess);
+    connect(raclient, &RAClient::requestFailed, this, &ra2snes::onLoginFailed);
+    connect(raclient, &RAClient::requestError, this, &ra2snes::onRequestError);
+    connect(raclient, &RAClient::gotGameID, this, [=] (int id){
+        raclient->checkAchievements(id);
+        gameLoaded = true;
+    });
+
+    connect(raclient, &RAClient::finishedGameSetup, this, [=] {
+        reader->initTriggers(raclient->getAchievements(), raclient->getLeaderboards());
+        raclient->getUnlocks();
+        //raclient->getLBPlacements();
+    });
+
+    connect(raclient, &RAClient::finishedUnlockSetup, this, [=] {
+        raclient->startSession();
+        //raclient->getLBPlacements();
+    });
+
+    connect(reader, &MemoryReader::finishedMemorySetup, this, [=] {
+        usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
+        reader->checkAchievements();
+    });
+
+    connect(reader, &MemoryReader::achievementsChecked, this, [=] {
+        usb2snes->infos();
+        //reader->checkAchievements();
+    });
+
+    connect(reader, &MemoryReader::achievementUnlocked, this, [=] (unsigned int id) {
+        raclient->awardAchievement(id);
+        //reader->checkAchievements();
+    });
+
 
 }
 
@@ -105,7 +135,7 @@ void ra2snes::on_signin_button_clicked()
 {
     QString username = ui->username_input->text();
     QString password = ui->password_input->text();
-    webclient->login_password(username, password);
+    raclient->loginPassword(username, password);
 }
 
 void ra2snes::onLoginSuccess()

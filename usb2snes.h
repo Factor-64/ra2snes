@@ -105,7 +105,7 @@ public:
     void                    setAppName(QString name);
     void                    attach(QString deviceName);
     void                    getAddress(unsigned int addr, unsigned int size, Space space = SNES);
-    void                    getAddresses(QList<QPair<uint32_t,uint32_t>> addresses);
+    void                    getAddresses(QList<QPair<int,int>> addresses);
     void                    setAddress(unsigned int addr, QByteArray data, Space space = SNES);
     void                    checkReset();
     void                    sendFile(QString path, QByteArray data);

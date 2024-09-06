@@ -312,7 +312,7 @@ void Usb2Snes::getAddress(unsigned int addr, unsigned int size, Space space)
     sendRequest(GetAddress, QStringList() << QString::number(addr, 16) << QString::number(size, 16), space);
 }
 
-void Usb2Snes::getAddresses(QList<QPair<uint32_t,uint32_t>> addresses)
+void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
 {
     // We can only send 8 addresses at a time
     m_istate = IBusy;
