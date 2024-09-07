@@ -41,7 +41,8 @@ public:
         ReceivingFile,
         GettingAddress,
         CheckingReset,
-        GettingInfo
+        GettingInfo,
+        GettingConfig
     };
     enum sd2snesState {
         sd2menu,
@@ -126,6 +127,7 @@ public:
     QVersionNumber          serverVersion();
     bool                    patchROM(QString patch);
     QByteArray              getBinaryData();
+    void                    getConfig();
 
 signals:
     void    stateChanged();
@@ -146,7 +148,7 @@ signals:
     void    infoDone(Usb2Snes::DeviceInfo info);
     void    lsDone(QList<Usb2Snes::FileInfo> filesInfo);
     void    doFrame();
-
+    void    getConfigDataReceived();
 
 private slots:
     void    onWebSocketConnected();

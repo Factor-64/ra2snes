@@ -206,9 +206,12 @@ void Usb2Snes::onWebSocketTextReceived(QString message)
             bool    ok;
             requestedBinaryReadSize = result.at(0).toUInt(&ok, 16);
             emit getFileSizeGet(requestedBinaryReadSize);
-            changeState(ReceivingFile);
+            if(m_state != GettingConfig)
+                changeState(ReceivingFile);
             break;
         }
+        default:
+            break;
     }
     emit textMessageReceived();
 }
@@ -225,13 +228,22 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
     if ((unsigned int) buffer.size() == requestedBinaryReadSize)
     {
         lastBinaryMessage = buffer;
-        if (m_state == ReceivingFile)
+        switch(m_state)
         {
-            emit getFileDataReceived();
-        }
-        else if (m_state == GettingAddress)
-        {
-            emit getAddressDataReceived();
+            case GettingConfig: {
+                emit getConfigDataReceived();
+                break;
+            }
+            case ReceivingFile: {
+                emit getFileDataReceived();
+                break;
+            }
+            case GettingAddress: {
+                emit getAddressDataReceived();
+                break;
+            }
+            default:
+                break;
         }
         emit binaryMessageReceived();
         sDebug() << "Finish Binary";
@@ -385,6 +397,13 @@ void Usb2Snes::sendFile(QString path, QByteArray data)
     emit fileSent();
     m_istate = IReady;
     changeState(Ready);
+}
+
+void Usb2Snes::getConfig()
+{
+    m_istate = IBusy;
+    changeState(GettingConfig);
+    sendRequest(GetFile, QStringList() << "/sd2snes/config.yml");
 }
 
 void Usb2Snes::getFile(QString path)

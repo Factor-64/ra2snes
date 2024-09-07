@@ -22,6 +22,7 @@ public:
     ra2snes(QWidget *parent = nullptr);
     ~ra2snes();
     void onUsb2SnesStateChanged();
+    void checkForHardcore();
 
 private slots:
     void on_signin_button_clicked();
