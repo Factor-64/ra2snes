@@ -2,6 +2,7 @@
 #include "./ui_ra2snes.h"
 #include <QMessageBox>
 #include <QCryptographicHash>
+#include <QThreadPool>
 
 ra2snes::ra2snes(QWidget *parent)
     : QMainWindow(parent)
@@ -17,6 +18,9 @@ ra2snes::ra2snes(QWidget *parent)
     currentGame = "/sd2snes/m3nu.bin";
     loggedin = false;
     gameLoaded = false;
+    tasksFinished = 0;
+
+    connect(usb2snes, &Usb2Snes::stateChanged, this, &ra2snes::onUsb2SnesStateChanged);
 
     connect(usb2snes, &Usb2Snes::connected, this, [=]() {
         usb2snes->setAppName("ra2snes");
@@ -53,7 +57,10 @@ ra2snes::ra2snes(QWidget *parent)
             currentGame = infos.romPlaying.remove(QChar('\u0000'));
             ui->currentGame->setText(QString(tr("Firmware version : %1 - Rom Playing : %2")).arg(infos.firmwareVersion, currentGame));
             if(currentGame.contains("m3nu.bin") || currentGame.contains("menu.bin"))
+            {
                 usb2snes->infos();
+                gameLoaded = false;
+            }
             else
             {
                 if(!gameLoaded && loggedin)
@@ -63,11 +70,6 @@ ra2snes::ra2snes(QWidget *parent)
                         usb2snes->getFile(currentGame);
                     });
                 }
-                else
-                    if(gameLoaded && loggedin)
-                        usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
-                    else
-                        usb2snes->infos();
             }
         }
     });
@@ -80,9 +82,11 @@ ra2snes::ra2snes(QWidget *parent)
 
     connect(usb2snes, &Usb2Snes::getAddressDataReceived, this, [=] {
         QByteArray data = usb2snes->getBinaryData();
+        tasksFinished = 0;
         memcpy(reader->getConsoleMemory(), data.data(), data.size());
-        reader->checkAchievements();
-        //usb2snes->infos();
+        QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
+        QThreadPool::globalInstance()->start([=] { reader->checkLeaderboards(); });
+        usb2snes->infos();
     });
 
     QTimer::singleShot(0, this, [=] {
@@ -110,24 +114,25 @@ ra2snes::ra2snes(QWidget *parent)
 
     connect(reader, &MemoryReader::finishedMemorySetup, this, [=] {
         usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
-        reader->checkAchievements();
     });
 
-    connect(reader, &MemoryReader::achievementsChecked, this, [=] {
-        usb2snes->infos();
-        //reader->checkAchievements();
+    connect(reader, &MemoryReader::achievementUnlocked, this, [=] {
     });
 
-    connect(reader, &MemoryReader::achievementUnlocked, this, [=] (unsigned int id) {
-        raclient->awardAchievement(id);
-        //reader->checkAchievements();
+    connect(reader, &MemoryReader::leaderboardCompleted, this, [=] {
     });
 
+    connect(reader, &MemoryReader::achievementsChecked, this, &ra2snes::onUsb2SnesStateChanged);
+    connect(reader, &MemoryReader::leaderboardsChecked, this, &ra2snes::onUsb2SnesStateChanged);
 
 }
 
 ra2snes::~ra2snes()
 {
+    reader->freeConsoleMemory();
+    delete raclient;
+    delete reader;
+    delete usb2snes;
     delete ui;
 }
 
@@ -144,10 +149,12 @@ void ra2snes::onLoginSuccess()
     usb2snes->infos();
     loggedin = true;
 }
+
 void ra2snes::onLoginFailed()
 {
     qDebug() << "login failed";
 }
+
 void ra2snes::onRequestError()
 {
     qDebug() << "request error";
@@ -156,4 +163,10 @@ void ra2snes::onRequestError()
 void ra2snes::resizeWindow(int width, int height)
 {
     this->resize(width, height);
+}
+
+void ra2snes::onUsb2SnesStateChanged()
+{
+    if (++tasksFinished == 2 && usb2snes->state() == Usb2Snes::Ready)
+        usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
 }

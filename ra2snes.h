@@ -21,6 +21,7 @@ class ra2snes : public QMainWindow
 public:
     ra2snes(QWidget *parent = nullptr);
     ~ra2snes();
+    void onUsb2SnesStateChanged();
 
 private slots:
     void on_signin_button_clicked();
@@ -33,6 +34,7 @@ private:
     QString currentGame;
     bool loggedin;
     bool gameLoaded;
+    QAtomicInt tasksFinished;
 
     void onLoginSuccess();
     void onLoginFailed();

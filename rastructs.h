@@ -22,6 +22,7 @@ struct AchievementInfo {
     QString author;
     unsigned int seconds_since_unlock;
     bool unlocked;
+    QUrl achievement_link;
 };
 
 struct LeaderboardInfo {
@@ -33,6 +34,7 @@ struct LeaderboardInfo {
     QString mem_addr;
     unsigned int score;
     unsigned int seconds_since_completion;
+    QUrl leaderboard_link;
 };
 
 struct UserInfo {
@@ -52,6 +54,7 @@ struct GameInfo {
     QUrl image_icon_url;
     QList<AchievementInfo> achievements;
     QList<LeaderboardInfo> leaderboards;
+    QUrl game_link;
 };
 
 static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {

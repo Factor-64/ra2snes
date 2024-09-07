@@ -2,12 +2,11 @@
 #include <QDebug>
 
 MemoryReader::MemoryReader(QObject *parent) : QObject(parent) {
+    consoleMemory = nullptr;
 }
 
 void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const QList<LeaderboardInfo> leaderboards) {
     uniqueMemoryAddresses.clear();
-    //achievementAddresses.clear();
-    //leaderboardAddresses.clear();
     achievementTriggers.clear();
     leaderboardTriggers.clear();
     consoleMemorySize = 0;
@@ -26,7 +25,6 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
             rc_memref_t* nextref = trigger->memrefs;
             while(nextref != nullptr)
             {
-                //achievementAddresses[achievement.id].append(qMakePair(nextref->address, nextref->value.size + 1));
                 if(uniqueAddresses[nextref->address] < nextref->value.size + 1)
                     uniqueAddresses[nextref->address] = nextref->value.size + 1;
                 nextref = nextref->next;
@@ -48,7 +46,6 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
                 leaderboardTriggers[leaderboard.id] = lboard;
                 while(nextref != nullptr)
                 {
-                    //leaderboardAddresses[leaderboard.id].append(qMakePair(nextref->address, nextref->value.size + 1));
                     if(uniqueAddresses[nextref->address] < nextref->value.size + 1)
                         uniqueAddresses[nextref->address] = nextref->value.size + 1;
                     nextref = nextref->next;
@@ -58,7 +55,7 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
 
     qDebug() << uniqueAddresses;
 
-    for (auto it = uniqueAddresses.begin(); it != uniqueAddresses.end(); ++it)
+    for(auto it = uniqueAddresses.begin(); it != uniqueAddresses.end(); ++it)
         uniqueMemoryAddresses.append(qMakePair(it.key(), it.value()));
 
     remapTriggerAddresses();
@@ -66,7 +63,7 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
 
 void MemoryReader::remapTriggerAddresses()
 {
-    for (auto it = achievementTriggers.begin(); it != achievementTriggers.end(); ++it)
+    for(auto it = achievementTriggers.begin(); it != achievementTriggers.end(); ++it)
     {
         rc_memref_t* nextref = it.value()->memrefs;
         while(nextref != nullptr)
@@ -90,7 +87,7 @@ void MemoryReader::remapTriggerAddresses()
 
     if(!leaderboardTriggers.empty())
     {
-        for (auto it = leaderboardTriggers.begin(); it != leaderboardTriggers.end(); ++it)
+        for(auto it = leaderboardTriggers.begin(); it != leaderboardTriggers.end(); ++it)
         {
             rc_memref_t* nextref = it.value()->memrefs;
             while(nextref != nullptr)
@@ -112,6 +109,7 @@ void MemoryReader::remapTriggerAddresses()
             }
         }
     }
+
     setConsoleMemorySize();
 }
 
@@ -120,6 +118,7 @@ void MemoryReader::setConsoleMemorySize()
     for(const auto& pair : std::as_const(uniqueMemoryAddresses))
         consoleMemorySize += pair.second;
 
+    delete[] consoleMemory;
     if(consoleMemorySize != 0)
         consoleMemory = new uint8_t[consoleMemorySize];
     else
@@ -140,7 +139,8 @@ QList<QPair<int, int>> MemoryReader::getUniqueMemoryAddresses()
 
 void MemoryReader::checkAchievements()
 {
-    for (auto it = achievementTriggers.cbegin(); it != achievementTriggers.cend(); it++)
+    QList<unsigned int> ids;
+    for(auto it = achievementTriggers.cbegin(); it != achievementTriggers.cend(); ++it)
     {
         const auto& trigger = it.value();
         rc_test_trigger(trigger, peek, consoleMemory, nullptr);
@@ -148,11 +148,11 @@ void MemoryReader::checkAchievements()
         if (trigger->state == RC_TRIGGER_STATE_TRIGGERED)
         {
             qDebug() << "Achievement Unlocked: " << it.key();
-            trigger->state = RC_TRIGGER_STATE_DISABLED;
+            ids.append(it.key());
             emit achievementUnlocked(it.key());
         }
     }
-    for(const auto& id : achievementsToRemove)
+    for(const auto& id : ids)
         achievementTriggers.remove(id);
     emit achievementsChecked();
 }
@@ -160,4 +160,9 @@ void MemoryReader::checkAchievements()
 void MemoryReader::checkLeaderboards()
 {
     emit leaderboardsChecked();
+}
+
+void MemoryReader::freeConsoleMemory()
+{
+    delete[] consoleMemory;
 }

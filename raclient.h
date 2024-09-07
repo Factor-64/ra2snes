@@ -28,6 +28,7 @@ public:
     //void getLBPlacements();
     QList<AchievementInfo> getAchievements();
     QList<LeaderboardInfo> getLeaderboards();
+    void queueAchievementRequest(unsigned int id);
 
 signals:
     void loginFailed();
@@ -38,6 +39,7 @@ signals:
     void finishedGameSetup();
     void finishedUnlockSetup();
     void awardedAchievement();
+    void gameLoadFailed();
 
 private:
     static const QString baseUrl;
@@ -51,6 +53,7 @@ private:
     GameInfo gameinfo;
     QList<unsigned int> unlocks;
     QList<QPair<unsigned int, unsigned int>> lb_placement;
+    QList<QPair<unsigned int, QString>> queue;
     bool hardcore;
 };
 

@@ -5,7 +5,7 @@
 #include <QUrlQuery>
 #include <rc_version.h>
 
-const QString RAClient::baseUrl = "https://retroachievements.org/dorequest.php";
+const QString RAClient::baseUrl = "https://retroachievements.org/";
 const QString RAClient::mediaUrl = "https://media.retroachievements.org/";
 const QString RAClient::userAgent = "ra2snes/1.0";
 
@@ -14,7 +14,6 @@ RAClient::RAClient(QObject *parent) : QObject(parent)
     hardcore = true;
     manager = new QNetworkAccessManager(this);
     connect(manager, &QNetworkAccessManager::finished, this, &RAClient::handleNetworkReply);
-    //index = 0;
 }
 
 void RAClient::loginPassword(const QString username, const QString password)
@@ -110,9 +109,19 @@ void RAClient::awardAchievement(unsigned int id)
     else index = 0;
 }*/
 
+QList<AchievementInfo> RAClient::getAchievements()
+{
+    return gameinfo.achievements;
+}
+
+QList<LeaderboardInfo> RAClient::getLeaderboards()
+{
+    return gameinfo.leaderboards;
+}
+
 void RAClient::request(const QString request_type, const QList<QPair<QString, QString>> post_content)
 {
-    QNetworkRequest request{QUrl(baseUrl)};
+    QNetworkRequest request{QUrl(baseUrl + "dorequest.php")};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     request.setRawHeader("User-Agent", userAgent.toUtf8());
     QUrlQuery query;
@@ -159,16 +168,6 @@ void printAchievements(QList<AchievementInfo> list)
     }
 }
 
-QList<AchievementInfo> RAClient::getAchievements()
-{
-    return gameinfo.achievements;
-}
-
-QList<LeaderboardInfo> RAClient::getLeaderboards()
-{
-    return gameinfo.leaderboards;
-}
-
 void RAClient::handleNetworkReply(QNetworkReply *reply)
 {
     QJsonObject jsonObject = QJsonDocument::fromJson(reply->readAll()).object();
@@ -203,8 +202,13 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
 
     else if(latestRequest == "gameid")
     {
-        gameinfo.id = jsonObject["GameID"].toInt();
-        emit gotGameID(gameinfo.id);
+        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
+        {
+            gameinfo.id = jsonObject["GameID"].toInt();
+            emit gotGameID(gameinfo.id);
+        }
+        else
+            emit gameLoadFailed();
     }
 
     else if(latestRequest == "patch")
@@ -213,6 +217,7 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
         gameinfo.title = patch_data["Title"].toString();
         gameinfo.image_icon = patch_data["ImageIcon"].toString();
         gameinfo.image_icon_url = QUrl(patch_data["ImageIconURL"].toString());
+        gameinfo.game_link = QUrl(baseUrl + "game/" + QString::number(gameinfo.id));
 
         gameinfo.achievements.clear();
         gameinfo.leaderboards.clear();
@@ -239,6 +244,7 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
                 info.title = data["Title"].toString();
                 info.type = data["Type"].toInt();
                 info.author = data["Author"].toString();
+                info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
                 gameinfo.achievements.append(info);
             }
         }
@@ -255,6 +261,7 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
                 info.id = data["id"].toInt();
                 info.lower_is_better = data["LowerIsBetter"].toInt();
                 info.mem_addr = data["Mem"].toString();
+                info.leaderboard_link = QUrl(baseUrl + "leaderboard/" + QString::number(info.id));
                 gameinfo.leaderboards.append(info);
                 lb_placement.append(qMakePair(info.id, 0));
             }

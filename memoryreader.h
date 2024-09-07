@@ -20,6 +20,7 @@ public:
     QList<QPair<int, int>> getUniqueMemoryAddresses();
     void checkAchievements();
     void checkLeaderboards();
+    void freeConsoleMemory();
 
 signals:
     void finishedMemorySetup();
