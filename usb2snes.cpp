@@ -145,7 +145,19 @@ void Usb2Snes::onWebSocketTextReceived(QString message)
                 if (m_firmwareString.right(3) == "gsu")
                     m_firmwareVersion = QVersionNumber(7);
                 else
-                    m_firmwareVersion = QVersionNumber(m_firmwareString.right(1).toInt());
+                {
+                    // usb2snes firmware
+                    if (m_firmwareString.contains("usb"))
+                    {
+                        int npos = m_firmwareString.indexOf("-v");
+                        npos += 2;
+                        sDebug() << "Firmware is : " << m_firmwareString << "Version" << m_firmwareString.mid(npos);
+                        m_firmwareVersion = QVersionNumber(m_firmwareString.mid(npos).toInt());
+                    } else { // oficial sd2snes
+                        m_firmwareVersion = QVersionNumber(QVersionNumber::fromString(m_firmwareString).minorVersion());
+                    }
+                }
+                sDebug() << "Firmware Version: " << m_firmwareVersion;
                 m_istate = ServerVersionRequested;
                 sendRequest(AppVersion);
             }
@@ -228,6 +240,7 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
     if ((unsigned int) buffer.size() == requestedBinaryReadSize)
     {
         lastBinaryMessage = buffer;
+        emit binaryMessageReceived();
         switch(m_state)
         {
             case GettingConfig: {
@@ -242,10 +255,13 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
                 emit getAddressDataReceived();
                 break;
             }
+            case GettingAddresses: {
+                emit getAddressesDataReceived();
+                break;
+            }
             default:
                 break;
         }
-        emit binaryMessageReceived();
         sDebug() << "Finish Binary";
         changeState(Ready);
         m_istate = IReady;
@@ -302,18 +318,20 @@ void Usb2Snes::changeState(Usb2Snes::State s)
     emit stateChanged();
 }
 
-void Usb2Snes::startSyncCall()
+QByteArray Usb2Snes::getAddressSync(unsigned int addr, unsigned int size, Space space)
 {
-    QObject::disconnect(&m_webSocket, SIGNAL(textMessageReceived(QString)), this, SLOT(onWebSocketTextReceived(QString)));
-    QObject::disconnect(&m_webSocket, SIGNAL(binaryMessageReceived(QByteArray)), this, SLOT(onWebSocketBinaryReceived(QByteArray)));
+    m_istate = IBusy;
+    sendRequest(GetAddress, QStringList() << QString::number(addr, 16) << QString::number(size, 16), space);
+    requestedBinaryReadSize = size;
+    QEventLoop  loop;
+    QObject::connect(this, SIGNAL(binaryMessageReceived()), &loop, SLOT(quit()));
+    QObject::connect(this, SIGNAL(disconnected()), &loop, SLOT(quit()));
+    loop.exec();
+    requestedBinaryReadSize = 0;
+    sDebug() << "Getting data,  size : " << lastBinaryMessage.size() << "- MD5 : " << QCryptographicHash::hash(lastBinaryMessage, QCryptographicHash::Md5).toHex();
+    m_istate = IReady;
+    return lastBinaryMessage;
 }
-
-void Usb2Snes::endSyncCall()
-{
-    QObject::connect(&m_webSocket, SIGNAL(textMessageReceived(QString)), this, SLOT(onWebSocketTextReceived(QString)));
-    QObject::connect(&m_webSocket, SIGNAL(binaryMessageReceived(QByteArray)), this, SLOT(onWebSocketBinaryReceived(QByteArray)));
-}
-
 
 void Usb2Snes::getAddress(unsigned int addr, unsigned int size, Space space)
 {
@@ -328,7 +346,7 @@ void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
 {
     // We can only send 8 addresses at a time
     m_istate = IBusy;
-    changeState(GettingAddress);
+    changeState(GettingAddresses);
     unsigned int total_size = 0;
     QStringList operands;
     for(auto &pair : addresses)
@@ -346,6 +364,21 @@ void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
     if(operands.isEmpty() == false)
         sendRequest(GetAddress, operands);
     requestedBinaryReadSize = total_size;
+}
+
+//To see if any NMI hook patch is applied you could technically look at $002A90 to see if it's $60 (RTS) = no patch.
+bool Usb2Snes::isPatchedROM()
+{
+    sDebug() << "Checking for patched rom";
+    QByteArray data;
+    if (m_firmwareVersion > QVersionNumber(7))
+    {
+        sDebug() << "Firmware is greater than 7";
+        data = getAddressSync(0xFC0000, 4, CMD);
+        return data != QByteArray::fromHex("00000000");
+    }
+    data = getAddressSync(0x2A90, 1, CMD);
+    return data[0] != (char) 0x60;
 }
 
 void Usb2Snes::checkReset()
@@ -443,7 +476,6 @@ void Usb2Snes::menu()
     sendRequest(Menu);
 }
 
-
 bool Usb2Snes::patchROM(QString patch)
 {
     QFile fPatch(patch);
@@ -463,9 +495,12 @@ Usb2Snes::State Usb2Snes::state()
     return m_state;
 }
 
-void Usb2Snes::infos()
+void Usb2Snes::infos(bool f)
 {
-    m_istate = IBusy;
+    if(f)
+        m_istate = FirmwareVersionRequested;
+    else
+        m_istate = IBusy;
     changeState(GettingInfo);
     sendRequest(Info);
 }
@@ -489,7 +524,6 @@ QVersionNumber Usb2Snes::firmwareVersion()
 {
     return m_firmwareVersion;
 }
-
 
 void Usb2Snes::deviceList()
 {

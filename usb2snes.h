@@ -40,6 +40,7 @@ public:
         SendingFile,
         ReceivingFile,
         GettingAddress,
+        GettingAddresses,
         CheckingReset,
         GettingInfo,
         GettingConfig
@@ -105,6 +106,7 @@ public:
     void                    close();
     void                    setAppName(QString name);
     void                    attach(QString deviceName);
+    QByteArray              getAddressSync(unsigned int addr, unsigned int size, Space space);
     void                    getAddress(unsigned int addr, unsigned int size, Space space = SNES);
     void                    getAddresses(QList<QPair<int,int>> addresses);
     void                    setAddress(unsigned int addr, QByteArray data, Space space = SNES);
@@ -118,7 +120,7 @@ public:
     void                    reset();
     void                    menu();
     State                   state();
-    void                    infos();
+    void                    infos(bool f = false);
     int                     fileDataSize() const;
     void                    ls(QString path);
     QString                 firmwareString();
@@ -128,6 +130,7 @@ public:
     bool                    patchROM(QString patch);
     QByteArray              getBinaryData();
     void                    getConfig();
+    bool                    isPatchedROM();
 
 signals:
     void    stateChanged();
@@ -143,6 +146,7 @@ signals:
     void    getFileDataReceived();
     void    getAddressGet(QByteArray data);
     void    getAddressDataReceived();
+    void    getAddressesDataReceived();
     void    resetOccurred(QByteArray data);
     void    deviceListDone(QStringList listDevice);
     void    infoDone(Usb2Snes::DeviceInfo info);

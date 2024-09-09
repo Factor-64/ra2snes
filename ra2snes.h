@@ -1,38 +1,36 @@
 #ifndef RA2SNES_H
 #define RA2SNES_H
 
-#include <QApplication>
-#include <QMainWindow>
-#include <QTimer>
+#include <QObject>
+#include <QString>
 #include "usb2snes.h"
 #include "raclient.h"
 #include "memoryreader.h"
 
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class ra2snes;
-}
-QT_END_NAMESPACE
-
-class ra2snes : public QMainWindow
+class ra2snes : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString currentGame READ currentGame NOTIFY currentGameChanged)
 
 public:
-    ra2snes(QWidget *parent = nullptr);
+    explicit ra2snes(QObject *parent = nullptr);
     ~ra2snes();
-    void onUsb2SnesStateChanged();
-    void checkForHardcore();
 
-private slots:
-    void on_signin_button_clicked();
+    QString currentGame() const;
+
+public slots:
+    void signIn(const QString &username, const QString &password);
+
+signals:
+    void currentGameChanged();
+    void loginSuccess();
+    void loginFailed();
 
 private:
-    Ui::ra2snes *ui;
     Usb2Snes *usb2snes;
     RAClient *raclient;
     MemoryReader *reader;
-    QString currentGame;
+    QString m_currentGame;
     bool loggedin;
     bool gameLoaded;
     QAtomicInt tasksFinished;
@@ -40,6 +38,7 @@ private:
     void onLoginSuccess();
     void onLoginFailed();
     void onRequestError();
-    void resizeWindow(int width, int height);
+    void onUsb2SnesStateChanged();
 };
+
 #endif // RA2SNES_H

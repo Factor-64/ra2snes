@@ -9,9 +9,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Websockets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools WebSockets Quick Qml QuickWidgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools WebSockets Quick Qml QuickWidgets)
 
 include_directories(${CMAKE_SOURCE_DIR}/rcheevos/include)
 include_directories(${CMAKE_SOURCE_DIR}/rcheevos/src)
@@ -29,6 +28,7 @@ file(GLOB RCHEEVOS_SOURCES_RCHEEVOS ${CMAKE_SOURCE_DIR}/rcheevos/src/rcheevos/*)
 file(GLOB RCHEEVOS_SOURCES_RHASH ${CMAKE_SOURCE_DIR}/rcheevos/src/rhash/*)
 file(GLOB RCHEEVOS_SOURCES_RURL ${CMAKE_SOURCE_DIR}/rcheevos/src/rurl/*)
 file(GLOB LUA_SOURCES ${CMAKE_SOURCE_DIR}/rcheevos/test/lua/src/*)
+file(GLOB UI_FILES ${CMAKE_SOURCE_DIR}/ui/*)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -52,6 +52,8 @@ set(PROJECT_SOURCES
         ${RCHEEVOS_SOURCES_RHASH}
         ${RCHEEVOS_SOURCES_RURL}
         ${LUA_SOURCES}
+        ${UI_FILES}
+        ui.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -75,6 +77,9 @@ endif()
 
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::WebSockets)
+target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Quick)
+target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Qml)
+target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::QuickWidgets)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.ra2snes)

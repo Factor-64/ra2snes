@@ -1,23 +1,33 @@
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include "ra2snes.h"
-
-#include <QApplication>
-#include <QLocale>
-#include <QTranslator>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QGuiApplication app(argc, argv);
 
-    QTranslator translator;
-    const QStringList uiLanguages = QLocale::system().uiLanguages();
-    for (const QString &locale : uiLanguages) {
-        const QString baseName = "ra2snes_" + QLocale(locale).name();
-        if (translator.load(":/i18n/" + baseName)) {
-            a.installTranslator(&translator);
-            break;
-        }
+    QQmlApplicationEngine engine;
+    ra2snes ra2snesInstance;
+
+    engine.rootContext()->setContextProperty("ra2snes", &ra2snesInstance);
+    engine.load(QUrl(QStringLiteral("qrc:/ui/login.qml")));
+
+    const auto rootObjects = engine.rootObjects();
+    QObject *loginWindow = nullptr;
+
+    if (!rootObjects.isEmpty()) {
+        loginWindow = rootObjects.first();
     }
-    ra2snes w;
-    w.show();
-    return a.exec();
+    QObject::connect(&ra2snesInstance, &ra2snes::loginSuccess, &engine, [&loginWindow, &engine]() {
+        if(loginWindow)
+            loginWindow->deleteLater();
+        engine.load(QUrl(QStringLiteral("qrc:/ui/mainwindow.qml")));
+        engine.clearComponentCache();
+    });
+
+    if (engine.rootObjects().isEmpty())
+        return -1;
+
+    return app.exec();
 }

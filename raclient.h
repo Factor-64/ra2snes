@@ -16,16 +16,6 @@ class RAClient : public QObject {
     Q_OBJECT
 
 public:
-    enum State {
-        Ready,
-        Login,
-        LoadingGame,
-        GettingAchievements,
-        GettingUnlocks,
-        StartingSession,
-        AwardingAchievement
-    };
-
     explicit RAClient(QObject *parent = nullptr);
 
     void loginPassword(const QString username, const QString password);
@@ -53,7 +43,7 @@ signals:
     void finishedUnlockSetup();
     void awardedAchievement();
     void gameLoadFailed();
-    void stateChanged();
+    //void stateChanged();
 
 private:
     static const QString baseUrl;
@@ -61,8 +51,10 @@ private:
     static const QString mediaUrl;
     void request(const QString request_type, const QList<QPair<QString, QString>> post_content);
     void handleNetworkReply(QNetworkReply *reply);
-    void changeState(State s);
-    State state;
+    //void changeState(State s);
+    //State state;
+    QString latestRequest;
+    bool ready;
     QNetworkAccessManager *manager;
     UserInfo userinfo;
     GameInfo gameinfo;

@@ -17,7 +17,6 @@ RAClient::RAClient(QObject *parent) : QObject(parent)
 
 void RAClient::loginPassword(const QString username, const QString password)
 {
-    changeState(Login);
     QList<QPair<QString, QString>> post_content;
     post_content.append(qMakePair("u", username));
     post_content.append(qMakePair("p", password));
@@ -27,7 +26,6 @@ void RAClient::loginPassword(const QString username, const QString password)
 
 void RAClient::loginToken(const QString username, const QString token)
 {
-    changeState(Login);
     QList<QPair<QString, QString>> post_content;
     post_content.append(qMakePair("u", username));
     post_content.append(qMakePair("t", token));
@@ -37,7 +35,6 @@ void RAClient::loginToken(const QString username, const QString token)
 
 void RAClient::loadGame(const QString md5hash)
 {
-    changeState(LoadingGame);
     gameinfo.md5hash = md5hash;
     QList<QPair<QString, QString>> post_content;
     post_content.append(qMakePair("m", md5hash));
@@ -47,7 +44,6 @@ void RAClient::loadGame(const QString md5hash)
 
 void RAClient::getAchievements(const unsigned int gameid)
 {
-    changeState(GettingAchievements);
     QList<QPair<QString, QString>> post_content;
     post_content.append(qMakePair("u", userinfo.username));
     post_content.append(qMakePair("t", userinfo.token));
@@ -58,7 +54,6 @@ void RAClient::getAchievements(const unsigned int gameid)
 
 void RAClient::getUnlocks()
 {
-    changeState(GettingUnlocks);
     QList<QPair<QString, QString>> post_content;
     post_content.append(qMakePair("u", userinfo.username));
     post_content.append(qMakePair("t", userinfo.token));
@@ -70,7 +65,6 @@ void RAClient::getUnlocks()
 
 void RAClient::startSession()
 {
-    changeState(StartingSession);
     QList<QPair<QString, QString>> post_content;
     post_content.append(qMakePair("u", userinfo.username));
     post_content.append(qMakePair("t", userinfo.token));
@@ -83,7 +77,6 @@ void RAClient::startSession()
 
 void RAClient::awardAchievement(unsigned int id)
 {
-    changeState(AwardingAchievement);
     QByteArray md5hash;
     md5hash.append(QString::number(id).toLocal8Bit());
     md5hash.append(userinfo.username.toLocal8Bit());
@@ -136,7 +129,7 @@ void RAClient::runQueue()
 {
     while(!queue.isEmpty())
     {
-        if(state == Ready)
+        if(ready)
         {
             QJsonObject data = queue.at(0);
             if(data["Request"].toString() == "Achievement")
@@ -145,11 +138,6 @@ void RAClient::runQueue()
                 //submitLeaderboardEntry(data["ID"].toInt(), data["Score"].toInt());
         }
     }
-}
-
-void RAClient::changeState(State s)
-{
-    state = s;
 }
 
 void RAClient::setHardcore(bool h)
@@ -169,7 +157,8 @@ QList<LeaderboardInfo> RAClient::getLeaderboards()
 
 void RAClient::request(const QString request_type, const QList<QPair<QString, QString>> post_content)
 {
-    QNetworkRequest request{QUrl(baseUrl + "dorequest.php?")};
+    ready = false;
+    QNetworkRequest request{QUrl(baseUrl + "dorequest.php")};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     request.setRawHeader("User-Agent", userAgent.toUtf8());
     QUrlQuery query;
@@ -179,6 +168,7 @@ void RAClient::request(const QString request_type, const QList<QPair<QString, QS
 
     QByteArray postData = query.query(QUrl::EncodeUnicode | QUrl::EncodeSpaces).toLocal8Bit();
     postData.replace("%20", "+");
+    latestRequest = request_type;
     manager->post(request, postData);
 }
 
@@ -217,7 +207,7 @@ void printAchievements(QList<AchievementInfo> list)
 
 void RAClient::handleNetworkReply(QNetworkReply *reply)
 {
-    qDebug() << "RA State: " << state;
+    //qDebug() << "RA State: " << state;
     QJsonObject jsonObject = QJsonDocument::fromJson(reply->readAll()).object();
     //printJsonObject(jsonObject);
 
@@ -231,128 +221,127 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
         qDebug() << "Error:" << jsonObject["Error"].toString();
         emit requestFailed();
     }
-    else
+    else if(latestRequest == "login")
     {
-        switch(state)
+        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
         {
-            case Login: {
-                if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
-                {
-                    userinfo.username = jsonObject["User"].toString();
-                    userinfo.token = jsonObject["Token"].toString();
-                    userinfo.softcore_score = jsonObject["SoftcoreScore"].toInt();
-                    userinfo.hardcore_score = jsonObject["Score"].toInt();
-                    userinfo.pfp = (mediaUrl + "UserPic/" + userinfo.username + ".png");
-                    emit loginSuccess();
-                }
-                else
-                    emit loginFailed();
-                break;
+            if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
+            {
+                userinfo.username = jsonObject["User"].toString();
+                userinfo.token = jsonObject["Token"].toString();
+                userinfo.softcore_score = jsonObject["SoftcoreScore"].toInt();
+                userinfo.hardcore_score = jsonObject["Score"].toInt();
+                userinfo.pfp = (mediaUrl + "UserPic/" + userinfo.username + ".png");
+                emit loginSuccess();
             }
-            case LoadingGame: {
-                if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
-                {
-                    gameinfo.id = jsonObject["GameID"].toInt();
-                    emit gotGameID(gameinfo.id);
-                }
-                else
-                    emit gameLoadFailed();
-                break;
-            }
-            case GettingAchievements: {
-                QJsonObject patch_data = jsonObject["PatchData"].toObject();
-                gameinfo.title = patch_data["Title"].toString();
-                gameinfo.image_icon = patch_data["ImageIcon"].toString();
-                gameinfo.image_icon_url = QUrl(patch_data["ImageIconURL"].toString());
-                gameinfo.game_link = QUrl(baseUrl + "game/" + QString::number(gameinfo.id));
-
-                gameinfo.achievements.clear();
-                gameinfo.leaderboards.clear();
-
-                QJsonArray achievements_data = patch_data["Achievements"].toArray();
-                for(const auto& achievement : achievements_data)
-                {
-                    AchievementInfo info;
-                    QJsonObject data = achievement.toObject();
-                    if(data["Flags"].toInt() == 3)
-                    {
-                        info.badgeLockedUrl = QUrl(data["BadgeLockedURL"].toString());
-                        info.badgeName = data["BadgeName"].toString();
-                        info.badgeUrl = QUrl(data["BadgeURL"].toString());
-                        info.description = data["Description"].toString();
-                        info.flags = data["Flags"].toInt();
-                        info.id = data["ID"].toInt();
-                        info.mem_addr = data["MemAddr"].toString();
-                        info.points = data["Points"].toInt();
-                        info.rarity = data["Rarity"].toInt();
-                        info.rarity_hardcore = data["RarityHardcore"].toInt();
-                        info.title = data["Title"].toString();
-                        info.type = data["Type"].toInt();
-                        info.author = data["Author"].toString();
-                        info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
-                        gameinfo.achievements.append(info);
-                    }
-                }
-
-                if(hardcore)
-                {
-                    QJsonArray leaderboards_data = patch_data["Leaderboards"].toArray();
-                    for(const auto& leaderboard : leaderboards_data)
-                    {
-                        LeaderboardInfo info;
-                        QJsonObject data = leaderboard.toObject();
-                        info.description = data["Description"].toString();
-                        info.format = data["Format"].isString();
-                        info.id = data["id"].toInt();
-                        info.lower_is_better = data["LowerIsBetter"].toInt();
-                        info.mem_addr = data["Mem"].toString();
-                        info.leaderboard_link = QUrl(baseUrl + "leaderboard/" + QString::number(info.id));
-                        gameinfo.leaderboards.append(info);
-                        lb_placement.append(qMakePair(info.id, 0));
-                    }
-                }
-
-                emit finishedGameSetup();
-                break;
-            }
-            case GettingUnlocks: {
-                unlocks.clear();
-                QJsonArray data = jsonObject["UserUnlocks"].toArray();
-                if(!data.isEmpty())
-                    for(auto id : data)
-                    {
-                        unlocks.append(id.toInt());
-                        for(auto& achievement : gameinfo.achievements)
-                        {
-                            if(achievement.id == id.toInt())
-                                achievement.unlocked = true;
-                        }
-
-                    }
-                emit finishedUnlockSetup();
-                break;
-            }
-            case StartingSession: {
-                qDebug() << jsonObject;
-                break;
-            }
-            case AwardingAchievement: {
-                if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
-                {
-                    for(auto& achievement : gameinfo.achievements)
-                        if(achievement.id == jsonObject["AchivementID"].toInt())
-                            achievement.unlocked = true;
-                    emit awardedAchievement();
-                }
-                break;
-            }
-            default: {
-                qDebug() << "Unexpected response:" << jsonObject;
-                emit requestError();
-                break;
-            }
+            else
+                emit loginFailed();
         }
     }
-    changeState(Ready);
+
+    else if(latestRequest == "gameid")
+    {
+        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
+        {
+            gameinfo.id = jsonObject["GameID"].toInt();
+            emit gotGameID(gameinfo.id);
+        }
+        else
+            emit gameLoadFailed();
+    }
+
+    else if(latestRequest == "patch")
+    {
+        QJsonObject patch_data = jsonObject["PatchData"].toObject();
+        gameinfo.title = patch_data["Title"].toString();
+        gameinfo.image_icon = patch_data["ImageIcon"].toString();
+        gameinfo.image_icon_url = QUrl(patch_data["ImageIconURL"].toString());
+        gameinfo.game_link = QUrl(baseUrl + "game/" + QString::number(gameinfo.id));
+
+        gameinfo.achievements.clear();
+        gameinfo.leaderboards.clear();
+
+        QJsonArray achievements_data = patch_data["Achievements"].toArray();
+        for(const auto& achievement : achievements_data)
+        {
+            AchievementInfo info;
+            QJsonObject data = achievement.toObject();
+            if(data["Flags"].toInt() == 3)
+            {
+                info.badgeLockedUrl = QUrl(data["BadgeLockedURL"].toString());
+                info.badgeName = data["BadgeName"].toString();
+                info.badgeUrl = QUrl(data["BadgeURL"].toString());
+                info.description = data["Description"].toString();
+                info.flags = data["Flags"].toInt();
+                info.id = data["ID"].toInt();
+                info.mem_addr = data["MemAddr"].toString();
+                info.points = data["Points"].toInt();
+                info.rarity = data["Rarity"].toInt();
+                info.rarity_hardcore = data["RarityHardcore"].toInt();
+                info.title = data["Title"].toString();
+                info.type = data["Type"].toInt();
+                info.author = data["Author"].toString();
+                info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
+                gameinfo.achievements.append(info);
+            }
+        }
+
+        if(hardcore)
+        {
+            QJsonArray leaderboards_data = patch_data["Leaderboards"].toArray();
+            for(const auto& leaderboard : leaderboards_data)
+            {
+                LeaderboardInfo info;
+                QJsonObject data = leaderboard.toObject();
+                info.description = data["Description"].toString();
+                info.format = data["Format"].isString();
+                info.id = data["id"].toInt();
+                info.lower_is_better = data["LowerIsBetter"].toInt();
+                info.mem_addr = data["Mem"].toString();
+                info.leaderboard_link = QUrl(baseUrl + "leaderboard/" + QString::number(info.id));
+                gameinfo.leaderboards.append(info);
+                lb_placement.append(qMakePair(info.id, 0));
+            }
+        }
+
+        emit finishedGameSetup();
+    }
+    else if(latestRequest == "unlocks")
+    {
+        unlocks.clear();
+        QJsonArray data = jsonObject["UserUnlocks"].toArray();
+        if(!data.isEmpty())
+            for(auto id : data)
+            {
+                unlocks.append(id.toInt());
+                for(auto& achievement : gameinfo.achievements)
+                {
+                    if(achievement.id == id.toInt())
+                        achievement.unlocked = true;
+                }
+
+            }
+        emit finishedUnlockSetup();
+    }
+    else if(latestRequest == "startsession")
+    {
+        qDebug() << jsonObject;
+    }
+    else if (latestRequest == "awardachievement")
+    {
+        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
+        {
+            for(auto& achievement : gameinfo.achievements)
+                if(achievement.id == jsonObject["AchivementID"].toInt())
+                    achievement.unlocked = true;
+            emit awardedAchievement();
+        }
+    }
+    else
+    {
+        qDebug() << "Unexpected response:" << jsonObject;
+        emit requestError();
+    }
+    ready = true;
     reply->deleteLater();
 }
