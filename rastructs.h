@@ -5,9 +5,9 @@
 #include <QDateTime>
 
 struct AchievementInfo {
-    QUrl badgeLockedUrl;
-    QString badgeName;
-    QUrl badgeUrl;
+    QUrl badge_locked_url;
+    QString badge_name;
+    QUrl badge_url;
     //QDateTime created;
     QString description;
     unsigned int flags;
@@ -18,9 +18,9 @@ struct AchievementInfo {
     unsigned int rarity;
     unsigned int rarity_hardcore;
     QString title;
-    unsigned int type;
+    QString type;
     QString author;
-    unsigned int seconds_since_unlock;
+    QDateTime time_unlocked;
     bool unlocked;
     QUrl achievement_link;
 };
@@ -35,6 +35,7 @@ struct LeaderboardInfo {
     unsigned int score;
     unsigned int seconds_since_completion;
     QUrl leaderboard_link;
+    unsigned int placement;
 };
 
 struct UserInfo {

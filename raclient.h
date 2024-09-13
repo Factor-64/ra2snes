@@ -58,8 +58,6 @@ private:
     QNetworkAccessManager *manager;
     UserInfo userinfo;
     GameInfo gameinfo;
-    QList<unsigned int> unlocks;
-    QList<QPair<unsigned int, unsigned int>> lb_placement;
     QList<QJsonObject> queue;
     bool hardcore;
 };

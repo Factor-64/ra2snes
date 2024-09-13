@@ -130,7 +130,7 @@ public:
     bool                    patchROM(QString patch);
     QByteArray              getBinaryData();
     void                    getConfig();
-    bool                    isPatchedROM();
+    void                    isPatchedROM();
 
 signals:
     void    stateChanged();

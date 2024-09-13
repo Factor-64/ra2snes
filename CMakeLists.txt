@@ -38,8 +38,6 @@ set(PROJECT_SOURCES
         ${TS_FILES}
         usb2snes.cpp
         usb2snes.h
-        ra_client_old.cpp
-        ra_client_old.h
         raclient.cpp
         raclient.h
         memoryreader.cpp

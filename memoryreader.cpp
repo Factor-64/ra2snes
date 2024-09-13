@@ -53,7 +53,7 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
             }
     }
 
-    qDebug() << uniqueAddresses;
+    //qDebug() << uniqueAddresses;
 
     for(auto it = uniqueAddresses.begin(); it != uniqueAddresses.end(); ++it)
         uniqueMemoryAddresses.append(qMakePair(it.key(), it.value()));
@@ -73,11 +73,11 @@ void MemoryReader::remapTriggerAddresses()
             {
                 if(pair.first == nextref->address)
                 {
-                    qDebug() << "Unique Address: " << pair.first;
-                    qDebug() << "Trigger Address:" << nextref->address;
+                    //qDebug() << "Unique Address: " << pair.first;
+                    //qDebug() << "Trigger Address:" << nextref->address;
                     nextref->address = memoryOffset;
-                    qDebug() << "Memory Offset: " << memoryOffset;
-                    qDebug() << "New Trigger Address: " << nextref->address;
+                    //qDebug() << "Memory Offset: " << memoryOffset;
+                    //qDebug() << "New Trigger Address: " << nextref->address;
                 }
                 memoryOffset += pair.second;
             }
@@ -97,11 +97,11 @@ void MemoryReader::remapTriggerAddresses()
                 {
                     if(pair.first == nextref->address)
                     {
-                        qDebug() << "Unique Address: " << pair.first;
-                        qDebug() << "Trigger Address:" << nextref->address;
+                        //qDebug() << "Unique Address: " << pair.first;
+                        //qDebug() << "Trigger Address:" << nextref->address;
                         nextref->address = memoryOffset;
-                        qDebug() << "Memory Offset: " << memoryOffset;
-                        qDebug() << "New Trigger Address: " << nextref->address;
+                        //qDebug() << "Memory Offset: " << memoryOffset;
+                        //qDebug() << "New Trigger Address: " << nextref->address;
                     }
                     memoryOffset += pair.second;
                 }

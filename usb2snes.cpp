@@ -367,18 +367,13 @@ void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
 }
 
 //To see if any NMI hook patch is applied you could technically look at $002A90 to see if it's $60 (RTS) = no patch.
-bool Usb2Snes::isPatchedROM()
+void Usb2Snes::isPatchedROM()
 {
     sDebug() << "Checking for patched rom";
-    QByteArray data;
     if (m_firmwareVersion > QVersionNumber(7))
-    {
-        sDebug() << "Firmware is greater than 7";
-        data = getAddressSync(0xFC0000, 4, CMD);
-        return data != QByteArray::fromHex("00000000");
-    }
-    data = getAddressSync(0x2A90, 1, CMD);
-    return data[0] != (char) 0x60;
+        getAddress(0xFC0000, 4, CMD);
+    else
+        getAddress(0x2A90, 1, CMD);
 }
 
 void Usb2Snes::checkReset()

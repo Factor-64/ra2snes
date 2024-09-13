@@ -127,15 +127,17 @@ void RAClient::queueLeaderboardRequest(unsigned int id, unsigned int score)
 
 void RAClient::runQueue()
 {
+    qDebug() << "Queue Size: " << queue.size();
     while(!queue.isEmpty())
     {
         if(ready)
         {
-            QJsonObject data = queue.at(0);
+            QJsonObject data = queue.first();
             if(data["Request"].toString() == "Achievement")
                 awardAchievement(data["ID"].toInt());
             //if(data["Request"].toString() == "Leaderboard")
                 //submitLeaderboardEntry(data["ID"].toInt(), data["Score"].toInt());
+            queue.removeFirst();
         }
     }
 }
@@ -207,7 +209,7 @@ void printAchievements(QList<AchievementInfo> list)
 
 void RAClient::handleNetworkReply(QNetworkReply *reply)
 {
-    //qDebug() << "RA State: " << state;
+    qDebug() << "Latest Request: " << latestRequest;
     QJsonObject jsonObject = QJsonDocument::fromJson(reply->readAll()).object();
     //printJsonObject(jsonObject);
 
@@ -220,6 +222,16 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     {
         qDebug() << "Error:" << jsonObject["Error"].toString();
         emit requestFailed();
+    }
+    else if (latestRequest == "awardachievement")
+    {
+        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
+        {
+            for(auto& achievement : gameinfo.achievements)
+                if(achievement.id == jsonObject["AchivementID"].toInt())
+                    achievement.unlocked = true;
+            emit awardedAchievement();
+        }
     }
     else if(latestRequest == "login")
     {
@@ -268,9 +280,9 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
             QJsonObject data = achievement.toObject();
             if(data["Flags"].toInt() == 3)
             {
-                info.badgeLockedUrl = QUrl(data["BadgeLockedURL"].toString());
-                info.badgeName = data["BadgeName"].toString();
-                info.badgeUrl = QUrl(data["BadgeURL"].toString());
+                info.badge_locked_url = QUrl(data["BadgeLockedURL"].toString());
+                info.badge_name = data["BadgeName"].toString();
+                info.badge_url = QUrl(data["BadgeURL"].toString());
                 info.description = data["Description"].toString();
                 info.flags = data["Flags"].toInt();
                 info.id = data["ID"].toInt();
@@ -279,8 +291,9 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
                 info.rarity = data["Rarity"].toInt();
                 info.rarity_hardcore = data["RarityHardcore"].toInt();
                 info.title = data["Title"].toString();
-                info.type = data["Type"].toInt();
+                info.type = data["Type"].toString();
                 info.author = data["Author"].toString();
+                info.unlocked = false;
                 info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
                 gameinfo.achievements.append(info);
             }
@@ -300,7 +313,6 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
                 info.mem_addr = data["Mem"].toString();
                 info.leaderboard_link = QUrl(baseUrl + "leaderboard/" + QString::number(info.id));
                 gameinfo.leaderboards.append(info);
-                lb_placement.append(qMakePair(info.id, 0));
             }
         }
 
@@ -308,33 +320,30 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     }
     else if(latestRequest == "unlocks")
     {
-        unlocks.clear();
         QJsonArray data = jsonObject["UserUnlocks"].toArray();
-        if(!data.isEmpty())
-            for(auto id : data)
+        for(auto id : data)
+        {
+            for(auto& achievement : gameinfo.achievements)
             {
-                unlocks.append(id.toInt());
-                for(auto& achievement : gameinfo.achievements)
-                {
-                    if(achievement.id == id.toInt())
-                        achievement.unlocked = true;
-                }
-
+                if(achievement.id == id.toInt())
+                    achievement.unlocked = true;
             }
+
+        }
         emit finishedUnlockSetup();
     }
     else if(latestRequest == "startsession")
     {
         qDebug() << jsonObject;
-    }
-    else if (latestRequest == "awardachievement")
-    {
-        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
+        QJsonArray unlock_data = jsonObject["Unlocks"].toArray();
+        for(const auto& unlock_value : unlock_data)
         {
+            QJsonObject unlock = unlock_value.toObject();
             for(auto& achievement : gameinfo.achievements)
-                if(achievement.id == jsonObject["AchivementID"].toInt())
-                    achievement.unlocked = true;
-            emit awardedAchievement();
+            {
+                if(unlock["ID"].toInt() == achievement.id)
+                    achievement.time_unlocked = QDateTime::fromSecsSinceEpoch(unlock["When"].toInt());
+            }
         }
     }
     else
