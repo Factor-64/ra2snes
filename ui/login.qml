@@ -6,6 +6,8 @@ ApplicationWindow {
     id: window
     width: 600
     height: 600
+    minimumWidth: 600
+    minimumHeight: 600
     visible: true
     title: "ra2snes"
     Material.theme: Material.Dark
@@ -15,14 +17,14 @@ ApplicationWindow {
         color: "#1a1a1a"
     }
 
-    property bool loginFailed: false
+    property string loginFailed: ""
 
     function signIn(username, password) {
         ra2snes.signIn(username, password);
     }
 
-    function showErrorMessage() {
-        window.loginFailed = true;
+    function showErrorMessage(error) {
+        window.loginFailed = error;
     }
 
     ColumnLayout {
@@ -34,7 +36,7 @@ ApplicationWindow {
             Layout.preferredWidth: 320
             Layout.preferredHeight: 320
             Layout.alignment: Qt.AlignHCenter
-            color: "#232323"
+            color: "#222222"
             border.width: 2
             border.color: "#161616"
             radius: 6
@@ -173,11 +175,11 @@ ApplicationWindow {
                             PropertyChanges {
                                 target: buttonBackground
                                 color: "#333333"
-                                border.color: "#ffffff"
+                                border.color: "#c8c8c8"
                             }
                             PropertyChanges {
                                 target: buttonText
-                                color: "#ffffff"
+                                color: "#eeeeee"
                             }
                         }
                     ]
@@ -231,13 +233,12 @@ ApplicationWindow {
 
                     Text {
                         id: errorMessage
-                        text: "Login failed. Please try again."
+                        text: window.loginFailed
                         font.family: "Verdana"
                         font.pixelSize: 13
                         color: "#ff0000"
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        visible: window.loginFailed
                     }
                 }
             }
@@ -245,8 +246,8 @@ ApplicationWindow {
     }
     Connections {
         target: ra2snes
-        function onLoginFailed() {
-            window.showErrorMessage();
+        function onLoginFailed(error) {
+            window.showErrorMessage(error);
         }
     }
 }

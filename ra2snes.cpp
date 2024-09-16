@@ -8,6 +8,7 @@ ra2snes::ra2snes(QObject *parent)
     , usb2snes(new Usb2Snes(false))
     , raclient(new RAClient(this))
     , reader(new MemoryReader(this))
+    , achievement_model(new AchievementModel(this))
 {
 
     m_currentGame = "/sd2snes/m3nu.bin";
@@ -50,7 +51,6 @@ ra2snes::ra2snes(QObject *parent)
         if (!infos.flags.contains("NO_FILE_CMD"))
         {
             m_currentGame = infos.romPlaying.remove(QChar('\u0000'));
-            emit currentGameChanged();
             if(m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin"))
             {
                 gameLoaded = false;
@@ -105,7 +105,9 @@ ra2snes::ra2snes(QObject *parent)
     });
 
     connect(raclient, &RAClient::loginSuccess, this, &ra2snes::onLoginSuccess);
-    connect(raclient, &RAClient::requestFailed, this, &ra2snes::onLoginFailed);
+    connect(raclient, &RAClient::requestFailed, this, [=] (QJsonObject error){
+        proccessRequestFailed(error);
+    });
     connect(raclient, &RAClient::requestError, this, &ra2snes::onRequestError);
     connect(raclient, &RAClient::gotGameID, this, [=] (int id){
         raclient->getAchievements(id);
@@ -119,7 +121,9 @@ ra2snes::ra2snes(QObject *parent)
 
     connect(raclient, &RAClient::finishedUnlockSetup, this, [=] {
         raclient->startSession();
-        reader->initTriggers(raclient->getAchievements(), raclient->getLeaderboards());
+        achievement_model->setAchievements(raclient->getAchievements());
+        emit achievementModelReady();
+        //reader->initTriggers(raclient->getAchievements(), raclient->getLeaderboards());
         //raclient->getLBPlacements();
     });
 
@@ -129,6 +133,10 @@ ra2snes::ra2snes(QObject *parent)
 
     connect(reader, &MemoryReader::achievementUnlocked, this, [=](unsigned int id) {
         raclient->awardAchievement(id);
+    });
+
+    connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id) {
+        achievement_model->setUnlockedState(id, true);
     });
 
     //connect(reader, &MemoryReader::leaderboardCompleted, this, [=](unsigned int id, unsigned int score) {
@@ -167,10 +175,11 @@ void ra2snes::onLoginSuccess()
     emit loginSuccess();
 }
 
-void ra2snes::onLoginFailed()
+void ra2snes::proccessRequestFailed(QJsonObject error)
 {
-    qDebug() << "login failed";
-    emit loginFailed();
+    QString errorMessage = error["Error"].toString();
+    if(error["Code"].toString() == "invalid_credentials")
+        emit loginFailed(errorMessage.remove(" Please try again."));
 }
 
 void ra2snes::onRequestError()
@@ -202,4 +211,9 @@ void ra2snes::onUsb2SnesStateChanged()
 QString ra2snes::currentGame() const
 {
     return m_currentGame;
+}
+
+AchievementModel* ra2snes::achievementModel()
+{
+    return achievement_model;
 }

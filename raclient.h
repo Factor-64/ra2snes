@@ -34,16 +34,13 @@ public:
     void setHardcore(bool h);
 
 signals:
-    void loginFailed();
     void loginSuccess();
-    void requestFailed();
+    void requestFailed(QJsonObject error);
     void requestError();
     void gotGameID(int gameid);
     void finishedGameSetup();
     void finishedUnlockSetup();
-    void awardedAchievement();
-    void gameLoadFailed();
-    //void stateChanged();
+    void awardedAchievement(unsigned int id);
 
 private:
     static const QString baseUrl;
@@ -51,8 +48,6 @@ private:
     static const QString mediaUrl;
     void request(const QString request_type, const QList<QPair<QString, QString>> post_content);
     void handleNetworkReply(QNetworkReply *reply);
-    //void changeState(State s);
-    //State state;
     QString latestRequest;
     bool ready;
     QNetworkAccessManager *manager;

@@ -6,6 +6,7 @@
 #include "usb2snes.h"
 #include "raclient.h"
 #include "memoryreader.h"
+#include "achievementmodel.h"
 
 class ra2snes : public QObject
 {
@@ -17,6 +18,7 @@ public:
     ~ra2snes();
 
     QString currentGame() const;
+    AchievementModel* achievementModel();
 
 public slots:
     void signIn(const QString &username, const QString &password);
@@ -24,19 +26,21 @@ public slots:
 signals:
     void currentGameChanged();
     void loginSuccess();
-    void loginFailed();
+    void loginFailed(QString error);
+    void achievementModelReady();
 
 private:
     Usb2Snes *usb2snes;
     RAClient *raclient;
     MemoryReader *reader;
+    AchievementModel *achievement_model;
     QString m_currentGame;
     bool loggedin;
     bool gameLoaded;
     QAtomicInt tasksFinished;
 
     void onLoginSuccess();
-    void onLoginFailed();
+    void proccessRequestFailed(QJsonObject error);
     void onRequestError();
     void onUsb2SnesStateChanged();
 };

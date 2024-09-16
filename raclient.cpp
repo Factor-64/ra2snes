@@ -221,45 +221,34 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     else if(jsonObject.contains("Error"))
     {
         qDebug() << "Error:" << jsonObject["Error"].toString();
-        emit requestFailed();
+        emit requestFailed(jsonObject);
     }
     else if (latestRequest == "awardachievement")
     {
-        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
+        for(auto& achievement : gameinfo.achievements)
         {
-            for(auto& achievement : gameinfo.achievements)
-                if(achievement.id == jsonObject["AchivementID"].toInt())
-                    achievement.unlocked = true;
-            emit awardedAchievement();
+            if(achievement.id == jsonObject["AchievementID"].toInt())
+            {
+                achievement.unlocked = true;
+                qDebug() << "AWARDED";
+                emit awardedAchievement(achievement.id);
+            }
         }
     }
     else if(latestRequest == "login")
     {
-        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
-        {
-            if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
-            {
-                userinfo.username = jsonObject["User"].toString();
-                userinfo.token = jsonObject["Token"].toString();
-                userinfo.softcore_score = jsonObject["SoftcoreScore"].toInt();
-                userinfo.hardcore_score = jsonObject["Score"].toInt();
-                userinfo.pfp = (mediaUrl + "UserPic/" + userinfo.username + ".png");
-                emit loginSuccess();
-            }
-            else
-                emit loginFailed();
-        }
+        userinfo.username = jsonObject["User"].toString();
+        userinfo.token = jsonObject["Token"].toString();
+        userinfo.softcore_score = jsonObject["SoftcoreScore"].toInt();
+        userinfo.hardcore_score = jsonObject["Score"].toInt();
+        userinfo.pfp = (mediaUrl + "UserPic/" + userinfo.username + ".png");
+        emit loginSuccess();
     }
 
     else if(latestRequest == "gameid")
     {
-        if(jsonObject.contains("Success") && jsonObject["Success"].toBool())
-        {
             gameinfo.id = jsonObject["GameID"].toInt();
             emit gotGameID(gameinfo.id);
-        }
-        else
-            emit gameLoadFailed();
     }
 
     else if(latestRequest == "patch")

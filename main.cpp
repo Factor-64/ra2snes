@@ -2,15 +2,20 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "ra2snes.h"
+#include "achievementsortfilterproxymodel.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
+    qmlRegisterType<AchievementModel>("CustomModels", 1, 0, "AchievementModel");
+    qmlRegisterType<AchievementSortFilterProxyModel>("CustomModels", 1, 0, "AchievementSortFilterProxyModel");
+
     QQmlApplicationEngine engine;
     ra2snes ra2snesInstance;
 
     engine.rootContext()->setContextProperty("ra2snes", &ra2snesInstance);
+    engine.rootContext()->setContextProperty("achievementModel", ra2snesInstance.achievementModel());
     engine.load(QUrl(QStringLiteral("qrc:/ui/login.qml")));
 
     const auto rootObjects = engine.rootObjects();

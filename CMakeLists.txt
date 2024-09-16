@@ -52,10 +52,15 @@ set(PROJECT_SOURCES
         ${LUA_SOURCES}
         ${UI_FILES}
         ui.qrc
+        achievementmodel.cpp
+        achievementmodel.h
+        achievementsortfilterproxymodel.cpp
+        achievementsortfilterproxymodel.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(ra2snes
+
+qt_add_executable(ra2snes
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
     )
