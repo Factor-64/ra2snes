@@ -20,7 +20,7 @@ struct AchievementInfo {
     QString title;
     QString type;
     QString author;
-    QDateTime time_unlocked;
+    QString time_unlocked;
     bool unlocked;
     QUrl achievement_link;
 };
@@ -56,6 +56,9 @@ struct GameInfo {
     QList<AchievementInfo> achievements;
     QList<LeaderboardInfo> leaderboards;
     QUrl game_link;
+    QString console;
+    QUrl console_icon;
+    unsigned int completion_count;
 };
 
 static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {

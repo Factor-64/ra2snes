@@ -43,6 +43,7 @@ private:
     void proccessRequestFailed(QJsonObject error);
     void onRequestError();
     void onUsb2SnesStateChanged();
+    void setCurrentConsole();
 };
 
 #endif // RA2SNES_H

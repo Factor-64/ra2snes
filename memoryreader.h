@@ -15,7 +15,7 @@ public:
 
     void initTriggers(const QList<AchievementInfo> achievements, const QList<LeaderboardInfo> leaderboards);
     void remapTriggerAddresses();
-    void setConsoleMemorySize();
+    void setupConsoleMemory();
     uint8_t* getConsoleMemory();
     QList<QPair<int, int>> getUniqueMemoryAddresses();
     void checkAchievements();

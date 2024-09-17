@@ -57,7 +57,10 @@ ra2snes::ra2snes(QObject *parent)
                 usb2snes->infos();
             }
             else if(!gameLoaded && loggedin)
+            {
+                setCurrentConsole();
                 usb2snes->getFile(m_currentGame);
+            }
             else
                 tasksFinished++;
         }
@@ -65,6 +68,8 @@ ra2snes::ra2snes(QObject *parent)
 
     connect(usb2snes, &Usb2Snes::getFileDataReceived, this, [=] {
         QByteArray romData = usb2snes->getBinaryData();
+        if (romData.size() & 512)
+            romData = romData.mid(512);
         QByteArray md5Hash = QCryptographicHash::hash(romData, QCryptographicHash::Md5);
         usb2snes->isPatchedROM();
         QByteArray data = usb2snes->getBinaryData();
@@ -121,10 +126,12 @@ ra2snes::ra2snes(QObject *parent)
 
     connect(raclient, &RAClient::finishedUnlockSetup, this, [=] {
         raclient->startSession();
+        //raclient->getLBPlacements();
+    });
+    connect(raclient, &RAClient::sessionStarted, this, [=] {
         achievement_model->setAchievements(raclient->getAchievements());
         emit achievementModelReady();
         //reader->initTriggers(raclient->getAchievements(), raclient->getLeaderboards());
-        //raclient->getLBPlacements();
     });
 
     connect(reader, &MemoryReader::finishedMemorySetup, this, [=] {
@@ -202,10 +209,30 @@ void ra2snes::onUsb2SnesStateChanged()
                 usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
                 break;
             }
-            default:
-                break;
         }
     }
+}
+
+void ra2snes::setCurrentConsole()
+{
+    int extensionIndex = m_currentGame.lastIndexOf('.');
+    if(extensionIndex != -1)
+    {
+        QString icon = "https://static.retroachievements.org/assets/images/system/";
+        QString extension = m_currentGame.mid(extensionIndex + 1);
+        if(extension == "sfc" || extension == "smc" || extension == "swc" || extension == "bs" || extension == "fig")
+        {
+            icon += "snes.png";
+            raclient->setConsole("Super Nintendo", QUrl(icon));
+        }
+        else if(extension == "gb")
+        {
+            icon += "gb.png";
+            raclient->setConsole("Game Boy", QUrl(icon));
+        }
+    }
+    else
+        raclient->setConsole("", QUrl(""));
 }
 
 QString ra2snes::currentGame() const
