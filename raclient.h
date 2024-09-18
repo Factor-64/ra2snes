@@ -40,6 +40,8 @@ public:
     void runQueue();
     void setHardcore(bool h);
     void setConsole(const QString& c, const QUrl& icon);
+    bool getHardcore();
+    UserInfo* getUserInfo();
 
 signals:
     void loginSuccess();

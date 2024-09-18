@@ -11,20 +11,20 @@
 class ra2snes : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString currentGame READ currentGame NOTIFY currentGameChanged)
 
 public:
     explicit ra2snes(QObject *parent = nullptr);
     ~ra2snes();
 
-    QString currentGame() const;
     AchievementModel* achievementModel();
+    bool isRemembered();
+    QString xorEncryptDecrypt(const QString &token, const QString &key);
+
 
 public slots:
-    void signIn(const QString &username, const QString &password);
+    void signIn(const QString &username, const QString &password, bool remember);
 
 signals:
-    void currentGameChanged();
     void loginSuccess();
     void loginFailed(QString error);
     void achievementModelReady();
@@ -37,8 +37,12 @@ private:
     QString m_currentGame;
     bool loggedin;
     bool gameLoaded;
+    bool remember_me;
     QAtomicInt tasksFinished;
+    QString console;
 
+    void createSettingsFile();
+    void loadSettings();
     void onLoginSuccess();
     void proccessRequestFailed(QJsonObject error);
     void onRequestError();

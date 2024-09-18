@@ -19,8 +19,8 @@ ApplicationWindow {
 
     property string loginFailed: ""
 
-    function signIn(username, password) {
-        ra2snes.signIn(username, password);
+    function signIn(username, password, remember) {
+        ra2snes.signIn(username, password, remember);
     }
 
     function showErrorMessage(error) {
@@ -163,7 +163,7 @@ ApplicationWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            window.signIn(username_input.text, password_input.text);
+                            window.signIn(username_input.text, password_input.text, remember_checkbox.checked);
                         }
                         onEntered: signin_button.state = "hovered"
                         onExited: signin_button.state = ""

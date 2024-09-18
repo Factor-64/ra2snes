@@ -16,6 +16,8 @@ ra2snes::ra2snes(QObject *parent)
     gameLoaded = false;
     tasksFinished = 0;
     raclient->setHardcore(false);
+    console = "SNES";
+    remember_me = false;
 
     connect(usb2snes, &Usb2Snes::stateChanged, this, &ra2snes::onUsb2SnesStateChanged);
 
@@ -37,6 +39,9 @@ ra2snes::ra2snes(QObject *parent)
         {
             usb2snes->attach(devices.at(0));
             usb2snes->infos(true);
+            QTimer::singleShot(1000, this, [=] {
+                usb2snes->infos();
+            });
         }
         else
         {
@@ -54,15 +59,16 @@ ra2snes::ra2snes(QObject *parent)
             if(m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin"))
             {
                 gameLoaded = false;
-                usb2snes->infos();
             }
+            else if(gameLoaded && loggedin)
+                tasksFinished++;
             else if(!gameLoaded && loggedin)
             {
                 setCurrentConsole();
                 usb2snes->getFile(m_currentGame);
             }
             else
-                tasksFinished++;
+                usb2snes->infos();
         }
     });
 
@@ -70,8 +76,8 @@ ra2snes::ra2snes(QObject *parent)
         QByteArray romData = usb2snes->getBinaryData();
         if (romData.size() & 512)
             romData = romData.mid(512);
-        QByteArray md5Hash = QCryptographicHash::hash(romData, QCryptographicHash::Md5);
         usb2snes->isPatchedROM();
+        QByteArray md5Hash = QCryptographicHash::hash(romData, QCryptographicHash::Md5);
         QByteArray data = usb2snes->getBinaryData();
         if(data != QByteArray::fromHex("00000000") || data[0] != (char) 0x60)
             raclient->setHardcore(false);
@@ -159,6 +165,7 @@ ra2snes::ra2snes(QObject *parent)
         onUsb2SnesStateChanged();
     });
 
+    loadSettings();
 }
 
 ra2snes::~ra2snes()
@@ -170,23 +177,32 @@ ra2snes::~ra2snes()
     delete reader;
 }
 
-void ra2snes::signIn(const QString &username, const QString &password)
+void ra2snes::signIn(const QString &username, const QString &password, bool remember)
 {
+    remember_me = remember;
     raclient->loginPassword(username, password);
 }
 
 void ra2snes::onLoginSuccess()
 {
-    usb2snes->infos();
     loggedin = true;
+    createSettingsFile();
     emit loginSuccess();
 }
 
 void ra2snes::proccessRequestFailed(QJsonObject error)
 {
     QString errorMessage = error["Error"].toString();
+    qDebug() << "Code:" << error["Code"].toString() << "Error:" << errorMessage;
     if(error["Code"].toString() == "invalid_credentials")
+    {
+        if(errorMessage.contains("token"))
+        {
+            remember_me = false;
+            createSettingsFile();
+        }
         emit loginFailed(errorMessage.remove(" Please try again."));
+    }
 }
 
 void ra2snes::onRequestError()
@@ -197,7 +213,7 @@ void ra2snes::onRequestError()
 void ra2snes::onUsb2SnesStateChanged()
 {
     qDebug() << "Tasks Finished: " << tasksFinished;
-    if(usb2snes->state() == Usb2Snes::Ready)
+    if(usb2snes->state() == Usb2Snes::Ready && gameLoaded)
     {
         switch(tasksFinished)
         {
@@ -235,12 +251,86 @@ void ra2snes::setCurrentConsole()
         raclient->setConsole("", QUrl(""));
 }
 
-QString ra2snes::currentGame() const
-{
-    return m_currentGame;
-}
-
 AchievementModel* ra2snes::achievementModel()
 {
     return achievement_model;
+}
+
+bool ra2snes::isRemembered()
+{
+    return remember_me;
+}
+
+QString ra2snes::xorEncryptDecrypt(const QString &token, const QString &key) {
+    QString result = token;
+    int keyLength = key.length();
+
+    for (int i = 0; i < token.length(); ++i) {
+        result[i] = QChar(token[i].unicode() ^ key[i % keyLength].unicode());
+    }
+
+    return result;
+}
+
+void ra2snes::createSettingsFile()
+{
+    QString appDir = QCoreApplication::applicationDirPath();
+
+    QString settingsFilePath = appDir + QDir::separator() + "settings.ini";
+
+    QSettings settings(settingsFilePath, QSettings::IniFormat);
+
+    settings.setValue("Hardcore", raclient->getHardcore());
+    settings.setValue("Console", console);
+    if(remember_me)
+    {
+        QString time = QString::number(QDateTime::currentDateTime().toSecsSinceEpoch());
+        UserInfo* user = raclient->getUserInfo();
+        settings.setValue("Username", user->username);
+        settings.setValue("Token", xorEncryptDecrypt(user->token, time));
+        settings.setValue("Time", time);
+    }
+    else
+    {
+        settings.setValue("Username", "");
+        settings.setValue("Token", "");
+        settings.setValue("Time", "");
+    }
+
+    settings.sync();
+}
+
+void ra2snes::loadSettings() {
+    QString appDir = QCoreApplication::applicationDirPath();
+
+    QString settingsFilePath = appDir + QDir::separator() + "settings.ini";
+
+    if (QFile::exists(settingsFilePath)) {
+        QSettings settings(settingsFilePath, QSettings::IniFormat);
+
+        bool hardcore = settings.value("Hardcore").toBool();
+        QString console_v = settings.value("Console").toString();
+        QString username = settings.value("Username").toString();
+        QString token = settings.value("Token").toString();
+        QString time = settings.value("Time").toString();
+
+        raclient->setHardcore(hardcore);
+        console = console_v;
+
+        qDebug() << "Hardcore:" << hardcore;
+        qDebug() << "Console:" << console;
+        qDebug() << "Username:" << username;
+        qDebug() << "Token:" << token;
+        qDebug() << "Time:" << time;
+
+        if(username != "" && token != "" && time != "")
+        {
+            remember_me = true;
+            raclient->loginToken(username, xorEncryptDecrypt(token, time));
+        }
+    }
+    else
+    {
+        qDebug() << "Settings file does not exist.";
+    }
 }

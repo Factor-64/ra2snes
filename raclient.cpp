@@ -144,6 +144,16 @@ void RAClient::setHardcore(bool h)
     hardcore = h;
 }
 
+bool RAClient::getHardcore()
+{
+    return hardcore;
+}
+
+UserInfo* RAClient::getUserInfo()
+{
+    return &userinfo;
+}
+
 QList<AchievementInfo> RAClient::getAchievements()
 {
     return gameinfo.achievements;
