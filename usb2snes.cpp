@@ -217,6 +217,7 @@ void Usb2Snes::onWebSocketTextReceived(QString message)
             QStringList result = getJsonResults(message);
             bool    ok;
             requestedBinaryReadSize = result.at(0).toUInt(&ok, 16);
+            sDebug() << "File Size:" << requestedBinaryReadSize;
             emit getFileSizeGet(requestedBinaryReadSize);
             if(m_state != GettingConfig)
                 changeState(ReceivingFile);

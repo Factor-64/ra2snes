@@ -17,7 +17,7 @@ ra2snes::ra2snes(QObject *parent)
     loggedin = false;
     gameLoaded = false;
     tasksFinished = 0;
-    raclient->setHardcore(false);
+    raclient->setHardcore(true);
     console = "SNES";
     remember_me = false;
 
@@ -57,21 +57,26 @@ ra2snes::ra2snes(QObject *parent)
     connect(usb2snes, &Usb2Snes::infoDone, this, [=] (Usb2Snes::DeviceInfo infos) {
         if (!infos.flags.contains("NO_FILE_CMD"))
         {
-            m_currentGame = infos.romPlaying.remove(QChar('\u0000'));
             if(m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin"))
             {
                 gameLoaded = false;
-                usb2snes->infos();
+                usb2snes->getConfig();
+                raclient->setPatched(false);
+                userinfo_model->setPatched(false);
+                /*QTimer::singleShot(1000, this, [=] {
+                    usb2snes->infos();
+                });*/
             }
             else if(gameLoaded && loggedin)
-                tasksFinished++;
+                tasksFinished += 2;
             else if(!gameLoaded && loggedin)
             {
+                usb2snes->getConfig();
                 setCurrentConsole();
-                usb2snes->getFile(m_currentGame);
+                QTimer::singleShot(1000, this, [=] {
+                    usb2snes->getFile(m_currentGame);
+                });
             }
-            else
-                usb2snes->infos();
         }
     });
 
@@ -79,22 +84,40 @@ ra2snes::ra2snes(QObject *parent)
         QByteArray romData = usb2snes->getBinaryData();
         if (romData.size() & 512)
             romData = romData.mid(512);
-        usb2snes->isPatchedROM();
         QByteArray md5Hash = QCryptographicHash::hash(romData, QCryptographicHash::Md5);
-        QByteArray data = usb2snes->getBinaryData();
-        if(data != QByteArray::fromHex("00000000") || data[0] != (char) 0x60)
-            raclient->setHardcore(false);
-        else
-            usb2snes->getConfig();
+        usb2snes->isPatchedROM();
         raclient->loadGame(md5Hash.toHex());
     });
 
     connect(usb2snes, &Usb2Snes::getConfigDataReceived, this, [=] {
+        qDebug() << "Checking config";
         QString config = QString::fromUtf8(usb2snes->getBinaryData());
-        if(config.contains("EnableCheats: false") && config.contains("EnableIngameSavestate: 0"))
-            raclient->setHardcore(true);
-        else
+        bool c = true;
+        bool s = true;
+        if(config.contains("EnableCheats: false"))
+        {
+            c = false;
+        }
+        if(config.contains("EnableIngameSavestate: 0"))
+        {
+            s = false;
+        }
+        if(c || s)
+        {
             raclient->setHardcore(false);
+            userinfo_model->setHardcore(false);
+        }
+        else
+        {
+            qDebug() << "Config check passed";
+            raclient->setHardcore(true);
+            userinfo_model->setHardcore(true);
+        }
+
+        raclient->setCheats(c);
+        raclient->setSaveStates(s);
+        userinfo_model->setCheats(c);
+        userinfo_model->setSaveStates(s);
     });
 
     connect(usb2snes, &Usb2Snes::getAddressesDataReceived, this, [=] {
@@ -111,7 +134,13 @@ ra2snes::ra2snes(QObject *parent)
         QByteArray data = usb2snes->getBinaryData();
         qDebug() << "Checking for patched rom";
         if(data != QByteArray::fromHex("00000000") || data[0] != (char) 0x60)
+        {
+            qDebug() << "ROM PATCHED!";
             raclient->setHardcore(false);
+            userinfo_model->setHardcore(false);
+            raclient->setPatched(true);
+            userinfo_model->setPatched(true);
+        }
     });
 
     QTimer::singleShot(0, this, [=] {
@@ -227,14 +256,22 @@ void ra2snes::onUsb2SnesStateChanged()
     {
         switch(tasksFinished)
         {
+            case 1:
             case 2: {
                 usb2snes->infos();
                 break;
             }
-            case 3: {
+            case 4: {
                 usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
                 break;
             }
+            case 5: {
+                usb2snes->infos();
+                tasksFinished = 0;
+                break;
+            }
+            default:
+                break;
         }
     }
 }
@@ -255,6 +292,16 @@ void ra2snes::setCurrentConsole()
         {
             icon += "gb.png";
             raclient->setConsole("Game Boy", QUrl(icon));
+        }
+        else
+        {
+            if(console == "SNES")
+            {
+                icon += "snes.png";
+                raclient->setConsole("SNES/Super Famicom", QUrl(icon));
+                raclient->setTitle("SD2SNES Menu", "https://media.retroachievements.org/UserPic/user.png");
+                gameinfo_model->setGameInfo(raclient->getGameInfo());
+            }
         }
     }
     else
@@ -357,4 +404,5 @@ void ra2snes::loadSettings() {
     {
         qDebug() << "Settings file does not exist.";
     }
+    setCurrentConsole();
 }

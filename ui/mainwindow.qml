@@ -68,16 +68,16 @@ ApplicationWindow {
             spacing: 10
 
             Loader {
-                id: listViewLoader
+                id: mainLoader
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 anchors.margins: 10
-                sourceComponent: listViewComponent
-                active: false
+                sourceComponent: mainComponent
+                active: true
             }
 
             Component {
-                id: listViewComponent
+                id: mainComponent
                 Rectangle {
                     id: contentForm
                     implicitHeight: contentColumn.implicitHeight
@@ -96,6 +96,98 @@ ApplicationWindow {
                             color: "#161616"
                             Layout.fillWidth: true
                             height: 168
+                            Button {
+                                id: logout_button
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+                                anchors.topMargin: 10
+                                anchors.rightMargin: 20
+                                text: qsTr("Sign out")
+                                font.family: "Verdana"
+                                font.pixelSize: 13
+                                background: Rectangle {
+                                    id: buttonBackground
+                                    color: "#222222"
+                                    border.width: 1
+                                    border.color: "#2a2a2a"
+                                    radius: 2
+                                }
+                                contentItem: Text {
+                                    id: buttonText
+                                    text: "Log Out"
+                                    color: "#ff0000"
+                                    font.family: "Verdana"
+                                    font.pixelSize: 13
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                MouseArea {
+                                    id: mouseAreaLogout
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        ra2snes.logOut();
+                                    }
+                                    onEntered: logout_button.state = "hovered"
+                                    onExited: logout_button.state = ""
+                                }
+
+                                states: [
+                                    State {
+                                        name: "hovered"
+                                        PropertyChanges {
+                                            target: buttonBackground
+                                            color: "#333333"
+                                            border.color: "#c8c8c8"
+                                        }
+                                        PropertyChanges {
+                                            target: buttonText
+                                            color: "#eeeeee"
+                                        }
+                                    }
+                                ]
+
+                                transitions: [
+                                    Transition {
+                                        from: ""
+                                        to: "hovered"
+                                        ColorAnimation {
+                                            target: buttonBackground
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: buttonBackground
+                                            property: "border.color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: buttonText
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                    },
+                                    Transition {
+                                        from: "hovered"
+                                        to: ""
+                                        ColorAnimation {
+                                            target: buttonBackground
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: buttonBackground
+                                            property: "border.color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: buttonText
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                    }
+                                ]
+                            }
                             Row {
                                 id: userRow
                                 spacing: 16
@@ -169,7 +261,7 @@ ApplicationWindow {
                                     }
                                     Row {
                                         Text {
-                                            text: "Points: "
+                                            text: qsTr("Points: ")
                                             color: "#2c97fa"
                                             font.bold: true
                                             font.family: "Verdana"
@@ -193,7 +285,7 @@ ApplicationWindow {
                                     }
                                     Row {
                                         Text {
-                                            text: "Mode: "
+                                            text: qsTr("Mode: ")
                                             color: "#2c97fa"
                                             font.bold: true
                                             font.family: "Verdana"
@@ -204,15 +296,24 @@ ApplicationWindow {
                                                 if(userInfoModel)
                                                 {
                                                     if(userInfoModel.hardcore)
-                                                        "Hardcore"
+                                                        qsTr("Hardcore")
                                                     else
-                                                        "Softcore"
+                                                        qsTr("Softcore")
                                                 }
                                                 else ""
                                             }
                                             font.family: "Verdana"
                                             font.pixelSize: 13
-                                            color: "#2c97fa"
+                                            color: {
+                                                if(userInfoModel)
+                                                {
+                                                    if(userInfoModel.hardcore)
+                                                        "#ff0000"
+                                                    else
+                                                        "#00ff00"
+                                                }
+                                                else "#000000"
+                                            }
                                         }
                                     }
                                 }
@@ -229,7 +330,7 @@ ApplicationWindow {
                             font.bold: true
                             font.family: "Verdana"
                             font.pixelSize: 13
-                            text: "Currently Playing"
+                            text: qsTr("Currently Playing")
                         }
 
                         Rectangle {
@@ -381,356 +482,377 @@ ApplicationWindow {
                             }
                         }
 
-                        Flow {
-                            id: sortingSettingsFlow
-                            spacing: 6
+                        Loader {
+                            id: listViewLoader
                             Layout.fillWidth: true
                             Layout.leftMargin: 20
                             Layout.bottomMargin: 10
                             Layout.rightMargin: 20
                             Layout.topMargin: 10
+                            sourceComponent: listViewComponent
+                            active: false
+                        }
 
-                            RowLayout {
-                                id: sortingTextRow
+                        Connections {
+                            target: ra2snes
+                            function onAchievementModelReady() {
+                                listViewLoader.active = true;
+                            }
+                        }
+
+                        Component {
+                            id: listViewComponent
+
+                            Flow {
+                                id: sortingSettingsFlow
                                 spacing: 6
                                 Layout.fillWidth: true
-                                Text{
-                                    text: qsTr("Sort:")
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#2c97fa"
+                                Layout.leftMargin: 20
+                                Layout.bottomMargin: 10
+                                Layout.rightMargin: 20
+                                Layout.topMargin: 10
+
+                                RowLayout {
+                                    id: sortingTextRow
+                                    spacing: 6
                                     Layout.fillWidth: true
-                                }
-                                Text{
-                                    id: normal
-                                    text: qsTr("Normal")
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#cc9900"
-                                    Layout.fillWidth: true
-                                    MouseArea {
-                                        id: mouseAreaNormal
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            sortedAchievementModel.sortByNormal()
-                                        }
-                                        onEntered: normal.state = "hovered"
-                                        onExited: normal.state = ""
-                                    }
-
-                                    states: [
-                                        State {
-                                            name: "hovered"
-                                            PropertyChanges {
-                                                target: normal
-                                                color: "#c8c8c8"
-                                            }
-                                        }
-                                    ]
-
-                                    transitions: [
-                                        Transition {
-                                            from: ""
-                                            to: "hovered"
-                                            ColorAnimation {
-                                                target: normal
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        },
-                                        Transition {
-                                            from: "hovered"
-                                            to: ""
-                                            ColorAnimation {
-                                                target: normal
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        }
-                                    ]
-                                }
-                                Text{
-                                    text: "-"
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#2c97fa"
-                                    Layout.fillWidth: true
-                                }
-                                Text{
-                                    id: points
-                                    text: qsTr("Points")
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#cc9900"
-                                    Layout.fillWidth: true
-                                    MouseArea {
-                                        id: mouseAreaPoints
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            sortedAchievementModel.sortByPoints()
-                                        }
-                                        onEntered: points.state = "hovered"
-                                        onExited: points.state = ""
-                                    }
-
-                                    states: [
-                                        State {
-                                            name: "hovered"
-                                            PropertyChanges {
-                                                target: points
-                                                color: "#c8c8c8"
-                                            }
-                                        }
-                                    ]
-
-                                    transitions: [
-                                        Transition {
-                                            from: ""
-                                            to: "hovered"
-                                            ColorAnimation {
-                                                target: points
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        },
-                                        Transition {
-                                            from: "hovered"
-                                            to: ""
-                                            ColorAnimation {
-                                                target: points
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        }
-                                    ]
-                                }
-                                Text{
-                                    text: "-"
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#2c97fa"
-                                    Layout.fillWidth: true
-                                }
-                                Text{
-                                    id: title
-                                    text: qsTr("Title")
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#cc9900"
-                                    Layout.fillWidth: true
-                                    MouseArea {
-                                        id: mouseAreaTitleSort
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            sortedAchievementModel.sortByTitle()
-                                        }
-                                        onEntered: title.state = "hovered"
-                                        onExited: title.state = ""
-                                    }
-
-                                    states: [
-                                        State {
-                                            name: "hovered"
-                                            PropertyChanges {
-                                                target: title
-                                                color: "#c8c8c8"
-                                            }
-                                        }
-                                    ]
-
-                                    transitions: [
-                                        Transition {
-                                            from: ""
-                                            to: "hovered"
-                                            ColorAnimation {
-                                                target: title
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        },
-                                        Transition {
-                                            from: "hovered"
-                                            to: ""
-                                            ColorAnimation {
-                                                target: title
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        }
-                                    ]
-                                }
-                                Text{
-                                    text: "-"
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#2c97fa"
-                                    Layout.fillWidth: true
-                                }
-                                Text{
-                                    id: type
-                                    text: qsTr("Type")
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    color: "#cc9900"
-                                    Layout.fillWidth: true
-                                    MouseArea {
-                                        id: mouseAreaType
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            sortedAchievementModel.sortByType()
-                                        }
-                                        onEntered: type.state = "hovered"
-                                        onExited: type.state = ""
-                                    }
-
-                                    states: [
-                                        State {
-                                            name: "hovered"
-                                            PropertyChanges {
-                                                target: type
-                                                color: "#c8c8c8"
-                                            }
-                                        }
-                                    ]
-
-                                    transitions: [
-                                        Transition {
-                                            from: ""
-                                            to: "hovered"
-                                            ColorAnimation {
-                                                target: type
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        },
-                                        Transition {
-                                            from: "hovered"
-                                            to: ""
-                                            ColorAnimation {
-                                                target: type
-                                                property: "color"
-                                                duration: 200
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-
-                            Item {
-                                id: dynamicSpacer
-                                height: 1
-                            }
-
-                            Binding {
-                                target: dynamicSpacer
-                                property: "width"
-                                value: Math.max(0,sortingSettingsFlow.width - sortingTextRow.width - sortingCheckBoxes.width - (sortingSettingsFlow.spacing * 3))
-                            }
-
-                            RowLayout {
-                                id: sortingCheckBoxes
-                                Layout.alignment: Qt.AlignRight
-                                Layout.fillWidth: true
-                                spacing: 14
-
-                                Row {
-                                    spacing: 4
-                                    Layout.fillWidth: true
-                                    CheckBox {
-                                        id: missableCheckBox
-                                        width: 14
-                                        height: 14
-
-                                        indicator: Rectangle {
-                                            width: 14
-                                            height: 14
-                                            radius: 2
-                                            color: missableCheckBox.checked ? "#005cc8" : "#ffffff"
-                                            border.color: missableCheckBox.checked ? "#005cc8" : "#4f4f4f"
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: missableCheckBox.checked ? "\u2713" : ""
-                                                color: "#ffffff"
-                                                font.pixelSize: 12
-                                            }
-                                        }
-
-                                        onCheckedChanged: {
-                                            if (missableCheckBox.checked) {
-                                                sortedAchievementModel.showOnlyMissable();
-                                            } else {
-                                                sortedAchievementModel.clearMissableFilter();
-                                            }
-                                        }
-                                    }
-                                    Text {
-                                        text: qsTr("Only show missables")
+                                    Text{
+                                        text: qsTr("Sort:")
                                         font.family: "Verdana"
                                         font.pixelSize: 13
                                         color: "#2c97fa"
-                                        verticalAlignment: Text.AlignVCenter
+                                        Layout.fillWidth: true
+                                    }
+                                    Text{
+                                        id: normal
+                                        text: qsTr("Normal")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#cc9900"
+                                        Layout.fillWidth: true
                                         MouseArea {
+                                            id: mouseAreaNormal
                                             anchors.fill: parent
+                                            hoverEnabled: true
                                             onClicked: {
-                                                missableCheckBox.checked = !missableCheckBox.checked
+                                                sortedAchievementModel.sortByNormal()
                                             }
+                                            onEntered: normal.state = "hovered"
+                                            onExited: normal.state = ""
                                         }
+
+                                        states: [
+                                            State {
+                                                name: "hovered"
+                                                PropertyChanges {
+                                                    target: normal
+                                                    color: "#c8c8c8"
+                                                }
+                                            }
+                                        ]
+
+                                        transitions: [
+                                            Transition {
+                                                from: ""
+                                                to: "hovered"
+                                                ColorAnimation {
+                                                    target: normal
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            },
+                                            Transition {
+                                                from: "hovered"
+                                                to: ""
+                                                ColorAnimation {
+                                                    target: normal
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            }
+                                        ]
                                     }
-                                }
-                                Row {
-                                    spacing: 4
-                                    Layout.fillWidth: true
-
-                                    CheckBox {
-                                        id: hideCheckBox
-                                        width: 14
-                                        height: 14
-
-                                        indicator: Rectangle {
-                                            width: 14
-                                            height: 14
-                                            radius: 2
-                                            color: hideCheckBox.checked ? "#005cc8" : "#ffffff"
-                                            border.color: hideCheckBox.checked ? "#005cc8" : "#4f4f4f"
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: hideCheckBox.checked ? "\u2713" : ""
-                                                color: "#ffffff"
-                                                font.pixelSize: 12
-                                            }
-                                        }
-
-                                        onCheckedChanged: {
-                                            if (hideCheckBox.checked) {
-                                                sortedAchievementModel.hideUnlocked();
-                                            } else {
-                                                sortedAchievementModel.clearUnlockedFilter();
-                                            }
-                                        }
-                                    }
-                                    Text {
-                                        text: qsTr("Hide unlocked achievements")
+                                    Text{
+                                        text: "-"
                                         font.family: "Verdana"
                                         font.pixelSize: 13
                                         color: "#2c97fa"
-                                        verticalAlignment: Text.AlignVCenter
+                                        Layout.fillWidth: true
+                                    }
+                                    Text{
+                                        id: points
+                                        text: qsTr("Points")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#cc9900"
+                                        Layout.fillWidth: true
                                         MouseArea {
+                                            id: mouseAreaPoints
                                             anchors.fill: parent
+                                            hoverEnabled: true
                                             onClicked: {
-                                                hideCheckBox.checked = !hideCheckBox.checked
+                                                sortedAchievementModel.sortByPoints()
+                                            }
+                                            onEntered: points.state = "hovered"
+                                            onExited: points.state = ""
+                                        }
+
+                                        states: [
+                                            State {
+                                                name: "hovered"
+                                                PropertyChanges {
+                                                    target: points
+                                                    color: "#c8c8c8"
+                                                }
+                                            }
+                                        ]
+
+                                        transitions: [
+                                            Transition {
+                                                from: ""
+                                                to: "hovered"
+                                                ColorAnimation {
+                                                    target: points
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            },
+                                            Transition {
+                                                from: "hovered"
+                                                to: ""
+                                                ColorAnimation {
+                                                    target: points
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            }
+                                        ]
+                                    }
+                                    Text{
+                                        text: "-"
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                    Text{
+                                        id: title
+                                        text: qsTr("Title")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#cc9900"
+                                        Layout.fillWidth: true
+                                        MouseArea {
+                                            id: mouseAreaTitleSort
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                sortedAchievementModel.sortByTitle()
+                                            }
+                                            onEntered: title.state = "hovered"
+                                            onExited: title.state = ""
+                                        }
+
+                                        states: [
+                                            State {
+                                                name: "hovered"
+                                                PropertyChanges {
+                                                    target: title
+                                                    color: "#c8c8c8"
+                                                }
+                                            }
+                                        ]
+
+                                        transitions: [
+                                            Transition {
+                                                from: ""
+                                                to: "hovered"
+                                                ColorAnimation {
+                                                    target: title
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            },
+                                            Transition {
+                                                from: "hovered"
+                                                to: ""
+                                                ColorAnimation {
+                                                    target: title
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            }
+                                        ]
+                                    }
+                                    Text{
+                                        text: "-"
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                    Text{
+                                        id: type
+                                        text: qsTr("Type")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#cc9900"
+                                        Layout.fillWidth: true
+                                        MouseArea {
+                                            id: mouseAreaType
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                sortedAchievementModel.sortByType()
+                                            }
+                                            onEntered: type.state = "hovered"
+                                            onExited: type.state = ""
+                                        }
+
+                                        states: [
+                                            State {
+                                                name: "hovered"
+                                                PropertyChanges {
+                                                    target: type
+                                                    color: "#c8c8c8"
+                                                }
+                                            }
+                                        ]
+
+                                        transitions: [
+                                            Transition {
+                                                from: ""
+                                                to: "hovered"
+                                                ColorAnimation {
+                                                    target: type
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            },
+                                            Transition {
+                                                from: "hovered"
+                                                to: ""
+                                                ColorAnimation {
+                                                    target: type
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+
+                                Item {
+                                    id: dynamicSpacer
+                                    height: 1
+                                }
+
+                                Binding {
+                                    target: dynamicSpacer
+                                    property: "width"
+                                    value: Math.max(0,sortingSettingsFlow.width - sortingTextRow.width - sortingCheckBoxes.width - (sortingSettingsFlow.spacing * 3))
+                                }
+
+                                RowLayout {
+                                    id: sortingCheckBoxes
+                                    Layout.alignment: Qt.AlignRight
+                                    Layout.fillWidth: true
+                                    spacing: 14
+
+                                    Row {
+                                        spacing: 4
+                                        Layout.fillWidth: true
+                                        CheckBox {
+                                            id: missableCheckBox
+                                            width: 14
+                                            height: 14
+
+                                            indicator: Rectangle {
+                                                width: 14
+                                                height: 14
+                                                radius: 2
+                                                color: missableCheckBox.checked ? "#005cc8" : "#ffffff"
+                                                border.color: missableCheckBox.checked ? "#005cc8" : "#4f4f4f"
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: missableCheckBox.checked ? "\u2713" : ""
+                                                    color: "#ffffff"
+                                                    font.pixelSize: 12
+                                                }
+                                            }
+
+                                            onCheckedChanged: {
+                                                if (missableCheckBox.checked) {
+                                                    sortedAchievementModel.showOnlyMissable();
+                                                } else {
+                                                    sortedAchievementModel.clearMissableFilter();
+                                                }
+                                            }
+                                        }
+                                        Text {
+                                            text: qsTr("Only show missables")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                            verticalAlignment: Text.AlignVCenter
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: {
+                                                    missableCheckBox.checked = !missableCheckBox.checked
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Row {
+                                        spacing: 4
+                                        Layout.fillWidth: true
+
+                                        CheckBox {
+                                            id: hideCheckBox
+                                            width: 14
+                                            height: 14
+
+                                            indicator: Rectangle {
+                                                width: 14
+                                                height: 14
+                                                radius: 2
+                                                color: hideCheckBox.checked ? "#005cc8" : "#ffffff"
+                                                border.color: hideCheckBox.checked ? "#005cc8" : "#4f4f4f"
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: hideCheckBox.checked ? "\u2713" : ""
+                                                    color: "#ffffff"
+                                                    font.pixelSize: 12
+                                                }
+                                            }
+
+                                            onCheckedChanged: {
+                                                if (hideCheckBox.checked) {
+                                                    sortedAchievementModel.hideUnlocked();
+                                                } else {
+                                                    sortedAchievementModel.clearUnlockedFilter();
+                                                }
+                                            }
+                                        }
+                                        Text {
+                                            text: qsTr("Hide unlocked achievements")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                            verticalAlignment: Text.AlignVCenter
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: {
+                                                    hideCheckBox.checked = !hideCheckBox.checked
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-
                         ListView {
                             id: achievementlist
                             implicitHeight: contentHeight
@@ -870,12 +992,6 @@ ApplicationWindow {
                             height: 10
                         }
                     }
-                }
-            }
-            Connections {
-                target: ra2snes
-                function onAchievementModelReady() {
-                    listViewLoader.active = true;
                 }
             }
         }

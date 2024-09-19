@@ -73,7 +73,7 @@ void RAClient::startSession()
     post_content["t"] = userinfo.token;
     post_content["g"] = QString::number(gameinfo.id);
     post_content["m"] = gameinfo.md5hash;
-    post_content["l"] = RCHEEVOS_VERSION_STRING;
+    post_content["h"] = userinfo.hardcore;
 
     sendRequest("startsession", post_content);
 }
@@ -145,9 +145,30 @@ void RAClient::setWidthHeight(int w, int h)
     userinfo.width = w;
 }
 
+void RAClient::setPatched(bool p)
+{
+    userinfo.patched = p;
+}
+
+void RAClient::setSaveStates(bool s)
+{
+    userinfo.savestates = s;
+}
+
+void RAClient::setCheats(bool c)
+{
+    userinfo.cheats = c;
+}
+
 void RAClient::setHardcore(bool h)
 {
     userinfo.hardcore = h;
+}
+
+void RAClient::setTitle(QString t, QString i)
+{
+    gameinfo.title = t;
+    gameinfo.image_icon_url = QUrl(i);
 }
 
 bool RAClient::getHardcore()

@@ -48,6 +48,9 @@ struct UserInfo {
     QUrl link;
     int width;
     int height;
+    bool savestates;
+    bool cheats;
+    bool patched;
 };
 
 struct GameInfo {

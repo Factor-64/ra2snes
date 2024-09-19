@@ -12,13 +12,20 @@ class UserInfoModel : public QObject {
     Q_PROPERTY(QUrl pfp READ pfp NOTIFY dataChanged)
     Q_PROPERTY(bool hardcore READ hardcore NOTIFY dataChanged)
     Q_PROPERTY(QUrl link READ link NOTIFY dataChanged)
-    Q_PROPERTY(int width READ width NOTIFY dataChanged)
-    Q_PROPERTY(int height READ height NOTIFY dataChanged)
+    Q_PROPERTY(int width READ width CONSTANT)
+    Q_PROPERTY(int height READ height CONSTANT)
+    Q_PROPERTY(bool savestates READ savestates NOTIFY dataChanged)
+    Q_PROPERTY(bool cheats READ cheats NOTIFY dataChanged)
+    Q_PROPERTY(bool patched READ patched NOTIFY dataChanged)
 
 public:
     explicit UserInfoModel(QObject *parent = nullptr);
 
     void setUserInfo(const UserInfo &userInfo);
+    void setHardcore(bool h);
+    void setSaveStates(bool s);
+    void setCheats(bool c);
+    void setPatched(bool p);
 
     QString username() const;
     QString token() const;
@@ -29,6 +36,9 @@ public:
     QUrl link() const;
     int width() const;
     int height() const;
+    bool savestates() const;
+    bool cheats() const;
+    bool patched() const;
 
 signals:
     void dataChanged();

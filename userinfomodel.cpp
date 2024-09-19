@@ -9,6 +9,26 @@ void UserInfoModel::setUserInfo(const UserInfo &userInfo) {
     emit dataChanged();
 }
 
+void UserInfoModel::setHardcore(bool h) {
+    m_userInfo.hardcore = h;
+    emit dataChanged();
+}
+
+void UserInfoModel::setSaveStates(bool s) {
+    m_userInfo.savestates = s;
+    emit dataChanged();
+}
+
+void UserInfoModel::setCheats(bool c) {
+    m_userInfo.cheats = c;
+    emit dataChanged();
+}
+
+void UserInfoModel::setPatched(bool p) {
+    m_userInfo.patched = p;
+    emit dataChanged();
+}
+
 QString UserInfoModel::username() const {
     return m_userInfo.username;
 }
@@ -43,4 +63,16 @@ int UserInfoModel::width() const {
 
 int UserInfoModel::height() const {
     return m_userInfo.height;
+}
+
+bool UserInfoModel::savestates() const {
+    return m_userInfo.savestates;
+}
+
+bool UserInfoModel::cheats() const {
+    return m_userInfo.cheats;
+}
+
+bool UserInfoModel::patched() const {
+    return m_userInfo.patched;
 }
