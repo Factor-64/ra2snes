@@ -8,7 +8,6 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
-    qmlRegisterType<AchievementModel>("CustomModels", 1, 0, "AchievementModel");
     qmlRegisterType<AchievementSortFilterProxyModel>("CustomModels", 1, 0, "AchievementSortFilterProxyModel");
 
     QQmlApplicationEngine engine;
@@ -16,6 +15,8 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("ra2snes", &ra2snesInstance);
     engine.rootContext()->setContextProperty("achievementModel", ra2snesInstance.achievementModel());
+    engine.rootContext()->setContextProperty("gameInfoModel", ra2snesInstance.gameInfoModel());
+    engine.rootContext()->setContextProperty("userInfoModel", ra2snesInstance.userInfoModel());
     engine.load(QUrl(QStringLiteral("qrc:/ui/login.qml")));
 
     const auto rootObjects = engine.rootObjects();

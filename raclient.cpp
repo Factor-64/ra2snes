@@ -60,7 +60,7 @@ void RAClient::getUnlocks()
     QJsonObject post_content;
     post_content["u"] = userinfo.username;
     post_content["t"] = userinfo.token;
-    post_content["h"] = QString::number(hardcore);
+    post_content["h"] = QString::number(userinfo.hardcore);
     post_content["g"] = QString::number(gameinfo.id);
 
     sendRequest("unlocks", post_content);
@@ -83,14 +83,14 @@ void RAClient::awardAchievement(unsigned int id)
     QByteArray md5hash;
     md5hash.append(QString::number(id).toLocal8Bit());
     md5hash.append(userinfo.username.toLocal8Bit());
-    md5hash.append(QString::number(hardcore).toLocal8Bit());
+    md5hash.append(QString::number(userinfo.hardcore).toLocal8Bit());
     md5hash = QCryptographicHash::hash(md5hash, QCryptographicHash::Md5);
 
     QJsonObject post_content;
     post_content["u"] = userinfo.username;
     post_content["t"] = userinfo.token;
     post_content["a"] = QString::number(id);
-    post_content["h"] = QString::number(hardcore);
+    post_content["h"] = QString::number(userinfo.hardcore);
     post_content["v"] = QString(md5hash.toHex());
 
     sendRequest("awardachievement", post_content);
@@ -139,19 +139,40 @@ void RAClient::runQueue() {
     }
 }
 
+void RAClient::setWidthHeight(int w, int h)
+{
+    userinfo.height = h;
+    userinfo.width = w;
+}
+
 void RAClient::setHardcore(bool h)
 {
-    hardcore = h;
+    userinfo.hardcore = h;
 }
 
 bool RAClient::getHardcore()
 {
-    return hardcore;
+    return userinfo.hardcore;
 }
 
-UserInfo* RAClient::getUserInfo()
+UserInfo RAClient::getUserInfo()
 {
-    return &userinfo;
+    return userinfo;
+}
+
+GameInfo RAClient::getGameInfo()
+{
+    return gameinfo;
+}
+
+int RAClient::getWidth()
+{
+    return userinfo.width;
+}
+
+int RAClient::getHeight()
+{
+    return userinfo.height;
 }
 
 QList<AchievementInfo> RAClient::getAchievements()
@@ -288,6 +309,7 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
             achievement.time_unlocked = QDateTime::currentDateTime().toString("MMMM d yyyy, h:mmap");
             achievement.unlocked = true;
             qDebug() << "AWARDED";
+            gameinfo.completion_count++;
             emit awardedAchievement(achievement.id);
         }
     }
@@ -300,6 +322,7 @@ void RAClient::handleLoginResponse(const QJsonObject& jsonObject)
     userinfo.softcore_score = jsonObject["SoftcoreScore"].toInt();
     userinfo.hardcore_score = jsonObject["Score"].toInt();
     userinfo.pfp = (mediaUrl + "UserPic/" + userinfo.username + ".png");
+    userinfo.link = ("https://retroachievements.org/user/" + userinfo.username);
     emit loginSuccess();
 }
 
@@ -347,7 +370,7 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
         }
     }
 
-    if (hardcore)
+    if (userinfo.hardcore)
     {
         QJsonArray leaderboards_data = patch_data["Leaderboards"].toArray();
         for (const auto& leaderboard : leaderboards_data)

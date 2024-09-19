@@ -40,11 +40,14 @@ struct LeaderboardInfo {
 
 struct UserInfo {
     QString username;
-    //QString displayname;
     QString token;
     int softcore_score;
     int hardcore_score;
     QUrl pfp;
+    bool hardcore;
+    QUrl link;
+    int width;
+    int height;
 };
 
 struct GameInfo {

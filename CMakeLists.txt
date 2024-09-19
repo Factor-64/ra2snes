@@ -56,6 +56,10 @@ set(PROJECT_SOURCES
         achievementmodel.h
         achievementsortfilterproxymodel.cpp
         achievementsortfilterproxymodel.h
+        gameinfomodel.cpp
+        gameinfomodel.h
+        userinfomodel.cpp
+        userinfomodel.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -9,7 +9,7 @@ ApplicationWindow {
     minimumWidth: 600
     minimumHeight: 600
     visible: true
-    title: "ra2snes"
+    title: "ra2snes - login"
     Material.theme: Material.Dark
     Material.accent: "#ffffff"
 
@@ -103,13 +103,13 @@ ApplicationWindow {
 
                     CheckBox {
                         id: remember_checkbox
-                        width: 15
-                        height: 15
+                        width: 14
+                        height: 14
 
                         indicator: Rectangle {
-                            width: 15
-                            height: 15
-                            radius: 4
+                            width: 14
+                            height: 14
+                            radius: 2
                             color: remember_checkbox.checked ? "#005cc8" : "#ffffff"
                             border.color: remember_checkbox.checked ? "#005cc8" : "#4f4f4f"
 

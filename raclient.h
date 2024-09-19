@@ -41,7 +41,11 @@ public:
     void setHardcore(bool h);
     void setConsole(const QString& c, const QUrl& icon);
     bool getHardcore();
-    UserInfo* getUserInfo();
+    UserInfo getUserInfo();
+    GameInfo getGameInfo();
+    void setWidthHeight(int w, int h);
+    int getWidth();
+    int getHeight();
 
 signals:
     void loginSuccess();
@@ -72,7 +76,6 @@ private:
     UserInfo userinfo;
     GameInfo gameinfo;
     QQueue<RequestData> queue;
-    bool hardcore;
 };
 
 #endif // RACLIENT_H

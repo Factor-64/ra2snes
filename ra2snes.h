@@ -1,12 +1,12 @@
 #ifndef RA2SNES_H
 #define RA2SNES_H
 
-#include <QObject>
-#include <QString>
 #include "usb2snes.h"
 #include "raclient.h"
 #include "memoryreader.h"
 #include "achievementmodel.h"
+#include "gameinfomodel.h"
+#include "userinfomodel.h"
 
 class ra2snes : public QObject
 {
@@ -17,7 +17,10 @@ public:
     ~ra2snes();
 
     AchievementModel* achievementModel();
+    GameInfoModel* gameInfoModel();
+    UserInfoModel* userInfoModel();
     bool isRemembered();
+    Q_INVOKABLE void saveWindowSize(int w, int h);
     QString xorEncryptDecrypt(const QString &token, const QString &key);
 
 
@@ -34,6 +37,8 @@ private:
     RAClient *raclient;
     MemoryReader *reader;
     AchievementModel *achievement_model;
+    GameInfoModel *gameinfo_model;
+    UserInfoModel *userinfo_model;
     QString m_currentGame;
     bool loggedin;
     bool gameLoaded;

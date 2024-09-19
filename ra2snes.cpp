@@ -9,6 +9,8 @@ ra2snes::ra2snes(QObject *parent)
     , raclient(new RAClient(this))
     , reader(new MemoryReader(this))
     , achievement_model(new AchievementModel(this))
+    , gameinfo_model(new GameInfoModel(this))
+    , userinfo_model(new UserInfoModel(this))
 {
 
     m_currentGame = "/sd2snes/m3nu.bin";
@@ -59,6 +61,7 @@ ra2snes::ra2snes(QObject *parent)
             if(m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin"))
             {
                 gameLoaded = false;
+                usb2snes->infos();
             }
             else if(gameLoaded && loggedin)
                 tasksFinished++;
@@ -126,6 +129,7 @@ ra2snes::ra2snes(QObject *parent)
     });
 
     connect(raclient, &RAClient::finishedGameSetup, this, [=] {
+        gameinfo_model->setGameInfo(raclient->getGameInfo());
         raclient->getUnlocks();
         //raclient->getLBPlacements();
     });
@@ -150,6 +154,7 @@ ra2snes::ra2snes(QObject *parent)
 
     connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id) {
         achievement_model->setUnlockedState(id, true);
+        gameinfo_model->updateCompletionCount();
     });
 
     //connect(reader, &MemoryReader::leaderboardCompleted, this, [=](unsigned int id, unsigned int score) {
@@ -170,11 +175,15 @@ ra2snes::ra2snes(QObject *parent)
 
 ra2snes::~ra2snes()
 {
+    createSettingsFile();
     usb2snes->close();
     delete usb2snes;
     reader->freeConsoleMemory();
     delete raclient;
     delete reader;
+    delete userinfo_model;
+    delete gameinfo_model;
+    delete achievement_model;
 }
 
 void ra2snes::signIn(const QString &username, const QString &password, bool remember)
@@ -187,6 +196,7 @@ void ra2snes::onLoginSuccess()
 {
     loggedin = true;
     createSettingsFile();
+    userinfo_model->setUserInfo(raclient->getUserInfo());
     emit loginSuccess();
 }
 
@@ -239,7 +249,7 @@ void ra2snes::setCurrentConsole()
         if(extension == "sfc" || extension == "smc" || extension == "swc" || extension == "bs" || extension == "fig")
         {
             icon += "snes.png";
-            raclient->setConsole("Super Nintendo", QUrl(icon));
+            raclient->setConsole("SNES/Super Famicom", QUrl(icon));
         }
         else if(extension == "gb")
         {
@@ -254,6 +264,16 @@ void ra2snes::setCurrentConsole()
 AchievementModel* ra2snes::achievementModel()
 {
     return achievement_model;
+}
+
+GameInfoModel* ra2snes::gameInfoModel()
+{
+    return gameinfo_model;
+}
+
+UserInfoModel* ra2snes::userInfoModel()
+{
+    return userinfo_model;
 }
 
 bool ra2snes::isRemembered()
@@ -272,6 +292,11 @@ QString ra2snes::xorEncryptDecrypt(const QString &token, const QString &key) {
     return result;
 }
 
+void ra2snes::saveWindowSize(int w, int h)
+{
+    raclient->setWidthHeight(w, h);
+}
+
 void ra2snes::createSettingsFile()
 {
     QString appDir = QCoreApplication::applicationDirPath();
@@ -282,12 +307,14 @@ void ra2snes::createSettingsFile()
 
     settings.setValue("Hardcore", raclient->getHardcore());
     settings.setValue("Console", console);
+    settings.setValue("Width", raclient->getWidth());
+    settings.setValue("Height", raclient->getHeight());
     if(remember_me)
     {
         QString time = QString::number(QDateTime::currentDateTime().toSecsSinceEpoch());
-        UserInfo* user = raclient->getUserInfo();
-        settings.setValue("Username", user->username);
-        settings.setValue("Token", xorEncryptDecrypt(user->token, time));
+        UserInfo user = raclient->getUserInfo();
+        settings.setValue("Username", user.username);
+        settings.setValue("Token", xorEncryptDecrypt(user.token, time));
         settings.setValue("Time", time);
     }
     else
@@ -313,15 +340,12 @@ void ra2snes::loadSettings() {
         QString username = settings.value("Username").toString();
         QString token = settings.value("Token").toString();
         QString time = settings.value("Time").toString();
+        int width = settings.value("Width").toInt();
+        int height = settings.value("Height").toInt();
 
         raclient->setHardcore(hardcore);
+        raclient->setWidthHeight(width, height);
         console = console_v;
-
-        qDebug() << "Hardcore:" << hardcore;
-        qDebug() << "Console:" << console;
-        qDebug() << "Username:" << username;
-        qDebug() << "Token:" << token;
-        qDebug() << "Time:" << time;
 
         if(username != "" && token != "" && time != "")
         {
