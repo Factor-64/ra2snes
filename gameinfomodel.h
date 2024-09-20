@@ -30,6 +30,7 @@ public:
     QString console() const;
     QUrl console_icon() const;
     unsigned int completion_count() const;
+    void clearGame();
 
 signals:
     void dataChanged();

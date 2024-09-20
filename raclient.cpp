@@ -72,8 +72,9 @@ void RAClient::startSession()
     post_content["u"] = userinfo.username;
     post_content["t"] = userinfo.token;
     post_content["g"] = QString::number(gameinfo.id);
-    post_content["m"] = gameinfo.md5hash;
     post_content["h"] = userinfo.hardcore;
+    post_content["m"] = gameinfo.md5hash;
+    post_content["l"] = RCHEEVOS_VERSION_STRING;
 
     sendRequest("startsession", post_content);
 }
@@ -165,10 +166,11 @@ void RAClient::setHardcore(bool h)
     userinfo.hardcore = h;
 }
 
-void RAClient::setTitle(QString t, QString i)
+void RAClient::setTitle(QString t, QString i, QString l)
 {
     gameinfo.title = t;
     gameinfo.image_icon_url = QUrl(i);
+    gameinfo.game_link = QUrl(l);
 }
 
 bool RAClient::getHardcore()
@@ -331,7 +333,7 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
             achievement.unlocked = true;
             qDebug() << "AWARDED";
             gameinfo.completion_count++;
-            emit awardedAchievement(achievement.id);
+            emit awardedAchievement(achievement.id, achievement.time_unlocked);
         }
     }
 }
@@ -428,7 +430,11 @@ void RAClient::handleUnlocksResponse(const QJsonObject& jsonObject)
 void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
 {
     qDebug() << jsonObject;
-    QJsonArray unlock_data = jsonObject["Unlocks"].toArray();
+    QJsonArray unlock_data;
+    if(userinfo.hardcore)
+        unlock_data = jsonObject["HardcoreUnlocks"].toArray();
+    else
+        unlock_data = jsonObject["Unlocks"].toArray();
     gameinfo.completion_count = unlock_data.count();
     for (const auto& unlock_value : unlock_data)
     {

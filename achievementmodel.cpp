@@ -80,14 +80,22 @@ QHash<int, QByteArray> AchievementModel::roleNames() const {
     return roles;
 }
 
-void AchievementModel::setUnlockedState(unsigned int id, bool unlocked) {
+void AchievementModel::setUnlockedState(unsigned int id, bool unlocked, QString time) {
     for (int i = 0; i < m_achievements.size(); ++i) {
         if (m_achievements[i].id == id) {
             m_achievements[i].unlocked = unlocked;
+            m_achievements[i].time_unlocked = time;
             QModelIndex index = createIndex(i, 0);
             qDebug() << "Data changed for index:" << index << "Unlocked state:" << unlocked;
             emit dataChanged(index, index, {UnlockedRole});
+            emit dataChanged(index, index, {TimeUnlockedRole});
             break;
         }
     }
+}
+
+void AchievementModel::clearAchievements() {
+    beginResetModel();
+    m_achievements.clear();
+    endResetModel();
 }

@@ -39,6 +39,7 @@ public:
     bool savestates() const;
     bool cheats() const;
     bool patched() const;
+    void clearUser();
 
 signals:
     void dataChanged();

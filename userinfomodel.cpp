@@ -76,3 +76,7 @@ bool UserInfoModel::cheats() const {
 bool UserInfoModel::patched() const {
     return m_userInfo.patched;
 }
+
+void UserInfoModel::clearUser() {
+    m_userInfo = UserInfo();
+}

@@ -241,6 +241,7 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
     if ((unsigned int) buffer.size() == requestedBinaryReadSize)
     {
         lastBinaryMessage = buffer;
+        buffer.clear();
         emit binaryMessageReceived();
         switch(m_state)
         {
@@ -266,7 +267,6 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
         sDebug() << "Finish Binary";
         changeState(Ready);
         m_istate = IReady;
-        buffer.clear();
     }
 }
 

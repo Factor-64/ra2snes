@@ -6,6 +6,7 @@ import CustomModels 1.0
 // I apologize to anyone looking at this
 
 ApplicationWindow {
+    id: mainWindow
     visible: true
     width: {
         if(userInfoModel)
@@ -37,6 +38,7 @@ ApplicationWindow {
 
     property int windowWidth: width
     property int windowHeight: height
+    property string modeFailed: ""
 
     onWidthChanged: windowWidth = width
     onHeightChanged: windowHeight = height
@@ -45,6 +47,7 @@ ApplicationWindow {
         id: sortedAchievementModel
         sourceModel: achievementModel
     }
+
     Flickable {
         id: flickable
         anchors.fill: parent
@@ -102,7 +105,7 @@ ApplicationWindow {
                                 anchors.right: parent.right
                                 anchors.topMargin: 10
                                 anchors.rightMargin: 20
-                                text: qsTr("Sign out")
+                                text: qsTr("Sign Out")
                                 font.family: "Verdana"
                                 font.pixelSize: 13
                                 background: Rectangle {
@@ -114,7 +117,7 @@ ApplicationWindow {
                                 }
                                 contentItem: Text {
                                     id: buttonText
-                                    text: "Log Out"
+                                    text: qsTr("Sign Out")
                                     color: "#ff0000"
                                     font.family: "Verdana"
                                     font.pixelSize: 13
@@ -126,7 +129,7 @@ ApplicationWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     onClicked: {
-                                        ra2snes.logOut();
+                                        ra2snes.signOut();
                                     }
                                     onEntered: logout_button.state = "hovered"
                                     onExited: logout_button.state = ""
@@ -188,6 +191,165 @@ ApplicationWindow {
                                     }
                                 ]
                             }
+
+                            Button {
+                                id: mode_button
+                                anchors.bottom: parent.bottom
+                                anchors.right: parent.right
+                                anchors.bottomMargin: 10
+                                anchors.rightMargin: 20
+                                font.family: "Verdana"
+                                text: qsTr("Change Mode")
+                                font.pixelSize: 13
+                                background: Rectangle {
+                                    id: button_Background
+                                    color: "#222222"
+                                    border.width: 1
+                                    border.color: "#2a2a2a"
+                                    radius: 2
+                                }
+                                contentItem: Text {
+                                    id: button_Text
+                                    text: {
+                                        if(userInfoModel)
+                                        {
+                                            if(userInfoModel.hardcore)
+                                                qsTr("Softcore Mode")
+                                            else
+                                                qsTr("Hardcore Mode")
+                                        }
+                                        else ""
+                                    }
+                                    color: {
+                                        if(userInfoModel)
+                                        {
+                                            if(userInfoModel.hardcore)
+                                                "#00ff00"
+                                            else
+                                                "#ff0000"
+                                        }
+                                        else "#000000"
+                                    }
+                                    font.family: "Verdana"
+                                    font.pixelSize: 13
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                MouseArea {
+                                    id: mouseAreaMode
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        ra2snes.changeMode();
+                                    }
+                                    onEntered: mode_button.state = "hovered"
+                                    onExited: mode_button.state = ""
+                                }
+
+                                states: [
+                                    State {
+                                        name: "hovered"
+                                        PropertyChanges {
+                                            target: button_Background
+                                            color: "#333333"
+                                            border.color: "#c8c8c8"
+                                        }
+                                        PropertyChanges {
+                                            target: button_Text
+                                            color: "#eeeeee"
+                                        }
+                                    }
+                                ]
+
+                                transitions: [
+                                    Transition {
+                                        from: ""
+                                        to: "hovered"
+                                        ColorAnimation {
+                                            target: button_Background
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: button_Background
+                                            property: "border.color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: button_Text
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                    },
+                                    Transition {
+                                        from: "hovered"
+                                        to: ""
+                                        ColorAnimation {
+                                            target: button_Background
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: button_Background
+                                            property: "border.color"
+                                            duration: 200
+                                        }
+                                        ColorAnimation {
+                                            target: button_Text
+                                            property: "color"
+                                            duration: 200
+                                        }
+                                    }
+                                ]
+                            }
+
+                            Item {
+                                id: errorMessagePlaceholder
+                                Layout.preferredHeight: 13
+                                anchors.bottom: parent.bottom
+                                anchors.left: parent.left
+                                anchors.leftMargin: 168
+                                anchors.bottomMargin: 40
+
+                                Text {
+                                    id: errorMessage
+                                    text: mainWindow.modeFailed
+                                    font.family: "Verdana"
+                                    font.pixelSize: 13
+                                    color: "#ff0000"
+                                    width: parent.width
+                                    opacity: 1
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 500
+                                        }
+                                    }
+
+                                    Timer {
+                                        id: fadeOutTimer
+                                        interval: 5000
+                                        running: false
+                                        repeat: false
+                                        onTriggered: {
+                                            errorMessage.opacity = 0.0
+                                        }
+                                    }
+
+                                    function showErrorMessage(error) {
+                                        mainWindow.modeFailed = error;
+                                        errorMessage.opacity = 1;
+                                        fadeOutTimer.restart();
+                                    }
+
+                                    Connections {
+                                        target: ra2snes
+                                        function onChangeModeFailed(error) {
+                                            errorMessage.showErrorMessage(error);
+                                        }
+                                    }
+                                }
+                            }
+
                             Row {
                                 id: userRow
                                 spacing: 16
@@ -197,6 +359,7 @@ ApplicationWindow {
                                 anchors.bottomMargin: 20
                                 anchors.fill: parent
                                 Image {
+                                    id: userpfp
                                     source: {
                                         if(userInfoModel)
                                             userInfoModel.pfp
@@ -206,6 +369,7 @@ ApplicationWindow {
                                     height: 128
                                 }
                                 Column {
+                                    spacing: 6
                                     Text {
                                         id: user
                                         text: {

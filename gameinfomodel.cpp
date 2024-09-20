@@ -47,3 +47,7 @@ void GameInfoModel::updateCompletionCount() {
     m_gameInfo.completion_count++;
     emit dataChanged();
 }
+
+void GameInfoModel::clearGame() {
+    m_gameInfo = GameInfo();
+}

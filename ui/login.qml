@@ -48,7 +48,7 @@ ApplicationWindow {
 
                 Text {
                     id: username_label
-                    text: "Username"
+                    text: qsTr("Username")
                     font.family: "Verdana"
                     font.pixelSize: 13
                     color: "#2c97fa"
@@ -72,7 +72,7 @@ ApplicationWindow {
 
                 Text {
                     id: password_label
-                    text: "Password"
+                    text: qsTr("Password")
                     font.family: "Verdana"
                     font.pixelSize: 13
                     color: "#2c97fa"
@@ -123,7 +123,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: "Remember Me"
+                        text: qsTr("Remember Me")
                         font.family: "Verdana"
                         font.pixelSize: 13
                         color: "#2c97fa"
@@ -136,7 +136,7 @@ ApplicationWindow {
                     id: signin_button
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
-                    text: "Sign in"
+                    text: qsTr("Sign in")
                     font.family: "Verdana"
                     font.pixelSize: 13
                     background: Rectangle {
@@ -148,7 +148,7 @@ ApplicationWindow {
                     }
                     contentItem: Text {
                         id: buttonText
-                        text: "Sign in"
+                        text: qsTr("Sign in")
                         color: "#cc9900"
                         font.family: "Verdana"
                         font.pixelSize: 13

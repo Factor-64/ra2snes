@@ -49,7 +49,7 @@ public:
     void setSaveStates(bool s);
     void setCheats(bool c);
     void setPatched(bool p);
-    void setTitle(QString t, QString i);
+    void setTitle(QString t, QString i, QString l);
 
 signals:
     void loginSuccess();
@@ -58,7 +58,7 @@ signals:
     void gotGameID(int gameid);
     void finishedGameSetup();
     void finishedUnlockSetup();
-    void awardedAchievement(unsigned int id);
+    void awardedAchievement(unsigned int id, QString time);
     void sessionStarted();
 
 private:

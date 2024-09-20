@@ -1,6 +1,5 @@
 #include "memoryreader.h"
 #include <QDebug>
-#include <memory>
 
 MemoryReader::MemoryReader(QObject *parent) : QObject(parent) {
     consoleMemory = nullptr;
@@ -12,68 +11,105 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
     leaderboardTriggers.clear();
     consoleMemorySize = 0;
     QMap<int, int> uniqueAddresses;
-
-    for(const auto& achievement : achievements)
+    for(const AchievementInfo& achievement : achievements)
     {
         if(!achievement.unlocked)
         {
             QByteArray data = achievement.mem_addr.toLocal8Bit();
             const char* mem_addr = data.constData();
+            rc_trigger_t* trigger;
             size_t trigger_size = rc_trigger_size(mem_addr);
-            std::unique_ptr<void, decltype(&free)> trigger_buffer(malloc(trigger_size), free);
-            rc_trigger_t* trigger = rc_parse_trigger(trigger_buffer.get(), mem_addr, NULL, 0);
+            void* trigger_buffer = malloc(trigger_size);;
+            trigger = rc_parse_trigger(trigger_buffer, mem_addr, NULL, 0);
             achievementTriggers[achievement.id] = trigger;
-            for(rc_memref_t* nextref = trigger->memrefs; nextref != nullptr; nextref = nextref->next)
+            rc_memref_t* nextref = trigger->memrefs;
+            while(nextref != nullptr)
             {
-                uniqueAddresses[nextref->address] = std::max(uniqueAddresses[nextref->address], nextref->value.size + 1);
+                if(uniqueAddresses[nextref->address] < nextref->value.size + 1)
+                    uniqueAddresses[nextref->address] = nextref->value.size + 1;
+                nextref = nextref->next;
             }
         }
     }
 
-    for(const auto& leaderboard : leaderboards)
+    if(!leaderboards.empty())
     {
-        QByteArray data = leaderboard.mem_addr.toLocal8Bit();
-        const char* mem_addr = data.constData();
-        size_t lboard_size = rc_lboard_size(mem_addr);
-        std::unique_ptr<void, decltype(&free)> lboard_buffer(malloc(lboard_size), free);
-        rc_lboard_t* lboard = rc_parse_lboard(lboard_buffer.get(), mem_addr, NULL, 0);
-        leaderboardTriggers[leaderboard.id] = lboard;
-        for(rc_memref_t* nextref = lboard->memrefs; nextref != nullptr; nextref = nextref->next)
+        for(const LeaderboardInfo& leaderboard : leaderboards)
         {
-            uniqueAddresses[nextref->address] = std::max(uniqueAddresses[nextref->address], nextref->value.size + 1);
+            QByteArray data = leaderboard.mem_addr.toLocal8Bit();
+            const char* mem_addr = data.constData();
+            rc_lboard_t* lboard;
+            size_t lboard_size = rc_lboard_size(mem_addr);
+            void* lboard_buffer = malloc(lboard_size);
+            lboard = rc_parse_lboard(lboard_buffer, mem_addr, NULL, 0);
+            rc_memref_t* nextref = lboard->memrefs;
+            leaderboardTriggers[leaderboard.id] = lboard;
+            while(nextref != nullptr)
+            {
+                if(uniqueAddresses[nextref->address] < nextref->value.size + 1)
+                    uniqueAddresses[nextref->address] = nextref->value.size + 1;
+                nextref = nextref->next;
+            }
         }
     }
 
+    //qDebug() << uniqueAddresses;
+
     for(auto it = uniqueAddresses.begin(); it != uniqueAddresses.end(); ++it)
+    {
         uniqueMemoryAddresses.append(qMakePair(it.key(), it.value()));
+        consoleMemorySize += it.value();
+    }
 
     remapTriggerAddresses();
 }
 
 void MemoryReader::remapTriggerAddresses()
 {
-    QMap<int, int> memoryOffsets;
-    int memoryOffset = 0;
-    for(const auto& pair : uniqueMemoryAddresses)
+    for(auto it = achievementTriggers.begin(); it != achievementTriggers.end(); ++it)
     {
-        memoryOffsets[pair.first] = memoryOffset;
-        memoryOffset += pair.second;
-        consoleMemorySize += pair.second;
-    }
-
-    for(auto& trigger : achievementTriggers)
-    {
-        for(rc_memref_t* nextref = trigger->memrefs; nextref != nullptr; nextref = nextref->next)
+        rc_memref_t* nextref = it.value()->memrefs;
+        while(nextref != nullptr)
         {
-            nextref->address = memoryOffsets[nextref->address];
+            int memoryOffset = 0;
+            for(const auto& pair : uniqueMemoryAddresses)
+            {
+                if(pair.first == nextref->address)
+                {
+                    //qDebug() << "Unique Address: " << pair.first;
+                    //qDebug() << "Trigger Address:" << nextref->address;
+                    nextref->address = memoryOffset;
+                    //qDebug() << "Memory Offset: " << memoryOffset;
+                    //qDebug() << "New Trigger Address: " << nextref->address;
+                }
+                memoryOffset += pair.second;
+            }
+            nextref = nextref->next;
         }
     }
 
-    for(auto& lboard : leaderboardTriggers)
+    if(!leaderboardTriggers.empty())
     {
-        for(rc_memref_t* nextref = lboard->memrefs; nextref != nullptr; nextref = nextref->next)
+        for(auto it = leaderboardTriggers.begin(); it != leaderboardTriggers.end(); ++it)
         {
-            nextref->address = memoryOffsets[nextref->address];
+            rc_memref_t* nextref = it.value()->memrefs;
+            while(nextref != nullptr)
+            {
+                int memoryOffset = 0;
+                for(const auto& pair : uniqueMemoryAddresses)
+                {
+                    if(pair.first == nextref->address)
+                    {
+                        //qDebug() << "Unique Address: " << pair.first;
+                        //qDebug() << "Trigger Address:" << nextref->address;
+                        nextref->address = memoryOffset;
+                        //qDebug() << "Memory Offset: " << memoryOffset;
+                        //qDebug() << "New Trigger Address: " << nextref->address;
+                    }
+                    memoryOffset += pair.second;
+                }
+                nextref = nextref->next;
+            }
         }
     }
 
@@ -84,6 +120,7 @@ void MemoryReader::setupConsoleMemory()
 {
     delete[] consoleMemory;
     consoleMemory = (consoleMemorySize != 0) ? new uint8_t[consoleMemorySize] : nullptr;
+
     emit finishedMemorySetup();
 }
 

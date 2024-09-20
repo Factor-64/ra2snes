@@ -40,7 +40,9 @@ public:
 
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE void setUnlockedState(unsigned int id, bool unlocked);
+    void setUnlockedState(unsigned int id, bool unlocked, QString time);
+
+    void clearAchievements();
 
 private:
     QList<AchievementInfo> m_achievements;

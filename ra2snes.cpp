@@ -20,6 +20,7 @@ ra2snes::ra2snes(QObject *parent)
     raclient->setHardcore(true);
     console = "SNES";
     remember_me = false;
+    reset = false;
 
     connect(usb2snes, &Usb2Snes::stateChanged, this, &ra2snes::onUsb2SnesStateChanged);
 
@@ -41,9 +42,6 @@ ra2snes::ra2snes(QObject *parent)
         {
             usb2snes->attach(devices.at(0));
             usb2snes->infos(true);
-            QTimer::singleShot(1000, this, [=] {
-                usb2snes->infos();
-            });
         }
         else
         {
@@ -57,20 +55,21 @@ ra2snes::ra2snes(QObject *parent)
     connect(usb2snes, &Usb2Snes::infoDone, this, [=] (Usb2Snes::DeviceInfo infos) {
         if (!infos.flags.contains("NO_FILE_CMD"))
         {
-            if(m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin"))
+            m_currentGame = infos.romPlaying.remove(QChar('\u0000'));
+            if(m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin") || reset)
             {
                 gameLoaded = false;
-                usb2snes->getConfig();
                 raclient->setPatched(false);
                 userinfo_model->setPatched(false);
-                /*QTimer::singleShot(1000, this, [=] {
-                    usb2snes->infos();
-                });*/
+                setCurrentConsole();
+                tasksFinished = 5;
+                usb2snes->getConfig();
             }
             else if(gameLoaded && loggedin)
                 tasksFinished += 2;
             else if(!gameLoaded && loggedin)
             {
+                gameLoaded = true;
                 usb2snes->getConfig();
                 setCurrentConsole();
                 QTimer::singleShot(1000, this, [=] {
@@ -102,22 +101,25 @@ ra2snes::ra2snes(QObject *parent)
         {
             s = false;
         }
-        if(c || s)
-        {
-            raclient->setHardcore(false);
-            userinfo_model->setHardcore(false);
-        }
-        else
-        {
-            qDebug() << "Config check passed";
-            raclient->setHardcore(true);
-            userinfo_model->setHardcore(true);
-        }
 
         raclient->setCheats(c);
         raclient->setSaveStates(s);
         userinfo_model->setCheats(c);
         userinfo_model->setSaveStates(s);
+
+        if(c || s)
+        {
+            if(raclient->getHardcore())
+                changeMode();
+        }
+
+        if(tasksFinished == 5)
+        {
+            tasksFinished = 0;
+            usb2snes->infos();
+            if(reset)
+                reset = false;
+        }
     });
 
     connect(usb2snes, &Usb2Snes::getAddressesDataReceived, this, [=] {
@@ -154,7 +156,6 @@ ra2snes::ra2snes(QObject *parent)
     connect(raclient, &RAClient::requestError, this, &ra2snes::onRequestError);
     connect(raclient, &RAClient::gotGameID, this, [=] (int id){
         raclient->getAchievements(id);
-        gameLoaded = true;
     });
 
     connect(raclient, &RAClient::finishedGameSetup, this, [=] {
@@ -170,7 +171,7 @@ ra2snes::ra2snes(QObject *parent)
     connect(raclient, &RAClient::sessionStarted, this, [=] {
         achievement_model->setAchievements(raclient->getAchievements());
         emit achievementModelReady();
-        //reader->initTriggers(raclient->getAchievements(), raclient->getLeaderboards());
+        reader->initTriggers(raclient->getAchievements(), raclient->getLeaderboards());
     });
 
     connect(reader, &MemoryReader::finishedMemorySetup, this, [=] {
@@ -181,8 +182,8 @@ ra2snes::ra2snes(QObject *parent)
         raclient->awardAchievement(id);
     });
 
-    connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id) {
-        achievement_model->setUnlockedState(id, true);
+    connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id, QString time) {
+        achievement_model->setUnlockedState(id, true, time);
         gameinfo_model->updateCompletionCount();
     });
 
@@ -226,6 +227,8 @@ void ra2snes::onLoginSuccess()
     loggedin = true;
     createSettingsFile();
     userinfo_model->setUserInfo(raclient->getUserInfo());
+    tasksFinished = 2;
+    onUsb2SnesStateChanged();
     emit loginSuccess();
 }
 
@@ -252,7 +255,9 @@ void ra2snes::onRequestError()
 void ra2snes::onUsb2SnesStateChanged()
 {
     qDebug() << "Tasks Finished: " << tasksFinished;
-    if(usb2snes->state() == Usb2Snes::Ready && gameLoaded)
+    if(usb2snes->state() == Usb2Snes::Ready && reset)
+        usb2snes->infos();
+    else if(usb2snes->state() == Usb2Snes::Ready)
     {
         switch(tasksFinished)
         {
@@ -263,11 +268,6 @@ void ra2snes::onUsb2SnesStateChanged()
             }
             case 4: {
                 usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
-                break;
-            }
-            case 5: {
-                usb2snes->infos();
-                tasksFinished = 0;
                 break;
             }
             default:
@@ -299,7 +299,7 @@ void ra2snes::setCurrentConsole()
             {
                 icon += "snes.png";
                 raclient->setConsole("SNES/Super Famicom", QUrl(icon));
-                raclient->setTitle("SD2SNES Menu", "https://media.retroachievements.org/UserPic/user.png");
+                raclient->setTitle("SD2SNES Menu", "https://media.retroachievements.org/UserPic/user.png", "");
                 gameinfo_model->setGameInfo(raclient->getGameInfo());
             }
         }
@@ -405,4 +405,53 @@ void ra2snes::loadSettings() {
         qDebug() << "Settings file does not exist.";
     }
     setCurrentConsole();
+}
+
+void ra2snes::signOut()
+{
+    loggedin = false;
+    gameLoaded = false;
+    remember_me = false;
+    achievement_model->clearAchievements();
+    userinfo_model->clearUser();
+    gameinfo_model->clearGame();
+    createSettingsFile();
+    loadSettings();
+    reset = true;
+    onUsb2SnesStateChanged();
+    emit signedOut();
+}
+
+void ra2snes::changeMode()
+{
+    UserInfo user = raclient->getUserInfo();
+    QString reason = "Hardcore Disabled: ";
+    bool needsChange = false;
+
+    if(user.cheats) {
+        reason += QString("Cheats Enabled");
+        needsChange = true;
+    }
+    if(user.savestates) {
+        reason += (QString(needsChange ? ", " : "") + "SaveStates Enabled");
+        needsChange = true;
+    }
+    if(user.patched) {
+        reason += (QString(needsChange ? ", " : "") + "ROM Patched");
+        needsChange = true;
+    }
+
+    if(!needsChange)
+    {
+        raclient->setHardcore(!raclient->getHardcore());
+        userinfo_model->setHardcore(!userinfo_model->hardcore());
+        reason = "";
+    }
+    else
+    {
+        raclient->setHardcore(false);
+        userinfo_model->setHardcore(false);
+    }
+
+    emit changeModeFailed(reason);
 }

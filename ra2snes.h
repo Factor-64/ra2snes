@@ -20,17 +20,21 @@ public:
     GameInfoModel* gameInfoModel();
     UserInfoModel* userInfoModel();
     bool isRemembered();
-    Q_INVOKABLE void saveWindowSize(int w, int h);
     QString xorEncryptDecrypt(const QString &token, const QString &key);
 
 
 public slots:
     void signIn(const QString &username, const QString &password, bool remember);
+    void signOut();
+    void saveWindowSize(int w, int h);
+    void changeMode();
 
 signals:
     void loginSuccess();
     void loginFailed(QString error);
+    void changeModeFailed(QString reason);
     void achievementModelReady();
+    void signedOut();
 
 private:
     Usb2Snes *usb2snes;
@@ -43,6 +47,7 @@ private:
     bool loggedin;
     bool gameLoaded;
     bool remember_me;
+    bool reset;
     QAtomicInt tasksFinished;
     QString console;
 

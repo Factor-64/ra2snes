@@ -19,18 +19,32 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("userInfoModel", ra2snesInstance.userInfoModel());
     engine.load(QUrl(QStringLiteral("qrc:/ui/login.qml")));
 
-    const auto rootObjects = engine.rootObjects();
-    QObject *loginWindow = nullptr;
+    QObject::connect(&ra2snesInstance, &ra2snes::loginSuccess, &engine, [&engine]() {
+        const auto rootObjects = engine.rootObjects();
+        QObject *loginWindow = nullptr;
 
-    if (!rootObjects.isEmpty()) {
-        loginWindow = rootObjects.first();
-    }
-    QObject::connect(&ra2snesInstance, &ra2snes::loginSuccess, &engine, [&loginWindow, &engine]() {
+        if (!rootObjects.isEmpty()) {
+            loginWindow = rootObjects.first();
+        }
         if(loginWindow)
             loginWindow->deleteLater();
         engine.load(QUrl(QStringLiteral("qrc:/ui/mainwindow.qml")));
         engine.clearComponentCache();
     });
+
+    QObject::connect(&ra2snesInstance, &ra2snes::signedOut, &engine, [&engine]() {
+        const auto rootObjects = engine.rootObjects();
+        QObject *mainWindow = nullptr;
+
+        if (!rootObjects.isEmpty()) {
+            mainWindow = rootObjects.first();
+        }
+        if(mainWindow)
+            mainWindow->deleteLater();
+        engine.load(QUrl(QStringLiteral("qrc:/ui/login.qml")));
+        engine.clearComponentCache();
+    });
+
 
     if (engine.rootObjects().isEmpty())
         return -1;
