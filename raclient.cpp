@@ -16,6 +16,8 @@ RAClient::RAClient(QObject *parent) : QObject(parent)
 {
     networkManager = new QNetworkAccessManager();
     connect(networkManager, &QNetworkAccessManager::finished, this, &RAClient::handleNetworkReply);
+    queue.clear();
+    running = false;
 }
 
 void RAClient::loginPassword(const QString& username, const QString& password)
@@ -79,7 +81,7 @@ void RAClient::startSession()
     sendRequest("startsession", post_content);
 }
 
-void RAClient::awardAchievement(unsigned int id)
+void RAClient::awardAchievement(unsigned int id, bool hardcore)
 {
     QByteArray md5hash;
     md5hash.append(QString::number(id).toLocal8Bit());
@@ -91,7 +93,7 @@ void RAClient::awardAchievement(unsigned int id)
     post_content["u"] = userinfo.username;
     post_content["t"] = userinfo.token;
     post_content["a"] = QString::number(id);
-    post_content["h"] = QString::number(userinfo.hardcore);
+    post_content["h"] = QString::number(hardcore);
     post_content["v"] = QString(md5hash.toHex());
 
     sendRequest("awardachievement", post_content);
@@ -114,30 +116,64 @@ void RAClient::awardAchievement(unsigned int id)
 }*/
 
 void RAClient::queueAchievementRequest(unsigned int id) {
-    RequestData data = {AchievementRequest, id, 0};
+    RequestData data = {AchievementRequest, id, userinfo.hardcore, 0};
     queue.append(data);
+    if(!running)
+        startQueue();
 }
 
 void RAClient::queueLeaderboardRequest(unsigned int id, unsigned int score) {
-    RequestData data = {LeaderboardRequest, id, score};
+    RequestData data = {LeaderboardRequest, id, true, score};
     queue.append(data);
+    if(!running)
+        startQueue();
 }
 
 void RAClient::runQueue() {
     qDebug() << "Queue Size: " << queue.size();
-    while (!queue.isEmpty()) {
-        if (ready) {
-            RequestData data = queue.dequeue();
-            switch (data.type) {
+    if(!queue.isEmpty())
+    {
+        RequestData data = queue.first();
+        switch (data.type) {
             case AchievementRequest:
-                awardAchievement(data.id);
+                awardAchievement(data.id, data.hardcore);
                 break;
             case LeaderboardRequest:
                 //submitLeaderboardEntry(data.id, data.score);
                 break;
-            }
+            default:
+                break;
         }
     }
+    else running = false;
+}
+
+int RAClient::queueSize()
+{
+    return queue.size();
+}
+
+bool RAClient::isQueueRunning()
+{
+    return running;
+}
+
+void RAClient::stopQueue()
+{
+    qDebug() << "Queue Stopped";
+    running = false;
+}
+
+void RAClient::startQueue()
+{
+    qDebug() << "Queue Started";
+    running = true;
+    runQueue();
+}
+
+void RAClient::clearQueue()
+{
+    queue.clear();
 }
 
 void RAClient::setWidthHeight(int w, int h)
@@ -216,7 +252,6 @@ void RAClient::setConsole(const QString& c, const QUrl& icon)
 
 void RAClient::sendRequest(const QString& request_type, const QJsonObject& post_content)
 {
-    ready = false;
     QNetworkRequest request{QUrl(baseUrl + "dorequest.php")};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     request.setRawHeader("User-Agent", userAgent.toUtf8());
@@ -275,6 +310,8 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     {
         qDebug() << "Network error:" << reply->errorString();
         emit requestError();
+        if(running)
+            emit continueQueue();
     }
     else if (jsonObject.contains("Error"))
     {
@@ -285,8 +322,15 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     {
         handleSuccessResponse(jsonObject);
     }
-
-    ready = true;
+    if(running)
+    {
+        queue.removeFirst();
+        if(!gameinfo.beaten)
+            isGameBeaten();
+        else if(!gameinfo.mastered)
+            isGameMastered();
+        emit continueQueue();
+    }
     reply->deleteLater();
 }
 
@@ -436,16 +480,50 @@ void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
     else
         unlock_data = jsonObject["Unlocks"].toArray();
     gameinfo.completion_count = unlock_data.count();
-    for (const auto& unlock_value : unlock_data)
+    for (int i = 0; i < unlock_data.size(); ++i)
     {
-        QJsonObject unlock = unlock_value.toObject();
+        QJsonObject unlock = unlock_data[i].toObject();
         for (auto& achievement : gameinfo.achievements)
         {
+            if(achievement.type == "progression" || achievement.type == "win_condition")
+                progressionMap[achievement.id] = achievement.unlocked;
             if (unlock["ID"].toInt() == achievement.id)
             {
                 achievement.time_unlocked = QDateTime::fromSecsSinceEpoch(unlock["When"].toInt()).toString("MMMM d yyyy, h:mmap");
             }
         }
     }
+    isGameBeaten();
+    isGameMastered();
     emit sessionStarted();
+}
+
+bool RAClient::isGameBeaten()
+{
+    if(progressionMap.empty() && !gameinfo.achievements.empty())
+        return false;
+    for(auto it = progressionMap.constBegin(); it != progressionMap.constEnd(); ++it) {
+        if(!it.value()) {
+            gameinfo.beaten = false;
+            return false;
+        }
+    }
+    gameinfo.beaten = true;
+    return true;
+}
+
+bool RAClient::isGameMastered()
+{
+    if(!gameinfo.achievements.empty())
+        return false;
+    if(gameinfo.completion_count == gameinfo.achievements.count())
+    {
+        gameinfo.mastered = true;
+        return true;
+    }
+    else
+    {
+        gameinfo.mastered = false;
+        return false;
+    }
 }

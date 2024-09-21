@@ -54,16 +54,6 @@ ApplicationWindow {
         contentHeight: infoColumn.height
         flickableDirection: Flickable.VerticalFlick
 
-        /*AnimatedImage {
-            id: loadingIcon
-            source: "./loading.gif"
-            Layout.alignment: Qt.AlignCenter
-            width: 96
-            height: 96
-            playing: true
-            paused: false
-        }*/
-
         ColumnLayout {
             id: infoColumn
             width: Math.min(parent.width,840)
@@ -203,13 +193,32 @@ ApplicationWindow {
                                 font.pixelSize: 13
                                 background: Rectangle {
                                     id: button_Background
-                                    color: "#222222"
                                     border.width: 1
                                     border.color: "#2a2a2a"
                                     radius: 2
+                                    color: {
+                                        if(mouseAreaMode.enabled)
+                                        {
+                                            "#222222"
+                                        }
+                                        else "#888888"
+                                    }
                                 }
                                 contentItem: Text {
                                     id: button_Text
+                                    color: {
+                                        if(mouseAreaMode.enabled)
+                                            if(userInfoModel)
+                                            {
+                                               if(userInfoModel.hardcore)
+                                                   "#00ff00"
+                                               else
+                                                   "#ff0000"
+                                            }
+                                            else "#000000"
+                                        else "#bbbbbb"
+
+                                    }
                                     text: {
                                         if(userInfoModel)
                                         {
@@ -219,16 +228,6 @@ ApplicationWindow {
                                                 qsTr("Hardcore Mode")
                                         }
                                         else ""
-                                    }
-                                    color: {
-                                        if(userInfoModel)
-                                        {
-                                            if(userInfoModel.hardcore)
-                                                "#00ff00"
-                                            else
-                                                "#ff0000"
-                                        }
-                                        else "#000000"
                                     }
                                     font.family: "Verdana"
                                     font.pixelSize: 13
@@ -240,10 +239,24 @@ ApplicationWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     onClicked: {
+                                        disableModeChangeButton();
                                         ra2snes.changeMode();
+                                    }
+                                    Component.onCompleted: {
+                                        enableModeChangeButton();
                                     }
                                     onEntered: mode_button.state = "hovered"
                                     onExited: mode_button.state = ""
+
+                                    function disableModeChangeButton()
+                                    {
+                                        mouseAreaMode.enabled = false;
+                                    }
+
+                                    function enableModeChangeButton()
+                                    {
+                                        mouseAreaMode.enabled = true;
+                                    }
                                 }
 
                                 states: [
@@ -336,6 +349,7 @@ ApplicationWindow {
                                     }
 
                                     function showErrorMessage(error) {
+                                        mouseAreaMode.enableModeChangeButton();
                                         mainWindow.modeFailed = error;
                                         errorMessage.opacity = 1;
                                         fadeOutTimer.restart();
@@ -656,11 +670,26 @@ ApplicationWindow {
                             sourceComponent: listViewComponent
                             active: false
                         }
+                        Connections {
+                            target: ra2snes
+                            function onSwitchingMode() {
+                                listViewLoader.active = false;
+                                mouseAreaMode.disableModeChangeButton()
+                            }
+                        }
 
                         Connections {
                             target: ra2snes
                             function onAchievementModelReady() {
                                 listViewLoader.active = true;
+                                mouseAreaMode.enableModeChangeButton();
+                            }
+                        }
+
+                        Connections {
+                            target: ra2snes
+                            function onClearedAchievements() {
+                                listViewLoader.active = false;
                             }
                         }
 
@@ -1130,7 +1159,7 @@ ApplicationWindow {
                                             color: "#2c97fa"
                                             Layout.fillWidth: true
                                             wrapMode: Text.WordWrap
-                                            Layout.preferredWidth: achievement.width - 100
+                                            Layout.preferredWidth: achievement.width - 120
                                         }
                                         Item {
                                             height: 8
@@ -1149,6 +1178,120 @@ ApplicationWindow {
                                             Layout.fillWidth: true
                                         }
                                     }
+                                }
+                                Rectangle {
+                                    id: typeRectangle
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 4
+                                    anchors.rightMargin: 4
+                                    width: 28
+                                    height: 28
+                                    radius: 50
+                                    color: "#161616"
+                                    visible: model.type !== "" ? true : false
+                                    z: 2
+
+                                    Text {
+                                        z: 3
+                                        id: typeText
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 20
+                                        font.bold: true
+                                        font.family: "Verdana"
+                                        font.pixelSize: 10
+                                        text: {
+                                            if(model.type === "win_condition")
+                                                "Win Condition"
+                                            else if(model.type === "missable")
+                                                "Missable"
+                                            else if(model.type === "progression")
+                                                "Progression"
+                                            else ""
+                                        }
+                                        color: "#e5e5e5"
+                                        visible: false
+                                        opacity: 0.0
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: 250
+                                            }
+                                        }
+
+                                        Behavior on anchors.leftMargin {
+                                            NumberAnimation {
+                                                duration: 250
+                                            }
+                                        }
+                                    }
+
+                                    Image {
+                                        z: 4
+                                        id: svgImage
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.rightMargin: 5
+                                        width: 18
+                                        height: 18
+                                        source: {
+                                            if(model.type === "win_condition")
+                                                "./images/win_condition.svg"
+                                            else if(model.type === "missable")
+                                                "./images/missable.svg"
+                                            else if(model.type === "progression")
+                                                "./images/progression.svg"
+                                            else ""
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onEntered: typeRectangle.state = "hovered"
+                                        onExited: typeRectangle.state = ""
+                                        hoverEnabled: true
+                                    }
+
+                                    states: [
+                                        State {
+                                            name: "hovered"
+                                            PropertyChanges {
+                                                target: typeRectangle
+                                                width: typeText.width + 38
+                                            }
+                                            PropertyChanges {
+                                                target: typeText
+                                                visible: true
+                                                anchors.leftMargin: 10
+                                                opacity: 1.0
+                                            }
+                                            PropertyChanges {
+                                                target: svgImage
+                                            }
+                                        }
+                                    ]
+
+                                    transitions: [
+                                        Transition {
+                                            from: ""
+                                            to: "hovered"
+                                            PropertyAnimation {
+                                                target: typeRectangle
+                                                property: "width"
+                                                duration: 50
+                                            }
+                                        },
+                                        Transition {
+                                            from: "hovered"
+                                            to: ""
+                                            PropertyAnimation {
+                                                target: typeRectangle
+                                                property: "width"
+                                                duration: 200
+                                            }
+                                        }
+                                    ]
                                 }
                             }
                         }

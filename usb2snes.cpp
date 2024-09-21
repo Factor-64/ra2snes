@@ -241,7 +241,6 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
     if ((unsigned int) buffer.size() == requestedBinaryReadSize)
     {
         lastBinaryMessage = buffer;
-        buffer.clear();
         emit binaryMessageReceived();
         switch(m_state)
         {
@@ -265,8 +264,9 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
                 break;
         }
         sDebug() << "Finish Binary";
-        changeState(Ready);
+        buffer.clear();
         m_istate = IReady;
+        changeState(Ready);
     }
 }
 
@@ -348,6 +348,7 @@ void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
     // We can only send 8 addresses at a time
     m_istate = IBusy;
     changeState(GettingAddresses);
+    requestedBinaryReadSize = 0;
     unsigned int total_size = 0;
     QStringList operands;
     for(auto &pair : addresses)

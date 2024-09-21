@@ -29,6 +29,7 @@ file(GLOB RCHEEVOS_SOURCES_RHASH ${CMAKE_SOURCE_DIR}/rcheevos/src/rhash/*)
 file(GLOB RCHEEVOS_SOURCES_RURL ${CMAKE_SOURCE_DIR}/rcheevos/src/rurl/*)
 file(GLOB LUA_SOURCES ${CMAKE_SOURCE_DIR}/rcheevos/test/lua/src/*)
 file(GLOB UI_FILES ${CMAKE_SOURCE_DIR}/ui/*)
+file(GLOB UI_IMAGES ${CMAKE_SOURCE_DIR}/ui/images/*)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -51,6 +52,7 @@ set(PROJECT_SOURCES
         ${RCHEEVOS_SOURCES_RURL}
         ${LUA_SOURCES}
         ${UI_FILES}
+        ${UI_IMAGES}
         ui.qrc
         achievementmodel.cpp
         achievementmodel.h

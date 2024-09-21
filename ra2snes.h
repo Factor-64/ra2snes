@@ -35,6 +35,8 @@ signals:
     void changeModeFailed(QString reason);
     void achievementModelReady();
     void signedOut();
+    void switchingMode();
+    void clearedAchievements();
 
 private:
     Usb2Snes *usb2snes;
@@ -48,15 +50,22 @@ private:
     bool gameLoaded;
     bool remember_me;
     bool reset;
+    bool gameSetup;
     QAtomicInt tasksFinished;
     QString console;
+    QThread* thread;
 
     void createSettingsFile();
     void loadSettings();
     void onLoginSuccess();
-    void proccessRequestFailed(QJsonObject error);
+    void onRequestFailed(QJsonObject error);
     void onRequestError();
     void onUsb2SnesStateChanged();
+    void onUsb2SnesGetAddressDataReceived();
+    void onUsb2SnesGetAddressesDataReceived();
+    void onUsb2SnesGetConfigDataReceived();
+    void onUsb2SnesGetFileDataReceived();
+    void onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos);
     void setCurrentConsole();
 };
 

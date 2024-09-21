@@ -65,6 +65,8 @@ struct GameInfo {
     QString console;
     QUrl console_icon;
     unsigned int completion_count;
+    bool beaten;
+    bool mastered;
 };
 
 static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {

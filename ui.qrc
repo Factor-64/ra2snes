@@ -2,5 +2,8 @@
     <qresource prefix="/">
         <file>ui/login.qml</file>
         <file>ui/mainwindow.qml</file>
+        <file>ui/images/missable.svg</file>
+        <file>ui/images/progression.svg</file>
+        <file>ui/images/win_condition.svg</file>
     </qresource>
 </RCC>

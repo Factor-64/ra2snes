@@ -14,12 +14,14 @@ class RAClient : public QObject {
 public:
     enum RequestType {
         AchievementRequest,
-        LeaderboardRequest
+        LeaderboardRequest,
+        Nothing
     };
 
     struct RequestData {
         RequestType type;
         unsigned int id;
+        bool hardcore;
         unsigned int score;
     };
 
@@ -31,13 +33,12 @@ public:
     void getAchievements(unsigned int gameId);
     void getUnlocks();
     void startSession();
-    void awardAchievement(unsigned int id);
+    void awardAchievement(unsigned int id, bool hardcore);
     //void getLBPlacements();
     QList<AchievementInfo> getAchievements();
     QList<LeaderboardInfo> getLeaderboards();
     void queueAchievementRequest(unsigned int id);
     void queueLeaderboardRequest(unsigned int id, unsigned int score);
-    void runQueue();
     void setHardcore(bool h);
     void setConsole(const QString& c, const QUrl& icon);
     bool getHardcore();
@@ -50,6 +51,15 @@ public:
     void setCheats(bool c);
     void setPatched(bool p);
     void setTitle(QString t, QString i, QString l);
+    int queueSize();
+    void startQueue();
+    void stopQueue();
+    void runQueue();
+    void clearQueue();
+    bool isQueueRunning();
+    void handleNetworkReply(QNetworkReply *reply);
+    bool isGameBeaten();
+    bool isGameMastered();
 
 signals:
     void loginSuccess();
@@ -60,13 +70,14 @@ signals:
     void finishedUnlockSetup();
     void awardedAchievement(unsigned int id, QString time);
     void sessionStarted();
+    void requestFinished();
+    void continueQueue();
 
 private:
     static const QString baseUrl;
     static const QString userAgent;
     static const QString mediaUrl;
     void sendRequest(const QString& request_type, const QJsonObject& post_content);
-    void handleNetworkReply(QNetworkReply *reply);
     void handleSuccessResponse(const QJsonObject& jsonObject);
     void handleAwardAchievementResponse(const QJsonObject& jsonObject);
     void handleLoginResponse(const QJsonObject& jsonObject);
@@ -75,10 +86,11 @@ private:
     void handleUnlocksResponse(const QJsonObject& jsonObject);
     void handleStartSessionResponse(const QJsonObject& jsonObject);
     QString latestRequest;
-    bool ready;
+    bool running;
     QNetworkAccessManager* networkManager;
     UserInfo userinfo;
     GameInfo gameinfo;
+    QMap<unsigned int, bool> progressionMap;
     QQueue<RequestData> queue;
 };
 
