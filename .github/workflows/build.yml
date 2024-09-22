@@ -31,7 +31,7 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.7.2'
+        version: '6.4.2'
         modules: 'qtwebsockets qtwidgets qtlinguisttools qtquick qtqml qtquickwidgets'
     - name: Install dependencies
       run: |
