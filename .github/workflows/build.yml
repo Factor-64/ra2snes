@@ -33,12 +33,9 @@ jobs:
       with:
         version: '6.7.2'
         modules: 'qtwebsockets'
-    - name: Install make and cmake
+    - name: Install MingW
       run: |
-        choco install -y cmake
-        choco install -y make
-    - name: Install MSBuild
-      uses: microsoft/setup-msbuild@v2
+        choco install -y mingw
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.0.0
       with:
@@ -48,7 +45,7 @@ jobs:
         cache: true
         stripdown: true
     - name: Build rcheevos
-      run: msbuild.exe rcheevos-test.sln -t:rcheevos-test -p:Configuration=Release -p:Platform=x64
+      run: mingw64-make ARCH=x64 BUILD=c89 CC=gcc test
       working-directory: rcheevos/test
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64/lib/cmake/Qt6"
