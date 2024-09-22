@@ -41,7 +41,7 @@ jobs:
       run: make ARCH=x64 BUILD=c89 CC=gcc test
       working-directory: rcheevos/test
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.2.0/msvc2019_64/lib/cmake/Qt6"
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/msvc2019_64/lib/cmake/Qt6"
     - name: Build project
       run: cmake --build build --config Release
 
