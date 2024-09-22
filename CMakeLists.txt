@@ -89,6 +89,7 @@ target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Quick)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Qml)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::QuickWidgets)
 target_link_libraries(ra2snes PRIVATE ${CMAKE_C_STANDARD_LIBRARIES})
+target_link_libraries(ra2snes PRIVATE m)
 
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
