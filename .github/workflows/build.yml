@@ -33,12 +33,6 @@ jobs:
       with:
         version: '6.7.2'
         modules: 'qtwebsockets'
-    - name: Install MingW
-      run: |
-        choco install -y mingw
-    - name: Add MinGW to PATH
-      run: |
-        echo "C:\\Program Files\\mingw-w64\\x86_64-8.1.0-posix-seh-rt_v6-rev0\\mingw64\\bin" >> $env:GITHUB_PATH
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.0.0
       with:
@@ -48,7 +42,7 @@ jobs:
         cache: true
         stripdown: true
     - name: Build rcheevos
-      run: mingw64-make ARCH=x64 BUILD=c89 CC=gcc test
+      run: make ARCH=x64 BUILD=c89 CC=gcc test
       working-directory: rcheevos/test
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64/lib/cmake/Qt6"
