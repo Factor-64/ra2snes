@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QList>
 #include <QSet>
-#include <rc_internal.h>
+#include <rc_runtime.h>
 #include "rastructs.h"
 
 class MemoryReader : public QObject {
