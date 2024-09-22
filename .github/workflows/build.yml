@@ -12,7 +12,7 @@ jobs:
         submodules: true
     - name: Install dependencies
       run: |
-       sudo apt-get update && sudo apt-get install qtbase5-dev qt5-qmake qtbase5-dev-tools qttools5-dev qttools5-dev-tools qttranslations5-l10n libqt5websockets5-dev sudo apt install qtdeclarative5-dev gcc-multilib # bits/libc-header-start.h
+       sudo apt-get update && sudo apt-get install qtbase5-dev qt5-qmake qtbase5-dev-tools qttools5-dev qttools5-dev-tools qttranslations5-l10n libqt5websockets5-dev qtdeclarative5-dev gcc-multilib # bits/libc-header-start.h
     - name: Build rcheevos
       run: make ARCH=x64 BUILD=c89 test
       working-directory: rcheevos/test
