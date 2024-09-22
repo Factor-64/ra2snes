@@ -17,35 +17,26 @@ jobs:
       run: make ARCH=x64 BUILD=c89 test
       working-directory: rcheevos/test
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
     - name: Build project
       run: cmake --build build --config Release
-  
-  windows-x64-mingw:
+  windows-x64:
     runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         submodules: true
-
     - name: Install dependencies
       run: |
-        choco install qt6-base-dev
-        choco install gcc
-
-    - name: Set up Qt environment
-      run: |
-        setx QT_DIR "C:\Qt\6.4.2\mingw_64"
-        setx PATH "%QT_DIR%\bin;%PATH%"
-
+        choco install -y qt6
+        choco install -y cmake
+        choco install -y make
     - name: Build rcheevos
-      run: make ARCH=x64 BUILD=c89 CC=gcc test
+      run: make ARCH=x64 BUILD=c89 test
       working-directory: rcheevos/test
-
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:/Qt/6.4.2/mingw_64/lib/cmake/Qt6
-
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.2.0/msvc2019_64/lib/cmake/Qt6"
     - name: Build project
       run: cmake --build build --config Release
       
