@@ -27,7 +27,6 @@ file(GLOB RCHEEVOS_SOURCES_RAPI ${CMAKE_SOURCE_DIR}/rcheevos/src/rapi/*)
 file(GLOB RCHEEVOS_SOURCES_RCHEEVOS ${CMAKE_SOURCE_DIR}/rcheevos/src/rcheevos/*)
 file(GLOB RCHEEVOS_SOURCES_RHASH ${CMAKE_SOURCE_DIR}/rcheevos/src/rhash/*)
 file(GLOB RCHEEVOS_SOURCES_RURL ${CMAKE_SOURCE_DIR}/rcheevos/src/rurl/*)
-file(GLOB LUA_SOURCES ${CMAKE_SOURCE_DIR}/rcheevos/test/lua/src/*)
 file(GLOB UI_FILES ${CMAKE_SOURCE_DIR}/ui/*)
 file(GLOB UI_IMAGES ${CMAKE_SOURCE_DIR}/ui/images/*)
 
@@ -38,7 +37,6 @@ set(PROJECT_SOURCES
         ${RCHEEVOS_SOURCES_RAPI}
         ${RCHEEVOS_SOURCES_RHASH}
         ${RCHEEVOS_SOURCES_RURL}
-        ${LUA_SOURCES}
         ${UI_FILES}
         ${UI_IMAGES}
         main.cpp
@@ -88,8 +86,6 @@ target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::WebSockets)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Quick)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Qml)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::QuickWidgets)
-target_link_libraries(ra2snes PRIVATE rt)
-target_link_libraries(ra2snes PRIVATE c)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.ra2snes)
