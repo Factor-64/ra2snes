@@ -22,7 +22,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev
+        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev qttools5-dev-tools
     - name: Set up Qt
       if: matrix.os == 'windows-latest'
       run: |
