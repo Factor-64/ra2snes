@@ -29,10 +29,10 @@ jobs:
       with:
         submodules: true
     - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.7.2'
-          modules: 'qtwebsockets qtwidgets qtlinguisttools qtquick qtqml qtquickwidgets'
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.7.2'
+        modules: 'qtwebsockets qtwidgets qtlinguisttools qtquick qtqml qtquickwidgets'
     - name: Install dependencies
       run: |
         choco install -y cmake
