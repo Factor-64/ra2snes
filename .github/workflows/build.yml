@@ -22,19 +22,19 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev qttools5-dev qttools5-dev-tools
+        sudo apt-get install -y qt6-base-dev qt6-declarative-dev libqt6websockets6-dev qt6-tools-dev qt6-tools-dev-tools
     - name: Set up Qt
       if: matrix.os == 'windows-latest'
       run: |
-        choco install qt5-default
+        choco install qt6-base-dev
 
     - name: Set Environment Variables
       run: |
-        export CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
-        export Qt5LinguistTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5LinguistTools
+        export CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
+        export Qt6LinguistTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6LinguistTools
 
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
 
     - name: Build rcheevos/test
       run: |
