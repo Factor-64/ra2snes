@@ -28,7 +28,7 @@ Usb2Snes::Usb2Snes(bool autoAttach) : QObject()
 
     QObject::connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &Usb2Snes::onWebSocketTextReceived);
     QObject::connect(&m_webSocket, &QWebSocket::connected, this, &Usb2Snes::onWebSocketConnected);
-    QObject::connect(&m_webSocket, &QWebSocket::errorOccurred, this, &Usb2Snes::onWebSocketError);
+    QObject::connect(&m_webSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onWebSocketError(QAbstractSocket::SocketError)));
     QObject::connect(&m_webSocket, &QWebSocket::disconnected, this, &Usb2Snes::onWebSocketDisconnected);
     QObject::connect(&m_webSocket, &QWebSocket::binaryMessageReceived, this, &Usb2Snes::onWebSocketBinaryReceived);
     QObject::connect(&timer, &QTimer::timeout, this, &Usb2Snes::onTimerTick);
