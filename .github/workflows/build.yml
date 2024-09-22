@@ -12,7 +12,7 @@ jobs:
         submodules: true
     - name: Install dependencies
       run: |
-        sudo apt-get update
+        sudo apt-get update && sudo apt-get upgrade
         sudo apt-get install -y \
         qt6-base-dev \
         qt6-tools-dev \
