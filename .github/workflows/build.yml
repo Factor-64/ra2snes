@@ -14,22 +14,23 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: true
-        
+
     - name: Set up CMake
       uses: jwlawson/actions-setup-cmake@v1
 
-    - name: Set up Qt Linux
+    - name: Install dependencies (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev qttools5-dev qttools5-dev-tools
-        
-    - name: Set up Qt Windows
+        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev qttools5-dev qttools5-dev-tools gcc-multilib
+
+    - name: Install dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         choco install qt5-default
 
-    - name: Set Environment Variables
+    - name: Set Environment Variables (Linux)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         export CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
         export Qt5LinguistTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5LinguistTools
@@ -44,4 +45,3 @@ jobs:
 
     - name: Build project
       run: cmake --build build --config Release
-      
