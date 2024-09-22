@@ -13,7 +13,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y qtbase6-dev qtdeclarative6-dev libqt5websockets6-dev qtquickcontrols2-6-dev qttools6-dev qttools6-dev-tools gcc-multilib # bits/libc-header-start.h
+        sudo apt-get install -y sudo apt install -y qt6-base qt6-base-dev qt6-tools-dev gcc-multilib # bits/libc-header-start.h
     - name: Build rcheevos
       run: make ARCH=x64 BUILD=c89 test
       working-directory: rcheevos/test
