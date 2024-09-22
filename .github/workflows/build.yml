@@ -3,44 +3,40 @@ name: CMake Build
 on: [push, pull_request]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-
+  linux-x64:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v4
       with:
         submodules: true
-
-    - name: Set up CMake
-      uses: jwlawson/actions-setup-cmake@v1
-
-    - name: Install dependencies (Linux)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev qttools5-dev qttools5-dev-tools gcc-multilib
-
-    - name: Install dependencies (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install qt5-default
-
-    - name: Set Environment Variables (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        export CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
-        export Qt5LinguistTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5LinguistTools
-
-    - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
-
-    - name: Build rcheevos/test
-      run: make ARCH=x64 BUILD=c89
+        sudo apt-get install -y qtbase6-dev qtdeclarative6-dev libqt5websockets6-dev qtquickcontrols2-6-dev qttools6-dev qttools6-dev-tools gcc-multilib # bits/libc-header-start.h
+    - name: Build rcheevos
+      run: make ARCH=x64 BUILD=c89 test
       working-directory: rcheevos/test
-
+    - name: Configure CMake
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
     - name: Build project
       run: cmake --build build --config Release
+windows-x64:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: |
+        choco install qt6-base-dev
+        choco install gcc
+    - name: Build rcheevos
+      run: make ARCH=x64 BUILD=c89 test
+      working-directory: rcheevos/test
+    - name: Configure CMake
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:/Qt/6.4.2/msvc2019_64/lib/cmake/Qt6
+    - name: Build project
+      run: cmake --build build --config Release
+      
