@@ -39,9 +39,8 @@ jobs:
       run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
 
     - name: Build rcheevos/test
-      run: |
-        cd rcheevos/test
-        make ARCH=x64
+      run: make ARCH=x64 BUILD=c89
+      working-directory: rcheevos/test
 
     - name: Build project
       run: cmake --build build --config Release
