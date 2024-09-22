@@ -12,13 +12,12 @@ jobs:
         submodules: true
     - name: Install dependencies
       run: |
-        sudo add-apt-repository ppa:beineri/opt-qt-6.2.0-bionic
         sudo apt-get update
         sudo apt-get install -y \
         qt6-base-dev \
         qt6-tools-dev \
         qt6-declarative-dev \
-        qt6-websockets-dev \
+        libqt6websockets6 \
         libqt6opengl6 \
         libgl1-mesa-dev \
         qt6-tools-dev-tools \
