@@ -1,5 +1,4 @@
 #include "memoryreader.h"
-#include "rc_runtime_types.h"
 //#include "rc_internal.h"
 #include <QDebug>
 
