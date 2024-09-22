@@ -36,6 +36,9 @@ jobs:
     - name: Install MingW
       run: |
         choco install -y mingw
+    - name: Add MinGW to PATH
+      run: |
+        echo "C:\\Program Files\\mingw-w64\\x86_64-8.1.0-posix-seh-rt_v6-rev0\\mingw64\\bin" >> $env:GITHUB_PATH
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.0.0
       with:
