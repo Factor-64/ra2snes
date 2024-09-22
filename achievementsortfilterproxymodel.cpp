@@ -24,6 +24,12 @@ void AchievementSortFilterProxyModel::sortByType() {
     sort(0, Qt::AscendingOrder);
 }
 
+void AchievementSortFilterProxyModel::sortByTime() {
+    sort(-1);
+    setSortRole(AchievementModel::TimeUnlockedRole);
+    sort(0, Qt::DescendingOrder);
+}
+
 void AchievementSortFilterProxyModel::showOnlyMissable() {
     missableFilterEnabled = true;
     invalidateFilter();

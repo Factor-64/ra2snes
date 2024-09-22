@@ -146,7 +146,7 @@ void MemoryReader::checkAchievements()
         {
             qDebug() << "Achievement Unlocked: " << it.key();
             ids.append(it.key());
-            emit achievementUnlocked(it.key());
+            emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
         }
     }
     for(const auto& id : ids)

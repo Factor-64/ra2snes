@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QSet>
 #include <rc_version.h>
 
 const QString RAClient::baseUrl = "https://retroachievements.org/";
@@ -81,12 +82,15 @@ void RAClient::startSession()
     sendRequest("startsession", post_content);
 }
 
-void RAClient::awardAchievement(unsigned int id, bool hardcore)
+void RAClient::awardAchievement(unsigned int id, bool hardcore, QDateTime achieved)
 {
     QByteArray md5hash;
     md5hash.append(QString::number(id).toLocal8Bit());
     md5hash.append(userinfo.username.toLocal8Bit());
     md5hash.append(QString::number(userinfo.hardcore).toLocal8Bit());
+    int secondsPassed = std::abs(achieved.secsTo(QDateTime::currentDateTime()));
+    md5hash.append(QString::number(id).toLocal8Bit());
+    md5hash.append(QString::number(secondsPassed).toLocal8Bit());
     md5hash = QCryptographicHash::hash(md5hash, QCryptographicHash::Md5);
 
     QJsonObject post_content;
@@ -115,15 +119,15 @@ void RAClient::awardAchievement(unsigned int id, bool hardcore)
     else index = 0;
 }*/
 
-void RAClient::queueAchievementRequest(unsigned int id) {
-    RequestData data = {AchievementRequest, id, userinfo.hardcore, 0};
+void RAClient::queueAchievementRequest(unsigned int id, QDateTime achieved) {
+    RequestData data = {AchievementRequest, id, userinfo.hardcore, achieved, 0};
     queue.append(data);
     if(!running)
         startQueue();
 }
 
-void RAClient::queueLeaderboardRequest(unsigned int id, unsigned int score) {
-    RequestData data = {LeaderboardRequest, id, true, score};
+void RAClient::queueLeaderboardRequest(unsigned int id, QDateTime achieved, unsigned int score) {
+    RequestData data = {LeaderboardRequest, id, true, achieved, score};
     queue.append(data);
     if(!running)
         startQueue();
@@ -136,7 +140,7 @@ void RAClient::runQueue() {
         RequestData data = queue.first();
         switch (data.type) {
             case AchievementRequest:
-                awardAchievement(data.id, data.hardcore);
+                awardAchievement(data.id, data.hardcore, data.unlock_time);
                 break;
             case LeaderboardRequest:
                 //submitLeaderboardEntry(data.id, data.score);
@@ -373,7 +377,7 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
     {
         if (achievement.id == jsonObject["AchievementID"].toInt())
         {
-            achievement.time_unlocked = QDateTime::currentDateTime().toString("MMMM d yyyy, h:mmap");
+            achievement.time_unlocked = queue.first().unlock_time.toString("MMMM d yyyy, h:mmap");
             achievement.unlocked = true;
             qDebug() << "AWARDED";
             gameinfo.completion_count++;
@@ -406,6 +410,12 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
     gameinfo.image_icon = patch_data["ImageIcon"].toString();
     gameinfo.image_icon_url = QUrl(patch_data["ImageIconURL"].toString());
     gameinfo.game_link = QUrl(baseUrl + "game/" + QString::number(gameinfo.id));
+    gameinfo.missable_count = 0;
+    gameinfo.point_total = 0;
+    gameinfo.mastered = false;
+    gameinfo.completion_count = 0;
+    gameinfo.beaten = false;
+    gameinfo.point_count = 0;
 
     gameinfo.achievements.clear();
     gameinfo.leaderboards.clear();
@@ -433,9 +443,13 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
             info.unlocked = false;
             info.time_unlocked = "";
             info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
+            if(info.type == "missable")
+                gameinfo.missable_count++;
+            gameinfo.point_total += info.points;
             gameinfo.achievements.append(info);
         }
     }
+    gameinfo.achievement_count = gameinfo.achievements.count();
 
     if (userinfo.hardcore)
     {
@@ -459,15 +473,6 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
 
 void RAClient::handleUnlocksResponse(const QJsonObject& jsonObject)
 {
-    QJsonArray data = jsonObject["UserUnlocks"].toArray();
-    for (auto id : data)
-    {
-        for (auto& achievement : gameinfo.achievements)
-        {
-            if (achievement.id == id.toInt())
-                achievement.unlocked = true;
-        }
-    }
     emit finishedUnlockSetup();
 }
 
@@ -489,6 +494,8 @@ void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
                 progressionMap[achievement.id] = achievement.unlocked;
             if (unlock["ID"].toInt() == achievement.id)
             {
+                achievement.unlocked = true;
+                gameinfo.point_count += achievement.points;
                 achievement.time_unlocked = QDateTime::fromSecsSinceEpoch(unlock["When"].toInt()).toString("MMMM d yyyy, h:mmap");
             }
         }

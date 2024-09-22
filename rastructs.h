@@ -67,6 +67,10 @@ struct GameInfo {
     unsigned int completion_count;
     bool beaten;
     bool mastered;
+    int point_total;
+    unsigned int missable_count;
+    int point_count;
+    int achievement_count;
 };
 
 static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {

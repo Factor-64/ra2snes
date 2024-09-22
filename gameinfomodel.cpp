@@ -43,6 +43,30 @@ unsigned int GameInfoModel::completion_count() const {
     return m_gameInfo.completion_count;
 }
 
+bool GameInfoModel::beaten() const {
+    return m_gameInfo.beaten;
+}
+
+bool GameInfoModel::mastered() const {
+    return m_gameInfo.mastered;
+}
+
+int GameInfoModel::point_total() const {
+    return m_gameInfo.point_total;
+}
+
+unsigned int GameInfoModel::missable_count() const {
+    return m_gameInfo.missable_count;
+}
+
+int GameInfoModel::point_count() const {
+    return m_gameInfo.point_count;
+}
+
+int GameInfoModel::achievement_count() const {
+    return m_gameInfo.achievement_count;
+}
+
 void GameInfoModel::updateCompletionCount() {
     m_gameInfo.completion_count++;
     emit dataChanged();

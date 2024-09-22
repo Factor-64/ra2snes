@@ -11,29 +11,29 @@ ApplicationWindow {
     width: {
         if(userInfoModel)
         {
-            if(userInfoModel.width >= 480)
+            if(userInfoModel.width >= 600)
                 userInfoModel.width
-            else 480
+            else 600
         }
         else
-            480
+            600
     }
 
     height: {
         if(userInfoModel)
         {
-            if(userInfoModel.height >= 480)
+            if(userInfoModel.height >= 600)
                 userInfoModel.height
-            else 480
+            else 600
         }
         else
-            480
+            600
     }
-    minimumWidth: 480
-    minimumHeight: 480
+    minimumWidth: 600
+    minimumHeight: 600
     title: "ra2snes"
     Material.theme: Material.Dark
-    Material.accent: "#ffffff"
+    Material.accent: "#eab308"
     color: "#1a1a1a"
 
     property int windowWidth: width
@@ -119,6 +119,7 @@ ApplicationWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     onClicked: {
+                                        ra2snes.saveWindowSize(windowWidth, windowHeight);
                                         ra2snes.signOut();
                                     }
                                     onEntered: logout_button.state = "hovered"
@@ -521,6 +522,30 @@ ApplicationWindow {
                             border.width: 2
                             border.color: "#161616"
                             radius: 6
+                            Rectangle {
+                                id: completionIcon
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.rightMargin: 16
+                                color: {
+                                    if(gameInfoModel)
+                                    {
+                                        if(gameInfoModel.mastered)
+                                            "#ffd700"
+                                        else if(gameInfoModel.beaten)
+                                            "#d4d4d4"
+                                        else "#161616"
+                                    }
+                                    else "#161616"
+                                }
+                                radius: 50
+                                width: 36
+                                height: 36
+                                border.width: 2
+                                border.color: "#52525b"
+                                visible: false
+                            }
+
                             Row {
                                 spacing: 10
                                 anchors.leftMargin: 8
@@ -661,6 +686,162 @@ ApplicationWindow {
                         }
 
                         Loader {
+                            id: achievementHeaderLoader
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 20
+                            Layout.bottomMargin: 10
+                            Layout.rightMargin: 20
+                            Layout.topMargin: 10
+                            sourceComponent: achievementHeader
+                            active: false
+                        }
+                        Rectangle {
+                            id: completionHeader
+                            color: "#161616"
+                            Layout.fillWidth: true
+                            height: 108
+                            border.width: 2
+                            border.color: "#161616"
+                            radius: 6
+                            visible: false
+
+                            Column {
+                                spacing: 8
+                                anchors.leftMargin: 20
+                                anchors.rightMargin: 20
+                                anchors.topMargin: 14
+                                anchors.bottomMargin: 20
+                                anchors.fill: parent
+                                Text {
+                                    text: {
+                                        if(gameInfoModel)
+                                        {
+                                            if(gameInfoModel.mastered)
+                                                qsTr("Mastered")
+                                            else if(gameInfoModel.beaten)
+                                                qsTr("Beaten")
+                                            else qsTr("Unfinished")
+                                        }
+                                        else ""
+                                    }
+                                    font.family: "Verdana"
+                                    font.pixelSize: 18
+                                    color: {
+                                        if(gameInfoModel)
+                                        {
+                                           if(gameInfoModel.mastered)
+                                               "#ffd700"
+                                           else if(gameInfoModel.beaten)
+                                               "#d4d4d4"
+                                           else "#4b4b4b"
+                                        }
+                                        else "black"
+                                    }
+                                }
+                                Column {
+                                    spacing: 6
+                                    Row {
+                                        Text {
+                                            text: {
+                                                if(gameInfoModel)
+                                                {
+                                                    gameInfoModel.completion_count
+                                                }
+                                                else ""
+                                            }
+                                            font.bold: true
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                        Text {
+                                            text: qsTr(" of ")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                        Text {
+                                            text: {
+                                                if(gameInfoModel)
+                                                    gameInfoModel.achievement_count;
+                                                else ""
+                                            }
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                        Text {
+                                            text: qsTr(" achievements")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                    }
+                                    Row {
+                                        Text {
+                                            text: {
+                                                if(gameInfoModel)
+                                                {
+                                                    gameInfoModel.point_count
+                                                }
+                                                else ""
+                                            }
+                                            font.bold: true
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                        Text {
+                                            text: qsTr(" of ")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                        Text {
+                                            text: {
+                                                if(gameInfoModel)
+                                                {
+                                                    gameInfoModel.point_total
+                                                }
+                                                else ""
+                                            }
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                        Text {
+                                            text: qsTr(" points")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ProgressBar {
+                            id: progressBar
+                            Layout.leftMargin: 2
+                            Layout.rightMargin: 2
+                            Layout.topMargin: -6
+                            implicitWidth: parent.width - 4
+                            height: 8
+                            value: {
+                                if (gameInfoModel) {
+                                    let val = Number((gameInfoModel.completion_count / gameInfoModel.achievement_count).toFixed(2));
+                                    if(val >= 0)
+                                        return Math.min(Math.max(val, 0), 1);
+                                    else return 0;
+                                } else {
+                                    return 0;
+                                }
+                            }
+                            visible: false
+                            background: Rectangle {
+                                color: "#2a2a2a"
+                            }
+                        }
+                        Loader {
                             id: listViewLoader
                             Layout.fillWidth: true
                             Layout.leftMargin: 20
@@ -670,10 +851,15 @@ ApplicationWindow {
                             sourceComponent: listViewComponent
                             active: false
                         }
+
                         Connections {
                             target: ra2snes
                             function onSwitchingMode() {
+                                achievementHeaderLoader.active = false;
                                 listViewLoader.active = false;
+                                completionHeader.visible = false;
+                                progressBar.visible = false;
+                                completionIcon.visible = false;
                                 mouseAreaMode.disableModeChangeButton()
                             }
                         }
@@ -681,7 +867,15 @@ ApplicationWindow {
                         Connections {
                             target: ra2snes
                             function onAchievementModelReady() {
+                                achievementHeaderLoader.active = true;
                                 listViewLoader.active = true;
+                                completionHeader.visible = true;
+                                let val = Number((gameInfoModel.completion_count / gameInfoModel.achievement_count).toFixed(2));
+                                if(val >= 0)
+                                    progressBar.value = Math.min(Math.max(val, 0), 1);
+                                else progressBar.value = 0;
+                                progressBar.visible = true;
+                                completionIcon.visible = true;
                                 mouseAreaMode.enableModeChangeButton();
                             }
                         }
@@ -689,7 +883,114 @@ ApplicationWindow {
                         Connections {
                             target: ra2snes
                             function onClearedAchievements() {
+                                achievementHeaderLoader.active = false;
                                 listViewLoader.active = false;
+                                completionHeader.visible = false;
+                                completionIcon.visible = false;
+                                progressBar.visible = false;
+                            }
+                        }
+
+                        Component {
+                            id: achievementHeader
+                            Column {
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 20
+                                Layout.bottomMargin: 10
+                                Layout.rightMargin: 20
+                                Layout.topMargin: 10
+                                spacing: 6
+                                Row {
+                                    Text {
+                                        text: qsTr("There are ")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                    Text {
+                                        text: {
+                                            if(gameInfoModel)
+                                                gameInfoModel.achievement_count;
+                                            else ""
+                                        }
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                        font.bold: true
+                                    }
+                                    Text {
+                                        text: qsTr(" achievements worth ")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                    Text {
+                                        text: {
+                                            if(gameInfoModel)
+                                                gameInfoModel.point_total
+                                            else ""
+                                        }
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                        font.bold: true
+                                    }
+                                    Text {
+                                        text: qsTr(" points.")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                                Row {
+                                    spacing: 6
+                                    Rectangle {
+                                        id: missableRectangle
+                                        width: 20
+                                        height: 20
+                                        radius: 50
+                                        color: "#161616"
+                                        Image {
+                                            id: missableImage
+                                            anchors.centerIn: parent
+                                            width: 14
+                                            height: 14
+                                            source: "./images/missable.svg"
+                                        }
+                                    }
+                                    Row {
+                                        Text {
+                                            text: qsTr("This set has ")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                            Layout.fillWidth: true
+                                        }
+                                        Text {
+                                            text: {
+                                                if(gameInfoModel)
+                                                    gameInfoModel.missable_count
+                                                else "0"
+                                            }
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                            Layout.fillWidth: true
+                                        }
+                                        Text {
+                                            text: qsTr(" missable achievements")
+                                            font.family: "Verdana"
+                                            font.pixelSize: 13
+                                            color: "#2c97fa"
+                                            Layout.fillWidth: true
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -927,6 +1228,62 @@ ApplicationWindow {
                                                 to: ""
                                                 ColorAnimation {
                                                     target: type
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            }
+                                        ]
+                                    }
+                                    Text{
+                                        text: "-"
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                    Text{
+                                        id: time
+                                        text: qsTr("Time")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#cc9900"
+                                        Layout.fillWidth: true
+                                        MouseArea {
+                                            id: mouseAreaTime
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                sortedAchievementModel.sortByTime()
+                                            }
+                                            onEntered: time.state = "hovered"
+                                            onExited: time.state = ""
+                                        }
+
+                                        states: [
+                                            State {
+                                                name: "hovered"
+                                                PropertyChanges {
+                                                    target: time
+                                                    color: "#c8c8c8"
+                                                }
+                                            }
+                                        ]
+
+                                        transitions: [
+                                            Transition {
+                                                from: ""
+                                                to: "hovered"
+                                                ColorAnimation {
+                                                    target: type
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            },
+                                            Transition {
+                                                from: "hovered"
+                                                to: ""
+                                                ColorAnimation {
+                                                    target: time
                                                     property: "color"
                                                     duration: 200
                                                 }

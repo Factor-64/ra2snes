@@ -71,7 +71,6 @@ ra2snes::ra2snes(QObject *parent)
     });
 
     connect(raclient, &RAClient::finishedGameSetup, this, [=] {
-        gameinfo_model->setGameInfo(raclient->getGameInfo());
         raclient->getUnlocks();
     });
 
@@ -79,6 +78,7 @@ ra2snes::ra2snes(QObject *parent)
         raclient->startSession();
     });
     connect(raclient, &RAClient::sessionStarted, this, [=] {
+        gameinfo_model->setGameInfo(raclient->getGameInfo());
         achievement_model->setAchievements(raclient->getAchievements());
         emit achievementModelReady();
         if(!raclient->isQueueRunning())
@@ -88,8 +88,8 @@ ra2snes::ra2snes(QObject *parent)
 
     connect(reader, &MemoryReader::finishedMemorySetup, this, [=] { usb2snes->getAddresses(reader->getUniqueMemoryAddresses()); });
 
-    connect(reader, &MemoryReader::achievementUnlocked, this, [=](unsigned int id) {
-        raclient->queueAchievementRequest(id);
+    connect(reader, &MemoryReader::achievementUnlocked, this, [=](unsigned int id, QDateTime time) {
+        raclient->queueAchievementRequest(id, time);
     });
 
     connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id, QString time) {

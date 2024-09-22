@@ -22,6 +22,7 @@ public:
         RequestType type;
         unsigned int id;
         bool hardcore;
+        QDateTime unlock_time;
         unsigned int score;
     };
 
@@ -33,12 +34,12 @@ public:
     void getAchievements(unsigned int gameId);
     void getUnlocks();
     void startSession();
-    void awardAchievement(unsigned int id, bool hardcore);
+    void awardAchievement(unsigned int id, bool hardcore, QDateTime achieved);
     //void getLBPlacements();
     QList<AchievementInfo> getAchievements();
     QList<LeaderboardInfo> getLeaderboards();
-    void queueAchievementRequest(unsigned int id);
-    void queueLeaderboardRequest(unsigned int id, unsigned int score);
+    void queueAchievementRequest(unsigned int id, QDateTime achieved);
+    void queueLeaderboardRequest(unsigned int id, QDateTime achieved, unsigned int score);
     void setHardcore(bool h);
     void setConsole(const QString& c, const QUrl& icon);
     bool getHardcore();

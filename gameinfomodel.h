@@ -14,6 +14,12 @@ class GameInfoModel : public QObject {
     Q_PROPERTY(QString console READ console NOTIFY dataChanged)
     Q_PROPERTY(QUrl console_icon READ console_icon NOTIFY dataChanged)
     Q_PROPERTY(unsigned int completion_count READ completion_count NOTIFY dataChanged)
+    Q_PROPERTY(bool mastered READ mastered NOTIFY dataChanged)
+    Q_PROPERTY(bool beaten READ beaten NOTIFY dataChanged)
+    Q_PROPERTY(int point_total READ point_total NOTIFY dataChanged)
+    Q_PROPERTY(unsigned int missable_count READ missable_count NOTIFY dataChanged)
+    Q_PROPERTY(int point_count READ point_count NOTIFY dataChanged)
+    Q_PROPERTY(int achievement_count READ achievement_count NOTIFY dataChanged)
 
 public:
     explicit GameInfoModel(QObject *parent = nullptr);
@@ -30,7 +36,13 @@ public:
     QString console() const;
     QUrl console_icon() const;
     unsigned int completion_count() const;
+    bool beaten() const;
+    bool mastered() const;
     void clearGame();
+    int point_total() const;
+    unsigned int missable_count() const;
+    int point_count() const;
+    int achievement_count() const;
 
 signals:
     void dataChanged();

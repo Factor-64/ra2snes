@@ -25,9 +25,9 @@ public:
 signals:
     void finishedMemorySetup();
     void achievementsChecked();
-    void achievementUnlocked(unsigned int id);
+    void achievementUnlocked(unsigned int id, QDateTime time);
     void leaderboardsChecked();
-    void leaderboardCompleted(unsigned int id);
+    void leaderboardCompleted(unsigned int id, QDateTime time);
 
 private:
     QList<QPair<int, int>> uniqueMemoryAddresses;
