@@ -1,0 +1,52 @@
+name: CMake Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+        
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v1
+
+    - name: Set up Qt on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qt6-base-dev qt6-tools-dev qt6-tools-dev-tools libgl1-mesa-dev
+
+    - name: Set up Qt on Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install qt6-default
+
+    - name: Set Environment Variables on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        export CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
+        export Qt6LinguistTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6LinguistTools
+
+    - name: Configure CMake on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
+
+    - name: Configure CMake on Windows
+      if: matrix.os == 'windows-latest'
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:/Qt/6.2.0/msvc2019_64/lib/cmake/Qt6
+
+    - name: Build rcheevos/test
+      run: |
+        cd rcheevos/test
+        make ARCH=x64
+
+    - name: Build project
+      run: cmake --build build --config Release
