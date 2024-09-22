@@ -50,6 +50,4 @@ jobs:
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64/lib/cmake/Qt6"
     - name: Build project
-      run: cmake --build build --config Release
-
-      
+      run: cmake --build build --config Release --verbose
