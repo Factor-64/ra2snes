@@ -12,13 +12,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools WebSockets Quick Qml QuickWidgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools WebSockets Quick Qml QuickWidgets)
 
-include_directories(${CMAKE_SOURCE_DIR}/rcheevos/include)
-include_directories(${CMAKE_SOURCE_DIR}/rcheevos/src)
-include_directories(${CMAKE_SOURCE_DIR}/rcheevos/src/rapi)
-include_directories(${CMAKE_SOURCE_DIR}/rcheevos/src/rcheevos)
-include_directories(${CMAKE_SOURCE_DIR}/rcheevos/src/rhash)
-include_directories(${CMAKE_SOURCE_DIR}/rcheevos/src/rurl)
-
 set(TS_FILES ra2snes_en_US.ts)
 
 file(GLOB RCHEEVOS_SOURCES ${CMAKE_SOURCE_DIR}/rcheevos/src/*)
@@ -86,6 +79,14 @@ target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::WebSockets)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Quick)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Qml)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::QuickWidgets)
+
+target_include_directories(ra2snes PRIVATE
+    ${CMAKE_SOURCE_DIR}/rcheevos/include
+    ${CMAKE_SOURCE_DIR}/rcheevos/src
+    ${CMAKE_SOURCE_DIR}/rcheevos/src/rapi
+    ${CMAKE_SOURCE_DIR}/rcheevos/src/rcheevos
+    ${CMAKE_SOURCE_DIR}/rcheevos/src/rhash
+    ${CMAKE_SOURCE_DIR}/rcheevos/src/rurl)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.ra2snes)
