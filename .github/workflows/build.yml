@@ -39,10 +39,6 @@ jobs:
         choco install -y make
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v2
-    - name: Download Vulkan SDK
-      run: |
-        Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile "vulkan-sdk.exe"
-      shell: pwsh
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.0.0
       with:
