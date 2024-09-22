@@ -39,12 +39,12 @@ jobs:
     - name: Build rcheevos/test
       run: |
         cd rcheevos/test
-        make ARCH=x86_64
+        make ARCH=x64
 
     - name: Build rcheevos/validator
       run: |
         cd rcheevos/validator
-        make ARCH=x86_64
+        make ARCH=x64
 
     - name: Build project
       run: cmake --build build --config Release
