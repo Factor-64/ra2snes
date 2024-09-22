@@ -26,7 +26,7 @@ jobs:
     - name: Set up Qt
       if: matrix.os == 'windows-latest'
       run: |
-        choco install qt5
+        choco install qt5-default
 
     - name: Set Environment Variables
       run: |
