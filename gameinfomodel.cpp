@@ -1,4 +1,4 @@
-#include "GameInfoModel.h"
+#include "gameinfomodel.h"
 
 GameInfoModel::GameInfoModel(QObject *parent) : QObject(parent) {}
 
