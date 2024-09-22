@@ -13,7 +13,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y qt6-base-dev qt6-tools-dev libqt6opengl6 libgl1-mesa-dev cmake gcc-multilib # bits/libc-header-start.h
+        sudo apt-get install -y qt6-base-dev qt6-tools-dev libqt6opengl6 libgl1-mesa-dev cmake vulkan-headers libxkbcommon-dev gcc-multilib # bits/libc-header-start.h
     - name: Build rcheevos
       run: make ARCH=x64 BUILD=c89 test
       working-directory: rcheevos/test
