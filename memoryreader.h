@@ -7,6 +7,11 @@
 #include "rcheevos/include/rc_runtime_types.h"
 #include "rastructs.h"
 
+class rc_trigger_t;
+class rc_lboard_t;
+class rc_value_t;
+class rc_memref_t;
+
 class MemoryReader : public QObject {
     Q_OBJECT
 

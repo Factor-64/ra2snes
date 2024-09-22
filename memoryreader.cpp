@@ -1,5 +1,5 @@
 #include "memoryreader.h"
-//#include "rcheevos/include/rc_internal.h"
+//#include "rc_internal.h"
 #include <QDebug>
 
 MemoryReader::MemoryReader(QObject *parent) : QObject(parent) {

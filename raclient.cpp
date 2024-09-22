@@ -7,7 +7,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSet>
-#include <rc_version.h>
+#include "rc_version.h"
 
 const QString RAClient::baseUrl = "https://retroachievements.org/";
 const QString RAClient::mediaUrl = "https://media.retroachievements.org/";

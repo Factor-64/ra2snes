@@ -32,18 +32,7 @@ file(GLOB UI_FILES ${CMAKE_SOURCE_DIR}/ui/*)
 file(GLOB UI_IMAGES ${CMAKE_SOURCE_DIR}/ui/images/*)
 
 set(PROJECT_SOURCES
-        main.cpp
-        ra2snes.cpp
-        ra2snes.h
-        ra2snes.ui
         ${TS_FILES}
-        usb2snes.cpp
-        usb2snes.h
-        raclient.cpp
-        raclient.h
-        memoryreader.cpp
-        memoryreader.h
-        rastructs.h
         ${RCHEEVOS_SOURCES}
         ${RCHEEVOS_INCLUDE}
         ${RCHEEVOS_SOURCES_RCHEEVOS}
@@ -53,7 +42,18 @@ set(PROJECT_SOURCES
         ${LUA_SOURCES}
         ${UI_FILES}
         ${UI_IMAGES}
+        main.cpp
         ui.qrc
+        ra2snes.cpp
+        ra2snes.h
+        ra2snes.ui
+        usb2snes.cpp
+        usb2snes.h
+        raclient.cpp
+        raclient.h
+        memoryreader.cpp
+        memoryreader.h
+        rastructs.h
         achievementmodel.cpp
         achievementmodel.h
         achievementsortfilterproxymodel.cpp
