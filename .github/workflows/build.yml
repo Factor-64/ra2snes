@@ -33,28 +33,24 @@ jobs:
       with:
         version: '6.7.2'
         modules: 'qtwebsockets'
-    - name: Install dependencies
+    - name: Install make and cmake
       run: |
         choco install -y cmake
         choco install -y make
     - name: Install MSBuild
-      uses: microsoft/setup-msbuild@v1.0.2
+      uses: microsoft/setup-msbuild@v2
     - name: Download Vulkan SDK
       run: |
         Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile "vulkan-sdk.exe"
       shell: pwsh
     - name: Install Vulkan SDK
-      run: |
-        Start-Process -FilePath "vulkan-sdk.exe" -ArgumentList "/S" -NoNewWindow -Wait
-        shell: pwsh
-    - name: Set Vulkan environment variables
-      run: |
-        $VulkanSDKPath = Get-ChildItem -Path "C:\VulkanSDK" | Where-Object { $_.PSIsContainer } | Sort-Object Name -Descending | Select-Object -First 1
-        $env:GITHUB_ENV += "`nVULKAN_SDK=$($VulkanSDKPath.FullName)"
-        $env:GITHUB_PATH += "`n$($VulkanSDKPath.FullName)\Bin"
-        $env:GITHUB_PATH += "`n$($VulkanSDKPath.FullName)\Lib"
-        $env:GITHUB_PATH += "`n$($VulkanSDKPath.FullName)\Include"
-      shell: pwsh
+      uses: jakoch/install-vulkan-sdk-action@v1.0.0
+      with:
+        vulkan_version: 'latest'
+        optional_components: 'com.lunarg.vulkan.vma'
+        install_runtime: true
+        cache: true
+        stripdown: true
     - name: Build rcheevos
       run: msbuild.exe rcheevos-test.sln -t:rcheevos-test -p:Configuration=Release -p:Platform=x64
       working-directory: rcheevos/test
