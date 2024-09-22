@@ -37,15 +37,21 @@ jobs:
       run: |
         choco install -y cmake
         choco install -y make
-        choco install -y mingw
-    - name: Add MinGW to PATH
-      run: echo "C:\\tools\\mingw64\\bin" >> $env:GITHUB_PATH
+        choco install -y vulkan-sdk
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Set Vulkan environment variables
+      run: |
+        echo "VULKAN_SDK=C:\\VulkanSDK\\1.2.182.0" >> $env:GITHUB_ENV
+        echo "C:\\VulkanSDK\\1.2.182.0\\Bin" >> $env:GITHUB_PATH
+        echo "C:\\VulkanSDK\\1.2.182.0\\Lib" >> $env:GITHUB_PATH
+        echo "C:\\VulkanSDK\\1.2.182.0\\Include" >> $env:GITHUB_PATH
       shell: pwsh
     - name: Build rcheevos
-      run: make ARCH=x64 BUILD=c89 CC=gcc test
+      run: msbuild.exe rcheevos-test.sln -t:rcheevos-test -p:Configuration=Release -p:Platform=x64
       working-directory: rcheevos/test
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/msvc2019_64/lib/cmake/Qt6"
+      run: cmake -S . -B build
     - name: Build project
       run: cmake --build build --config Release
 
