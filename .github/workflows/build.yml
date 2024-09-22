@@ -3,44 +3,49 @@ name: CMake Build
 on: [push, pull_request]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-
+  linux-x64:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: |
+       sudo apt-get update && sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev install libxkbcommon-dev qt6-base-dev qt6-base-dev-tools qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools qt6-translations-l10n libqt6websockets6-dev qt6-declarative-dev gcc-multilib # bits/libc-header-start.h
+    - name: Build rcheevos
+      run: make ARCH=x64 BUILD=c89 test
+      working-directory: rcheevos/test
+    - name: Configure CMake
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
+    - name: Build project
+      run: cmake --build build --config Release
+  
+  windows-x64-mingw:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
       with:
         submodules: true
 
-    - name: Set up CMake
-      uses: jwlawson/actions-setup-cmake@v1
-
-    - name: Install dependencies (Linux)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev qttools5-dev qttools5-dev-tools gcc-multilib
+        choco install qt6-base-dev
+        choco install gcc
 
-    - name: Install dependencies (Windows)
-      if: matrix.os == 'windows-latest'
+    - name: Set up Qt environment
       run: |
-        choco install qt5-default
+        setx QT_DIR "C:\Qt\6.4.2\mingw_64"
+        setx PATH "%QT_DIR%\bin;%PATH%"
 
-    - name: Set Environment Variables (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        export CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
-        export Qt5LinguistTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5LinguistTools
+    - name: Build rcheevos
+      run: make ARCH=x64 BUILD=c89 CC=gcc test
+      working-directory: rcheevos/test
 
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
-
-    - name: Build rcheevos/test
-      run: make ARCH=x64 BUILD=c89
-      working-directory: rcheevos/test
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:/Qt/6.4.2/mingw_64/lib/cmake/Qt6
 
     - name: Build project
       run: cmake --build build --config Release
+      
