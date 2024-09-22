@@ -32,7 +32,6 @@ file(GLOB UI_FILES ${CMAKE_SOURCE_DIR}/ui/*)
 file(GLOB UI_IMAGES ${CMAKE_SOURCE_DIR}/ui/images/*)
 
 set(PROJECT_SOURCES
-        ${TS_FILES}
         ${RCHEEVOS_SOURCES}
         ${RCHEEVOS_INCLUDE}
         ${RCHEEVOS_SOURCES_RCHEEVOS}
@@ -43,10 +42,9 @@ set(PROJECT_SOURCES
         ${UI_FILES}
         ${UI_IMAGES}
         main.cpp
-        ui.qrc
         ra2snes.cpp
         ra2snes.h
-        ra2snes.ui
+        ${TS_FILES}
         usb2snes.cpp
         usb2snes.h
         raclient.cpp
@@ -54,6 +52,7 @@ set(PROJECT_SOURCES
         memoryreader.cpp
         memoryreader.h
         rastructs.h
+        ui.qrc
         achievementmodel.cpp
         achievementmodel.h
         achievementsortfilterproxymodel.cpp
@@ -89,6 +88,8 @@ target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::WebSockets)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Quick)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::Qml)
 target_link_libraries(ra2snes PRIVATE Qt${QT_VERSION_MAJOR}::QuickWidgets)
+target_link_libraries(ra2snes PRIVATE ${CMAKE_C_STANDARD_LIBRARIES})
+
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.ra2snes)
