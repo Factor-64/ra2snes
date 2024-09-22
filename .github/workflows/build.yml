@@ -40,6 +40,9 @@ jobs:
     - name: Build rcheevos
       run: make ARCH=x64 BUILD=c89 CC=gcc test
       working-directory: rcheevos/test
+    - name: List Qt directory contents
+      run: dir "C:/Qt"
+      shell: pwsh
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/msvc2019_64/lib/cmake/Qt6"
     - name: Build project
