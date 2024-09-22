@@ -38,7 +38,7 @@ jobs:
       run: echo "C:\\tools\\mingw64\\bin" >> $env:GITHUB_PATH
       shell: pwsh
     - name: Build rcheevos
-      run: make ARCH=x64 BUILD=c89 test
+      run: make ARCH=x64 BUILD=c89 CC=gcc test
       working-directory: rcheevos/test
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.2.0/msvc2019_64/lib/cmake/Qt6"
