@@ -37,15 +37,23 @@ jobs:
       run: |
         choco install -y cmake
         choco install -y make
-        choco install -y vulkan-sdk --version=1.3.250.0
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
+    - name: Download Vulkan SDK
+      run: |
+        Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile "vulkan-sdk.exe"
+      shell: pwsh
+    - name: Install Vulkan SDK
+      run: |
+        Start-Process -FilePath "vulkan-sdk.exe" -ArgumentList "/S" -NoNewWindow -Wait
+        shell: pwsh
     - name: Set Vulkan environment variables
       run: |
-        echo "VULKAN_SDK=C:\\VulkanSDK\\1.3.250.0" >> $env:GITHUB_ENV
-        echo "C:\\VulkanSDK\\1.3.250.0\\Bin" >> $env:GITHUB_PATH
-        echo "C:\\VulkanSDK\\1.3.250.0\\Lib" >> $env:GITHUB_PATH
-        echo "C:\\VulkanSDK\\1.3.250.0\\Include" >> $env:GITHUB_PATH
+        $VulkanSDKPath = Get-ChildItem -Path "C:\VulkanSDK" | Where-Object { $_.PSIsContainer } | Sort-Object Name -Descending | Select-Object -First 1
+        $env:GITHUB_ENV += "`nVULKAN_SDK=$($VulkanSDKPath.FullName)"
+        $env:GITHUB_PATH += "`n$($VulkanSDKPath.FullName)\Bin"
+        $env:GITHUB_PATH += "`n$($VulkanSDKPath.FullName)\Lib"
+        $env:GITHUB_PATH += "`n$($VulkanSDKPath.FullName)\Include"
       shell: pwsh
     - name: Build rcheevos
       run: msbuild.exe rcheevos-test.sln -t:rcheevos-test -p:Configuration=Release -p:Platform=x64
