@@ -12,40 +12,41 @@ jobs:
         submodules: true
     - name: Install dependencies
       run: |
-       sudo apt-get update && sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev install libxkbcommon-dev qt6-base-dev qt6-base-dev-tools qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools qt6-translations-l10n libqt6websockets6-dev qt6-declarative-dev gcc-multilib # bits/libc-header-start.h
+       sudo apt-get update && sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libxkbcommon-dev qt6-base-dev qt6-base-dev-tools qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools qt6-translations-l10n libqt6websockets6-dev qt6-declarative-dev gcc-multilib # bits/libc-header-start.h
     - name: Build rcheevos
       run: make ARCH=x64 BUILD=c89 test
       working-directory: rcheevos/test
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
     - name: Build project
       run: cmake --build build --config Release
-  
-  windows-x64-mingw:
+      
+  windows-x64:
     runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         submodules: true
-
-    - name: Install dependencies
-      run: |
-        choco install qt6-base-dev
-        choco install gcc
-
-    - name: Set up Qt environment
-      run: |
-        setx QT_DIR "C:\Qt\6.4.2\mingw_64"
-        setx PATH "%QT_DIR%\bin;%PATH%"
-
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.7.2'
+        modules: 'qtwebsockets'
+    - name: Install Vulkan SDK
+      uses: jakoch/install-vulkan-sdk-action@v1.0.0
+      with:
+        vulkan_version: 'latest'
+        optional_components: 'com.lunarg.vulkan.vma'
+        install_runtime: true
+        cache: true
+        stripdown: true
     - name: Build rcheevos
       run: make ARCH=x64 BUILD=c89 CC=gcc test
       working-directory: rcheevos/test
-
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:/Qt/6.4.2/mingw_64/lib/cmake/Qt6
-
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64/lib/cmake/Qt6"
     - name: Build project
       run: cmake --build build --config Release
+
       
