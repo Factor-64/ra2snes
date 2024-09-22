@@ -33,6 +33,7 @@ jobs:
       with:
         version: '6.7.2'
         modules: 'qtwebsockets'
+    
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.0.0
       with:
@@ -41,8 +42,10 @@ jobs:
         install_runtime: true
         cache: true
         stripdown: true
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v2
     - name: Build rcheevos
-      run: make ARCH=x64 BUILD=c89 CC=gcc test
+      run: msbuild.exe rcheevos-test.sln -t:rcheevos-test -p:Configuration=Release -p:Platform=x64
       working-directory: rcheevos/test
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64/lib/cmake/Qt6"
