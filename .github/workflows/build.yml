@@ -51,7 +51,7 @@ jobs:
       run: msbuild.exe rcheevos-test.sln -t:rcheevos-test -p:Configuration=Release -p:Platform=x64
       working-directory: rcheevos/test
     - name: Configure CMake
-      run: cmake -S . -B build
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64/lib/cmake/Qt6"
     - name: Build project
       run: cmake --build build --config Release
 
