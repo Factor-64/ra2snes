@@ -1,0 +1,45 @@
+name: CMake Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: true  # Initialize and update submodules
+
+    - name: Set up CMake
+      uses: lukka/get-cmake@v3
+
+    - name: Set up Qt
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qtbase5-dev qtdeclarative5-dev libqt5websockets5-dev qtquickcontrols2-5-dev
+    - name: Set up Qt
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install qt5
+
+    - name: Configure CMake
+      run: cmake -S . -B build
+
+    - name: Build rcheevos/test
+      run: |
+        cd rcheevos/test
+        make
+
+    - name: Build rcheevos/validator
+      run: |
+        cd rcheevos/validator
+        make
+
+    - name: Build project
+      run: cmake --build build --config Release
