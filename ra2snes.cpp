@@ -22,6 +22,7 @@ ra2snes::ra2snes(QObject *parent)
     reset = false;
 
     raclient->setHardcore(true);
+    saveWindowSize(600, 600);
 
     connect(usb2snes, &Usb2Snes::connected, this, [=]() {
         usb2snes->setAppName("ra2snes");
