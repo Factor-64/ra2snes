@@ -290,6 +290,15 @@ void ra2snes::onUsb2SnesStateChanged()
             qDebug() << "Restart";
             usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
         }
+        else if(tasksFinished == 10)
+        {
+            reset = true;
+            usb2snes->infos();
+        }
+    }
+    else if(usb2snes->state() == Usb2Snes::None)
+    {
+        tasksFinished = 10;
     }
 }
 
