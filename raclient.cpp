@@ -271,7 +271,7 @@ void RAClient::sendRequest(const QString& request_type, const QJsonObject& post_
     networkManager->post(request, postData);
 }
 
-void printJsonObject(const QJsonObject &jsonObject, int indent = 0) {
+/*void printJsonObject(const QJsonObject &jsonObject, int indent = 0) {
     QString indentString(indent, ' ');
     for (auto it = jsonObject.begin(); it != jsonObject.end(); ++it) {
         if (it.value().isObject()) {
@@ -302,7 +302,7 @@ void printAchievements(QList<AchievementInfo> list)
         qDebug() << achievement.title;
         qDebug() << achievement.flags;
     }
-}
+}*/
 
 void RAClient::handleNetworkReply(QNetworkReply *reply)
 {
@@ -480,10 +480,16 @@ void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
 {
     qDebug() << jsonObject;
     QJsonArray unlock_data;
-    if(userinfo.hardcore)
+    if(!userinfo.hardcore)
+    {
         unlock_data = jsonObject["HardcoreUnlocks"].toArray();
+        QJsonArray unlocks = jsonObject["Unlocks"].toArray();
+        for (const QJsonValue &value : unlocks) {
+            unlock_data.append(value);
+        }
+    }
     else
-        unlock_data = jsonObject["Unlocks"].toArray();
+        unlock_data = jsonObject["HardcoreUnlocks"].toArray();
     gameinfo.completion_count = unlock_data.count();
     for (int i = 0; i < unlock_data.size(); ++i)
     {
