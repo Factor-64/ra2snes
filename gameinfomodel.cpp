@@ -72,6 +72,11 @@ void GameInfoModel::updateCompletionCount() {
     emit dataChanged();
 }
 
+void GameInfoModel::updatePointCount(unsigned int points) {
+    m_gameInfo.point_count += points;
+    emit dataChanged();
+}
+
 void GameInfoModel::clearGame() {
     m_gameInfo = GameInfo();
 }

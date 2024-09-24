@@ -69,7 +69,7 @@ signals:
     void gotGameID(int gameid);
     void finishedGameSetup();
     void finishedUnlockSetup();
-    void awardedAchievement(unsigned int id, QString time);
+    void awardedAchievement(unsigned int id, QString time, unsigned int points);
     void sessionStarted();
     void requestFinished();
     void continueQueue();

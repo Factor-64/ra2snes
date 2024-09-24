@@ -26,6 +26,7 @@ public:
 
     void setGameInfo(const GameInfo &gameInfo);
     void updateCompletionCount();
+    void updatePointCount(unsigned int points);
 
     QString title() const;
     QString md5hash() const;

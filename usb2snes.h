@@ -153,6 +153,7 @@ signals:
     void    lsDone(QList<Usb2Snes::FileInfo> filesInfo);
     void    doFrame();
     void    getConfigDataReceived();
+    void    gotServerVersion();
 
 private slots:
     void    onWebSocketConnected();

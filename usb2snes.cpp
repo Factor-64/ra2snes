@@ -171,6 +171,7 @@ void Usb2Snes::onWebSocketTextReceived(QString message)
                 m_serverVersion = QVersionNumber::fromString(results.at(0));
                 m_istate = IReady;
                 changeState(Ready);
+                emit gotServerVersion();
             }
             break;
         }

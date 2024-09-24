@@ -379,9 +379,10 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
         {
             achievement.time_unlocked = queue.first().unlock_time.toString("MMMM d yyyy, h:mmap");
             achievement.unlocked = true;
+            gameinfo.point_count += achievement.points;
             qDebug() << "AWARDED";
             gameinfo.completion_count++;
-            emit awardedAchievement(achievement.id, achievement.time_unlocked);
+            emit awardedAchievement(achievement.id, achievement.time_unlocked, achievement.points);
         }
     }
 }
@@ -502,6 +503,10 @@ void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
             {
                 achievement.unlocked = true;
                 gameinfo.point_count += achievement.points;
+                if(userinfo.hardcore)
+                    userinfo.hardcore_score += achievement.points;
+                else
+                    userinfo.softcore_score += achievement.points;
                 achievement.time_unlocked = QDateTime::fromSecsSinceEpoch(unlock["When"].toInt()).toString("MMMM d yyyy, h:mmap");
             }
         }

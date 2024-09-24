@@ -349,9 +349,13 @@ ApplicationWindow {
                                         }
                                     }
 
-                                    function showErrorMessage(error) {
+                                    function showErrorMessage(error, iserror) {
                                         mouseAreaMode.enableModeChangeButton();
                                         mainWindow.modeFailed = error;
+                                        if(iserror)
+                                            errorMessage.color = "#ff0000";
+                                        else
+                                            errorMessage.color = "#00ff00";
                                         errorMessage.opacity = 1;
                                         fadeOutTimer.restart();
                                     }
@@ -359,7 +363,14 @@ ApplicationWindow {
                                     Connections {
                                         target: ra2snes
                                         function onChangeModeFailed(error) {
-                                            errorMessage.showErrorMessage(error);
+                                            errorMessage.showErrorMessage(error, true);
+                                        }
+                                    }
+
+                                    Connections {
+                                        target: ra2snes
+                                        function onDisplayMessage(error, iserror) {
+                                            errorMessage.showErrorMessage(error, iserror);
                                         }
                                     }
                                 }
@@ -704,6 +715,7 @@ ApplicationWindow {
                             border.color: "#161616"
                             radius: 6
                             visible: false
+                            clip: true
 
                             Column {
                                 spacing: 8
@@ -818,29 +830,59 @@ ApplicationWindow {
                                     }
                                 }
                             }
-                        }
-                        ProgressBar {
-                            id: progressBar
-                            Layout.leftMargin: 2
-                            Layout.rightMargin: 2
-                            Layout.topMargin: -6
-                            implicitWidth: parent.width - 4
-                            height: 8
-                            value: {
-                                if (gameInfoModel) {
-                                    let val = Number((gameInfoModel.completion_count / gameInfoModel.achievement_count).toFixed(2));
-                                    if(val >= 0)
-                                        return Math.min(Math.max(val, 0), 1);
-                                    else return 0;
-                                } else {
-                                    return 0;
+                            ProgressBar {
+                                id: progressBar
+                                anchors.left: parent.left
+                                anchors.bottom: parent.bottom
+                                width: parent.width - 4
+                                anchors.leftMargin: 2
+                                height: 8
+                                value: {
+                                    if (gameInfoModel) {
+                                        let val = (gameInfoModel.completion_count / gameInfoModel.achievement_count);
+                                        if(val >= 0)
+                                            return Math.min(Math.max(val, 0), 1);
+                                        else return 0;
+                                    } else {
+                                        return 0;
+                                    }
+                                }
+                                clip: true
+                                Item {
+                                    width: progressBar.width
+                                    height: progressBar.height
+                                    Rectangle {
+                                        width: parent.width
+                                        height: parent.height / 2
+                                        color: "#2a2a2a"
+                                    }
+                                    Rectangle {
+                                        width: parent.width
+                                        height: parent.height / 2
+                                        radius: 6
+                                        color: "#2a2a2a"
+                                        anchors.bottom: parent.bottom
+                                    }
+                                }
+                                Item {
+                                    width: progressBar.width * progressBar.value
+                                    height: progressBar.height
+                                    Rectangle {
+                                        width: parent.width
+                                        height: parent.height / 2
+                                        color: "#eab308"
+                                    }
+                                    Rectangle {
+                                        width: parent.width
+                                        height: parent.height / 2
+                                        radius: 6
+                                        color: "#eab308"
+                                        anchors.bottom: parent.bottom
+                                    }
                                 }
                             }
-                            visible: false
-                            background: Rectangle {
-                                color: "#2a2a2a"
-                            }
                         }
+
                         Loader {
                             id: listViewLoader
                             Layout.fillWidth: true
@@ -858,7 +900,6 @@ ApplicationWindow {
                                 achievementHeaderLoader.active = false;
                                 listViewLoader.active = false;
                                 completionHeader.visible = false;
-                                progressBar.visible = false;
                                 completionIcon.visible = false;
                                 mouseAreaMode.disableModeChangeButton()
                             }
@@ -870,11 +911,10 @@ ApplicationWindow {
                                 achievementHeaderLoader.active = true;
                                 listViewLoader.active = true;
                                 completionHeader.visible = true;
-                                let val = Number((gameInfoModel.completion_count / gameInfoModel.achievement_count).toFixed(2));
+                                let val =(gameInfoModel.completion_count / gameInfoModel.achievement_count);
                                 if(val >= 0)
                                     progressBar.value = Math.min(Math.max(val, 0), 1);
                                 else progressBar.value = 0;
-                                progressBar.visible = true;
                                 completionIcon.visible = true;
                                 mouseAreaMode.enableModeChangeButton();
                             }
@@ -887,7 +927,6 @@ ApplicationWindow {
                                 listViewLoader.active = false;
                                 completionHeader.visible = false;
                                 completionIcon.visible = false;
-                                progressBar.visible = false;
                             }
                         }
 
@@ -1243,7 +1282,7 @@ ApplicationWindow {
                                     }
                                     Text{
                                         id: time
-                                        text: qsTr("Time")
+                                        text: qsTr("Lastest")
                                         font.family: "Verdana"
                                         font.pixelSize: 13
                                         color: "#cc9900"

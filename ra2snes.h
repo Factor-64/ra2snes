@@ -37,6 +37,7 @@ signals:
     void signedOut();
     void switchingMode();
     void clearedAchievements();
+    void displayMessage(QString error, bool iserror);
 
 private:
     Usb2Snes *usb2snes;
@@ -51,6 +52,7 @@ private:
     bool remember_me;
     bool reset;
     bool gameSetup;
+    bool isGB;
     QAtomicInt tasksFinished;
     QString console;
     QThread* thread;

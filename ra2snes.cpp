@@ -12,10 +12,11 @@ ra2snes::ra2snes(QObject *parent)
     achievement_model = new AchievementModel(this);
     gameinfo_model = new GameInfoModel(this);
     userinfo_model = new UserInfoModel(this);
-    m_currentGame = "/sd2snes/m3nu.bin";
+    m_currentGame = "";
     loggedin = false;
     gameSetup = false;
     gameLoaded = false;
+    isGB = false;
     tasksFinished = 0;
     console = "SNES";
     remember_me = false;
@@ -28,10 +29,12 @@ ra2snes::ra2snes(QObject *parent)
         usb2snes->setAppName("ra2snes");
         qDebug() << "Connected to usb2snes server, trying to find a suitable device";
         usb2snes->deviceList();
+        emit displayMessage("QUsb2Snes Connected", false);
     });
 
     connect(usb2snes, &Usb2Snes::disconnected, this, [=]() {
         qDebug() << "Disconnected, trying to reconnect in 1 sec";
+        emit displayMessage("QUsb2Snes Not Connected", true);
         QTimer::singleShot(1000, this, [=] {
             usb2snes->connect();
         });
@@ -42,9 +45,12 @@ ra2snes::ra2snes(QObject *parent)
         {
             usb2snes->attach(devices.at(0));
             usb2snes->infos(true);
+            emit displayMessage("Console Connected", false);
         }
         else
         {
+            m_currentGame = "";
+            emit displayMessage("Console Not Connected", true);
             QTimer::singleShot(1000, this, [=] {
                 if (usb2snes->state() == Usb2Snes::Connected)
                     usb2snes->deviceList();
@@ -53,6 +59,7 @@ ra2snes::ra2snes(QObject *parent)
     });
 
     connect(usb2snes, &Usb2Snes::stateChanged, this, &ra2snes::onUsb2SnesStateChanged);
+    connect(usb2snes, &Usb2Snes::gotServerVersion, this, [=] {usb2snes->infos(); });
     connect(usb2snes, &Usb2Snes::infoDone, this, &ra2snes::onUsb2SnesInfoDone);
     connect(usb2snes, &Usb2Snes::getFileDataReceived, this, &ra2snes::onUsb2SnesGetFileDataReceived);
     connect(usb2snes, &Usb2Snes::getConfigDataReceived, this, &ra2snes::onUsb2SnesGetConfigDataReceived);
@@ -93,9 +100,10 @@ ra2snes::ra2snes(QObject *parent)
         raclient->queueAchievementRequest(id, time);
     });
 
-    connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id, QString time) {
+    connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id, QString time, unsigned int points) {
         achievement_model->setUnlockedState(id, true, time);
         gameinfo_model->updateCompletionCount();
+        gameinfo_model->updatePointCount(points);
     });
 
     //connect(reader, &MemoryReader::leaderboardCompleted, this, [=](unsigned int id, unsigned int score) {
@@ -142,6 +150,7 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
     if (!infos.flags.contains("NO_FILE_CMD"))
     {
         m_currentGame = infos.romPlaying.remove(QChar('\u0000'));
+        m_currentGame.replace("?", " ");
         if (m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin") || reset)
         {
             gameLoaded = false;
@@ -150,23 +159,28 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
             achievement_model->clearAchievements();
             emit clearedAchievements();
             gameinfo_model->clearGame();
-            m_currentGame = "/sd2snes/m3nu.bin";
-            setCurrentConsole();
             reset = false;
+            setCurrentConsole();
             usb2snes->getConfig();
         }
         else if (gameLoaded && loggedin)
         {
-            usb2snes->isPatchedROM();
             tasksFinished++;
-            QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
-            QThreadPool::globalInstance()->start([=] { reader->checkLeaderboards(); });
+            if(raclient->getHardcore())
+                usb2snes->isPatchedROM();
+            else
+            {
+                QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
+                QThreadPool::globalInstance()->start([=] { reader->checkLeaderboards(); });
+            }
+            onUsb2SnesStateChanged();
         }
         else if (!gameLoaded && loggedin)
         {
             emit switchingMode();
             setCurrentConsole();
             gameSetup = true;
+            emit displayMessage("Loading Game...", false);
             usb2snes->getConfig();
         }
     }
@@ -215,6 +229,12 @@ void ra2snes::onUsb2SnesGetAddressesDataReceived()
 
 void ra2snes::onUsb2SnesGetAddressDataReceived()
 {
+    if(isGB)
+    {
+        tasksFinished++;
+        onUsb2SnesStateChanged();
+        return;
+    }
     QByteArray data = usb2snes->getBinaryData();
     bool patched = false;
     qDebug() << "Checking for patched rom";
@@ -237,13 +257,13 @@ void ra2snes::onUsb2SnesGetAddressDataReceived()
     {
         raclient->setPatched(false);
         userinfo_model->setPatched(false);
+        if (gameLoaded)
+        {
+            QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
+            QThreadPool::globalInstance()->start([=] { reader->checkLeaderboards(); });
+        }
     }
     qDebug() << "Finished Patch Check";
-    if (gameLoaded)
-    {
-        tasksFinished++;
-        onUsb2SnesStateChanged();
-    }
 }
 
 void ra2snes::onLoginSuccess()
@@ -286,21 +306,19 @@ void ra2snes::onUsb2SnesStateChanged()
     {
         if(reset)
             usb2snes->infos();
-        else if(tasksFinished == 4)
+        else if(tasksFinished == 3)
         {
             qDebug() << "Restart";
             usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
         }
-        else if(tasksFinished == 10)
-        {
-            reset = true;
-            usb2snes->infos();
-        }
     }
     else if(usb2snes->state() == Usb2Snes::None)
     {
-        tasksFinished = 10;
+        m_currentGame = "";
+        setCurrentConsole();
     }
+    else if(usb2snes->state() == Usb2Snes::ReceivingFile)
+        emit displayMessage("Loading Game...", false);
 }
 
 void ra2snes::setCurrentConsole()
@@ -311,28 +329,33 @@ void ra2snes::setCurrentConsole()
         QString icon = "https://static.retroachievements.org/assets/images/system/";
         QString extension = m_currentGame.mid(extensionIndex + 1);
         if(extension == "sfc" || extension == "smc" || extension == "swc" || extension == "bs" || extension == "fig")
-        {
-            icon += "snes.png";
-            raclient->setConsole("SNES/Super Famicom", QUrl(icon));
-        }
+            console = "SNES";
         else if(extension == "gb")
         {
-            icon += "gb.png";
-            raclient->setConsole("Game Boy", QUrl(icon));
+            console = "SNES";
+            isGB = true;
         }
-        else
+        if(console == "SNES")
         {
-            if(console == "SNES")
+            raclient->setTitle("SD2SNES Menu", "https://media.retroachievements.org/UserPic/user.png", "");
+            if(isGB)
+            {
+                icon += "gb.png";
+                raclient->setConsole("Super Game Boy", QUrl(icon));
+            }
+            else
             {
                 icon += "snes.png";
                 raclient->setConsole("SNES/Super Famicom", QUrl(icon));
-                raclient->setTitle("SD2SNES Menu", "https://media.retroachievements.org/UserPic/user.png", "");
-                gameinfo_model->setGameInfo(raclient->getGameInfo());
             }
         }
     }
     else
+    {
+        raclient->setTitle("", "", "");
         raclient->setConsole("", QUrl(""));
+    }
+    gameinfo_model->setGameInfo(raclient->getGameInfo());
 }
 
 AchievementModel* ra2snes::achievementModel()
