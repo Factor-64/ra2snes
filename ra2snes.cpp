@@ -75,6 +75,7 @@ ra2snes::ra2snes(QObject *parent)
     connect(raclient, &RAClient::gotGameID, this, [=] (int id){
         gameSetup = false;
         gameLoaded = true;
+        emit displayMessage("Game Loaded", false);
         raclient->getAchievements(id);
     });
 

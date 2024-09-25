@@ -834,8 +834,7 @@ ApplicationWindow {
                                 id: progressBar
                                 anchors.left: parent.left
                                 anchors.bottom: parent.bottom
-                                width: parent.width - 4
-                                anchors.leftMargin: 2
+                                width: parent.width
                                 height: 8
                                 value: {
                                     if (gameInfoModel) {
