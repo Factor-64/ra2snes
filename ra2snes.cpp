@@ -166,13 +166,13 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
         else if (gameLoaded && loggedin)
         {
             tasksFinished++;
-            if(raclient->getHardcore())
-                usb2snes->isPatchedROM();
-            else
+            if(!raclient->getHardcore() || isGB)
             {
                 QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
                 QThreadPool::globalInstance()->start([=] { reader->checkLeaderboards(); });
             }
+            else
+                usb2snes->isPatchedROM();
             onUsb2SnesStateChanged();
         }
         else if (!gameLoaded && loggedin)
@@ -203,10 +203,13 @@ void ra2snes::onUsb2SnesGetConfigDataReceived()
     bool c = !config.contains("EnableCheats: false");
     bool s = !config.contains("EnableIngameSavestate: 0");
 
+    if(isGB)
+        s = !config.contains("SGBEnableState: false");
     raclient->setCheats(c);
     raclient->setSaveStates(s);
     userinfo_model->setCheats(c);
     userinfo_model->setSaveStates(s);
+
 
     if (c || s)
     {
@@ -229,12 +232,6 @@ void ra2snes::onUsb2SnesGetAddressesDataReceived()
 
 void ra2snes::onUsb2SnesGetAddressDataReceived()
 {
-    if(isGB)
-    {
-        tasksFinished++;
-        onUsb2SnesStateChanged();
-        return;
-    }
     QByteArray data = usb2snes->getBinaryData();
     bool patched = false;
     qDebug() << "Checking for patched rom";
