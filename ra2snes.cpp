@@ -97,9 +97,6 @@ ra2snes::ra2snes(QObject *parent)
         raclient->queueAchievementRequest(id, time);
     });
 
-    connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id, QString time, unsigned int points) {
-    });
-
     //connect(reader, &MemoryReader::leaderboardCompleted, this, [=](unsigned int id, unsigned int score) {
     //    raclient->queueLeaderboardRequest(id, score);
     //    if(!raclient->isQueueRunning())

@@ -412,12 +412,10 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
     {
         if (achievement.id == jsonObject["AchievementID"].toInt())
         {
-            achievement.time_unlocked = queue.first().unlock_time.toString("MMMM d yyyy, h:mmap");
-            achievement.unlocked = true;
+            achievement_model->setUnlockedState(achievement.id, true, queue.first().unlock_time.toString("MMMM d yyyy, h:mmap"));
             gameinfo_model->updatePointCount(achievement.points);
             qDebug() << "AWARDED";
             gameinfo_model->updateCompletionCount();
-            emit awardedAchievement(achievement.id, achievement.time_unlocked, achievement.points);
         }
     }
 }
