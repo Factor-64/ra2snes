@@ -28,6 +28,7 @@ public slots:
     void signOut();
     void saveWindowSize(int w, int h);
     void changeMode();
+    void autoChange(bool ac);
 
 signals:
     void loginSuccess();
@@ -43,9 +44,6 @@ private:
     Usb2Snes *usb2snes;
     RAClient *raclient;
     MemoryReader *reader;
-    AchievementModel *achievement_model;
-    GameInfoModel *gameinfo_model;
-    UserInfoModel *userinfo_model;
     QString m_currentGame;
     bool loggedin;
     bool gameLoaded;
@@ -55,7 +53,6 @@ private:
     bool isGB;
     QAtomicInt tasksFinished;
     QString console;
-    QThread* thread;
 
     void createSettingsFile();
     void loadSettings();

@@ -6,8 +6,9 @@
 #include <QNetworkReply>
 #include <QQueue>
 #include <QJsonObject>
-#include "rastructs.h"
-
+#include "userinfomodel.h"
+#include "gameinfomodel.h"
+#include "achievementmodel.h"
 class RAClient : public QObject {
     Q_OBJECT
 
@@ -36,15 +37,15 @@ public:
     void startSession();
     void awardAchievement(unsigned int id, bool hardcore, QDateTime achieved);
     //void getLBPlacements();
-    QList<AchievementInfo> getAchievements();
+    AchievementModel* getAchievementModel();
     QList<LeaderboardInfo> getLeaderboards();
     void queueAchievementRequest(unsigned int id, QDateTime achieved);
     void queueLeaderboardRequest(unsigned int id, QDateTime achieved, unsigned int score);
     void setHardcore(bool h);
     void setConsole(const QString& c, const QUrl& icon);
     bool getHardcore();
-    UserInfo getUserInfo();
-    GameInfo getGameInfo();
+    UserInfoModel* getUserInfoModel();
+    GameInfoModel* getGameInfoModel();
     void setWidthHeight(int w, int h);
     int getWidth();
     int getHeight();
@@ -61,6 +62,12 @@ public:
     void handleNetworkReply(QNetworkReply *reply);
     bool isGameBeaten();
     bool isGameMastered();
+    void freeModelMemory();
+    void clearAchievements();
+    void clearGame();
+    void clearUser();
+    void setAutoHardcore(bool ac);
+    bool getAutoHardcore();
 
 signals:
     void loginSuccess();
@@ -89,10 +96,12 @@ private:
     QString latestRequest;
     bool running;
     QNetworkAccessManager* networkManager;
-    UserInfo userinfo;
-    GameInfo gameinfo;
+    UserInfoModel* userinfo_model;
+    GameInfoModel* gameinfo_model;
+    AchievementModel* achievement_model;
     QMap<unsigned int, bool> progressionMap;
     QQueue<RequestData> queue;
+    QList<LeaderboardInfo> leaderboards;
 };
 
 #endif // RACLIENT_H

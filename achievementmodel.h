@@ -32,8 +32,6 @@ public:
 
     AchievementModel(QObject *parent = nullptr);
 
-    void setAchievements(const QList<AchievementInfo> &achievements);
-
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -43,6 +41,10 @@ public:
     void setUnlockedState(unsigned int id, bool unlocked, QString time);
 
     void clearAchievements();
+
+    QList<AchievementInfo> getAchievements();
+
+    void appendAchievement(AchievementInfo a);
 
 private:
     QList<AchievementInfo> m_achievements;

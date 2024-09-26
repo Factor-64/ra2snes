@@ -17,15 +17,13 @@ class UserInfoModel : public QObject {
     Q_PROPERTY(bool savestates READ savestates NOTIFY dataChanged)
     Q_PROPERTY(bool cheats READ cheats NOTIFY dataChanged)
     Q_PROPERTY(bool patched READ patched NOTIFY dataChanged)
+    Q_PROPERTY(bool autohardcore READ autohardcore NOTIFY dataChanged)
 
 public:
     explicit UserInfoModel(QObject *parent = nullptr);
 
-    void setUserInfo(const UserInfo &userInfo);
-    void setHardcore(bool h);
-    void setSaveStates(bool s);
-    void setCheats(bool c);
-    void setPatched(bool p);
+    void updateHardcoreScore(int score);
+    void updateSoftcoreScore(int score);
 
     QString username() const;
     QString token() const;
@@ -40,6 +38,21 @@ public:
     bool cheats() const;
     bool patched() const;
     void clearUser();
+    bool autohardcore() const;
+
+    void username(QString u);
+    void token(QString t);
+    void softcore_score(int s);
+    void hardcore_score(int hs);
+    void pfp(QUrl p);
+    void hardcore(bool h);
+    void link(QUrl l);
+    void width(int w);
+    void height(int h);
+    void savestates(bool s);
+    void cheats(bool c);
+    void patched(bool p);
+    void autohardcore(bool a);
 
 signals:
     void dataChanged();

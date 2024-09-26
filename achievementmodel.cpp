@@ -3,13 +3,6 @@
 AchievementModel::AchievementModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
-void AchievementModel::setAchievements(const QList<AchievementInfo> &achievements) {
-    beginResetModel();
-    m_achievements = achievements;
-    endResetModel();
-    qDebug() << "Achievements set:" << m_achievements.count();
-}
-
 int AchievementModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     return m_achievements.count();
@@ -98,4 +91,15 @@ void AchievementModel::clearAchievements() {
     beginResetModel();
     m_achievements.clear();
     endResetModel();
+}
+
+QList<AchievementInfo> AchievementModel::getAchievements()
+{
+    return m_achievements;
+}
+
+void AchievementModel::appendAchievement(AchievementInfo a) {
+    beginInsertRows(QModelIndex(), m_achievements.size(), m_achievements.size());
+    m_achievements.append(a);
+    endInsertRows();
 }

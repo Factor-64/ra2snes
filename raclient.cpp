@@ -16,6 +16,9 @@ const QString RAClient::userAgent = "ra2snes/1.0";
 RAClient::RAClient(QObject *parent) : QObject(parent)
 {
     networkManager = new QNetworkAccessManager();
+    userinfo_model = new UserInfoModel(this);
+    gameinfo_model = new GameInfoModel(this);
+    achievement_model = new AchievementModel(this);
     connect(networkManager, &QNetworkAccessManager::finished, this, &RAClient::handleNetworkReply);
     queue.clear();
     running = false;
@@ -41,7 +44,7 @@ void RAClient::loginToken(const QString& username, const QString& token)
 
 void RAClient::loadGame(const QString& md5hash)
 {
-    gameinfo.md5hash = md5hash;
+    gameinfo_model->md5hash() = md5hash;
     QJsonObject post_content;
     post_content["m"] = md5hash;
 
@@ -51,8 +54,8 @@ void RAClient::loadGame(const QString& md5hash)
 void RAClient::getAchievements(unsigned int gameid)
 {
     QJsonObject post_content;
-    post_content["u"] = userinfo.username;
-    post_content["t"] = userinfo.token;
+    post_content["u"] = userinfo_model->username();
+    post_content["t"] = userinfo_model->token();
     post_content["g"] = QString::number(gameid);
 
     sendRequest("patch", post_content);
@@ -61,10 +64,10 @@ void RAClient::getAchievements(unsigned int gameid)
 void RAClient::getUnlocks()
 {
     QJsonObject post_content;
-    post_content["u"] = userinfo.username;
-    post_content["t"] = userinfo.token;
-    post_content["h"] = QString::number(userinfo.hardcore);
-    post_content["g"] = QString::number(gameinfo.id);
+    post_content["u"] = userinfo_model->username();
+    post_content["t"] = userinfo_model->token();
+    post_content["h"] = QString::number(userinfo_model->hardcore());
+    post_content["g"] = QString::number(gameinfo_model->id());
 
     sendRequest("unlocks", post_content);
 }
@@ -72,11 +75,11 @@ void RAClient::getUnlocks()
 void RAClient::startSession()
 {
     QJsonObject post_content;
-    post_content["u"] = userinfo.username;
-    post_content["t"] = userinfo.token;
-    post_content["g"] = QString::number(gameinfo.id);
-    post_content["h"] = userinfo.hardcore;
-    post_content["m"] = gameinfo.md5hash;
+    post_content["u"] = userinfo_model->username();
+    post_content["t"] = userinfo_model->token();
+    post_content["g"] = QString::number(gameinfo_model->id());
+    post_content["h"] = userinfo_model->hardcore();
+    post_content["m"] = gameinfo_model->md5hash();
     post_content["l"] = RCHEEVOS_VERSION_STRING;
 
     sendRequest("startsession", post_content);
@@ -86,16 +89,16 @@ void RAClient::awardAchievement(unsigned int id, bool hardcore, QDateTime achiev
 {
     QByteArray md5hash;
     md5hash.append(QString::number(id).toLocal8Bit());
-    md5hash.append(userinfo.username.toLocal8Bit());
-    md5hash.append(QString::number(userinfo.hardcore).toLocal8Bit());
+    md5hash.append(userinfo_model->username().toLocal8Bit());
+    md5hash.append(QString::number(userinfo_model->hardcore()).toLocal8Bit());
     int secondsPassed = std::abs(achieved.secsTo(QDateTime::currentDateTime()));
     md5hash.append(QString::number(id).toLocal8Bit());
     md5hash.append(QString::number(secondsPassed).toLocal8Bit());
     md5hash = QCryptographicHash::hash(md5hash, QCryptographicHash::Md5);
 
     QJsonObject post_content;
-    post_content["u"] = userinfo.username;
-    post_content["t"] = userinfo.token;
+    post_content["u"] = userinfo_model->username();
+    post_content["t"] = userinfo_model->token();
     post_content["a"] = QString::number(id);
     post_content["h"] = QString::number(hardcore);
     post_content["v"] = QString(md5hash.toHex());
@@ -106,12 +109,12 @@ void RAClient::awardAchievement(unsigned int id, bool hardcore, QDateTime achiev
 
 /*void RAClient::getLBPlacements()
 {
-    if(!gameinfo.leaderboards.empty() && index < gameinfo.leaderboards.size())
+    if(!gameinfo_model->leaderboards.empty() && index < gameinfo_model->leaderboards.size())
     {
         qDebug() << "Getting Placements";
         QList<QPair<QString, QString>> post_content;
-        post_content.append(qMakePair("i", QString::number(gameinfo.leaderboards.at(index).id)));
-        post_content.append(qMakePair("u", userinfo.username));
+        post_content.append(qMakePair("i", QString::number(gameinfo_model->leaderboards.at(index).id)));
+        post_content.append(qMakePair("u", userinfo_model->username));
         post_content.append(qMakePair("c", "1"));
 
         request("lbinfo", post_content);
@@ -120,7 +123,7 @@ void RAClient::awardAchievement(unsigned int id, bool hardcore, QDateTime achiev
 }*/
 
 void RAClient::queueAchievementRequest(unsigned int id, QDateTime achieved) {
-    RequestData data = {AchievementRequest, id, userinfo.hardcore, achieved, 0};
+    RequestData data = {AchievementRequest, id, userinfo_model->hardcore(), achieved, 0};
     queue.append(data);
     if(!running)
         startQueue();
@@ -180,78 +183,110 @@ void RAClient::clearQueue()
     queue.clear();
 }
 
+void RAClient::freeModelMemory()
+{
+    delete userinfo_model;
+    delete gameinfo_model;
+    delete achievement_model;
+}
+
 void RAClient::setWidthHeight(int w, int h)
 {
-    userinfo.height = h;
-    userinfo.width = w;
+    userinfo_model->height(h);
+    userinfo_model->width(w);
 }
 
 void RAClient::setPatched(bool p)
 {
-    userinfo.patched = p;
+    userinfo_model->patched(p);
 }
 
 void RAClient::setSaveStates(bool s)
 {
-    userinfo.savestates = s;
+    userinfo_model->savestates(s);
 }
 
 void RAClient::setCheats(bool c)
 {
-    userinfo.cheats = c;
+    userinfo_model->cheats(c);
 }
 
 void RAClient::setHardcore(bool h)
 {
-    userinfo.hardcore = h;
+    userinfo_model->hardcore(h);
+}
+
+void RAClient::setAutoHardcore(bool ac)
+{
+    userinfo_model->autohardcore(ac);
+}
+
+bool RAClient::getAutoHardcore()
+{
+    return userinfo_model->autohardcore();
 }
 
 void RAClient::setTitle(QString t, QString i, QString l)
 {
-    gameinfo.title = t;
-    gameinfo.image_icon_url = QUrl(i);
-    gameinfo.game_link = QUrl(l);
+    gameinfo_model->title(t);
+    gameinfo_model->image_icon_url(QUrl(i));
+    gameinfo_model->game_link(QUrl(l));
 }
 
 bool RAClient::getHardcore()
 {
-    return userinfo.hardcore;
+    return userinfo_model->hardcore();
 }
 
-UserInfo RAClient::getUserInfo()
+UserInfoModel* RAClient::getUserInfoModel()
 {
-    return userinfo;
+    return userinfo_model;
 }
 
-GameInfo RAClient::getGameInfo()
+GameInfoModel* RAClient::getGameInfoModel()
 {
-    return gameinfo;
+    return gameinfo_model;
 }
 
 int RAClient::getWidth()
 {
-    return userinfo.width;
+    return userinfo_model->width();
 }
 
 int RAClient::getHeight()
 {
-    return userinfo.height;
+    return userinfo_model->height();
 }
 
-QList<AchievementInfo> RAClient::getAchievements()
+AchievementModel* RAClient::getAchievementModel()
 {
-    return gameinfo.achievements;
+    return achievement_model;
+}
+
+void RAClient::clearAchievements()
+{
+    achievement_model->clearAchievements();
+}
+
+void RAClient::clearUser()
+{
+    userinfo_model->clearUser();
+}
+
+void RAClient::clearGame()
+{
+    gameinfo_model->clearGame();
 }
 
 QList<LeaderboardInfo> RAClient::getLeaderboards()
 {
-    return gameinfo.leaderboards;
+    return leaderboards;
 }
 
 void RAClient::setConsole(const QString& c, const QUrl& icon)
 {
-    gameinfo.console = c;
-    gameinfo.console_icon = icon;
+    gameinfo_model->console(c);
+    gameinfo_model->console_icon(icon);
 }
 
 void RAClient::sendRequest(const QString& request_type, const QJsonObject& post_content)
@@ -329,9 +364,9 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     if(running)
     {
         queue.removeFirst();
-        if(!gameinfo.beaten)
+        if(!gameinfo_model->beaten())
             isGameBeaten();
-        else if(!gameinfo.mastered)
+        else if(!gameinfo_model->mastered())
             isGameMastered();
         emit continueQueue();
     }
@@ -373,15 +408,15 @@ void RAClient::handleSuccessResponse(const QJsonObject& jsonObject)
 
 void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
 {
-    for (auto& achievement : gameinfo.achievements)
+    for (auto& achievement : achievement_model->getAchievements())
     {
         if (achievement.id == jsonObject["AchievementID"].toInt())
         {
             achievement.time_unlocked = queue.first().unlock_time.toString("MMMM d yyyy, h:mmap");
             achievement.unlocked = true;
-            gameinfo.point_count += achievement.points;
+            gameinfo_model->updatePointCount(achievement.points);
             qDebug() << "AWARDED";
-            gameinfo.completion_count++;
+            gameinfo_model->updateCompletionCount();
             emit awardedAchievement(achievement.id, achievement.time_unlocked, achievement.points);
         }
     }
@@ -389,37 +424,39 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
 
 void RAClient::handleLoginResponse(const QJsonObject& jsonObject)
 {
-    userinfo.username = jsonObject["User"].toString();
-    userinfo.token = jsonObject["Token"].toString();
-    userinfo.softcore_score = jsonObject["SoftcoreScore"].toInt();
-    userinfo.hardcore_score = jsonObject["Score"].toInt();
-    userinfo.pfp = (mediaUrl + "UserPic/" + userinfo.username + ".png");
-    userinfo.link = ("https://retroachievements.org/user/" + userinfo.username);
+    userinfo_model->username(jsonObject["User"].toString());
+    userinfo_model->token(jsonObject["Token"].toString());
+    userinfo_model->softcore_score(jsonObject["SoftcoreScore"].toInt());
+    userinfo_model->hardcore_score(jsonObject["Score"].toInt());
+    userinfo_model->pfp((mediaUrl + "UserPic/" + userinfo_model->username() + ".png"));
+    userinfo_model->link(("https://retroachievement_model->org/user/" + userinfo_model->username()));
     emit loginSuccess();
 }
 
 void RAClient::handleGameIDResponse(const QJsonObject& jsonObject)
 {
-    gameinfo.id = jsonObject["GameID"].toInt();
-    emit gotGameID(gameinfo.id);
+    gameinfo_model->id(jsonObject["GameID"].toInt());
+    emit gotGameID(gameinfo_model->id());
 }
 
 void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
 {
     QJsonObject patch_data = jsonObject["PatchData"].toObject();
-    gameinfo.title = patch_data["Title"].toString();
-    gameinfo.image_icon = patch_data["ImageIcon"].toString();
-    gameinfo.image_icon_url = QUrl(patch_data["ImageIconURL"].toString());
-    gameinfo.game_link = QUrl(baseUrl + "game/" + QString::number(gameinfo.id));
-    gameinfo.missable_count = 0;
-    gameinfo.point_total = 0;
-    gameinfo.mastered = false;
-    gameinfo.completion_count = 0;
-    gameinfo.beaten = false;
-    gameinfo.point_count = 0;
+    gameinfo_model->title(patch_data["Title"].toString());
+    gameinfo_model->image_icon(patch_data["ImageIcon"].toString());
+    gameinfo_model->image_icon_url(QUrl(patch_data["ImageIconURL"].toString()));
+    gameinfo_model->game_link(QUrl(baseUrl + "game/" + QString::number(gameinfo_model->id())));
+    gameinfo_model->missable_count(0);
+    gameinfo_model->point_total(0);
+    gameinfo_model->mastered(false);
+    gameinfo_model->completion_count(0);
+    gameinfo_model->beaten(false);
+    gameinfo_model->point_count(0);
+    gameinfo_model->achievement_count(0);
+    int missables = 0;
+    int total = 0;
 
-    gameinfo.achievements.clear();
-    gameinfo.leaderboards.clear();
+    achievement_model->clearAchievements();
 
     QJsonArray achievements_data = patch_data["Achievements"].toArray();
     for (const auto& achievement : achievements_data)
@@ -445,14 +482,16 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
             info.time_unlocked = "";
             info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
             if(info.type == "missable")
-                gameinfo.missable_count++;
-            gameinfo.point_total += info.points;
-            gameinfo.achievements.append(info);
+                missables++;
+            total += info.points;
+            achievement_model->appendAchievement(info);
         }
     }
-    gameinfo.achievement_count = gameinfo.achievements.count();
+    gameinfo_model->missable_count(missables);
+    gameinfo_model->point_total(total);
+    gameinfo_model->achievement_count(achievement_model->rowCount());
 
-    if (userinfo.hardcore)
+    if (userinfo_model->hardcore())
     {
         QJsonArray leaderboards_data = patch_data["Leaderboards"].toArray();
         for (const auto& leaderboard : leaderboards_data)
@@ -465,7 +504,6 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
             info.lower_is_better = data["LowerIsBetter"].toInt();
             info.mem_addr = data["Mem"].toString();
             info.leaderboard_link = QUrl(baseUrl + "leaderboard/" + QString::number(info.id));
-            gameinfo.leaderboards.append(info);
         }
     }
 
@@ -481,33 +519,28 @@ void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
 {
     qDebug() << jsonObject;
     QJsonArray unlock_data;
-    if(!userinfo.hardcore)
+    if(userinfo_model->hardcore())
     {
         unlock_data = jsonObject["HardcoreUnlocks"].toArray();
-        QJsonArray unlocks = jsonObject["Unlocks"].toArray();
-        for (const QJsonValue &value : unlocks) {
-            unlock_data.append(value);
-        }
     }
     else
-        unlock_data = jsonObject["HardcoreUnlocks"].toArray();
-    gameinfo.completion_count = unlock_data.count();
+        unlock_data = jsonObject["Unlocks"].toArray();
+    gameinfo_model->completion_count(unlock_data.count());
     for (int i = 0; i < unlock_data.size(); ++i)
     {
         QJsonObject unlock = unlock_data[i].toObject();
-        for (auto& achievement : gameinfo.achievements)
+        for (auto& achievement : achievement_model->getAchievements())
         {
             if(achievement.type == "progression" || achievement.type == "win_condition")
                 progressionMap[achievement.id] = achievement.unlocked;
             if (unlock["ID"].toInt() == achievement.id)
             {
-                achievement.unlocked = true;
-                gameinfo.point_count += achievement.points;
-                if(userinfo.hardcore)
-                    userinfo.hardcore_score += achievement.points;
+                achievement_model->setUnlockedState(achievement.id, true, QDateTime::fromSecsSinceEpoch(unlock["When"].toInt()).toString("MMMM d yyyy, h:mmap"));
+                gameinfo_model->updatePointCount(achievement.points);
+                if(userinfo_model->hardcore())
+                    userinfo_model->updateHardcoreScore(achievement.points);
                 else
-                    userinfo.softcore_score += achievement.points;
-                achievement.time_unlocked = QDateTime::fromSecsSinceEpoch(unlock["When"].toInt()).toString("MMMM d yyyy, h:mmap");
+                    userinfo_model->updateSoftcoreScore(achievement.points);
             }
         }
     }
@@ -518,30 +551,30 @@ void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
 
 bool RAClient::isGameBeaten()
 {
-    if(progressionMap.empty() && !gameinfo.achievements.empty())
+    if(progressionMap.empty() && achievement_model->rowCount() > 0)
         return false;
     for(auto it = progressionMap.constBegin(); it != progressionMap.constEnd(); ++it) {
         if(!it.value()) {
-            gameinfo.beaten = false;
+            gameinfo_model->beaten(false);
             return false;
         }
     }
-    gameinfo.beaten = true;
+    gameinfo_model->beaten(true);
     return true;
 }
 
 bool RAClient::isGameMastered()
 {
-    if(!gameinfo.achievements.empty())
+    if(!(achievement_model->rowCount() > 0))
         return false;
-    if(gameinfo.completion_count == gameinfo.achievements.count())
+    if(gameinfo_model->completion_count() == achievement_model->rowCount())
     {
-        gameinfo.mastered = true;
+        gameinfo_model->mastered(true);
         return true;
     }
     else
     {
-        gameinfo.mastered = false;
+        gameinfo_model->mastered(false);
         return false;
     }
 }

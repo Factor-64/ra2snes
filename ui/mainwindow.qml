@@ -39,6 +39,7 @@ ApplicationWindow {
     property int windowWidth: width
     property int windowHeight: height
     property string modeFailed: ""
+    property bool disableChange: false
 
     onWidthChanged: windowWidth = width
     onHeightChanged: windowHeight = height
@@ -182,139 +183,203 @@ ApplicationWindow {
                                     }
                                 ]
                             }
-
-                            Button {
-                                id: mode_button
+                            Column {
                                 anchors.bottom: parent.bottom
                                 anchors.right: parent.right
                                 anchors.bottomMargin: 10
                                 anchors.rightMargin: 20
-                                font.family: "Verdana"
-                                text: qsTr("Change Mode")
-                                font.pixelSize: 13
-                                background: Rectangle {
-                                    id: button_Background
-                                    border.width: 1
-                                    border.color: "#2a2a2a"
-                                    radius: 2
-                                    color: {
-                                        if(mouseAreaMode.enabled)
-                                        {
-                                            "#222222"
+                                Row {
+                                    spacing: 4
+                                    Layout.fillWidth: true
+                                    CheckBox {
+                                        id: changeCheckBox
+                                        width: 14
+                                        height: 14
+
+                                        indicator: Rectangle {
+                                            width: 14
+                                            height: 14
+                                            radius: 2
+                                            color: changeCheckBox.checked ? "#005cc8" : "#ffffff"
+                                            border.color: changeCheckBox.checked ? "#005cc8" : "#4f4f4f"
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: changeCheckBox.checked ? "\u2713" : ""
+                                                color: "#ffffff"
+                                                font.pixelSize: 12
+                                            }
                                         }
-                                        else "#888888"
+
+                                        onCheckedChanged: {
+                                            if(changeCheckBox.checked)
+                                            {
+                                                disableChange = true;
+                                                mouseAreaMode.disableModeChangeButton();
+                                            }
+                                            else
+                                            {
+                                                disableChange = false;
+                                                mouseAreaMode.enableModeChangeButton();
+                                            }
+                                            ra2snes.autoChange(changeCheckBox.checked);
+                                        }
+                                    }
+                                    Text {
+                                        text: qsTr("Auto Hardcore")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        verticalAlignment: Text.AlignVCenter
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: {
+                                                changeCheckBox.checked = !changeCheckBox.checked
+                                            }
+                                            Component.onCompleted: {
+                                                if(userInfoModel)
+                                                {
+                                                    changeCheckBox.checked = userInfoModel.autohardcore;
+                                                    if(changeCheckBox.checked)
+                                                    {
+                                                        disableChange = true;
+                                                        mouseAreaMode.disableModeChangeButton();
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-                                contentItem: Text {
-                                    id: button_Text
-                                    color: {
-                                        if(mouseAreaMode.enabled)
+                                Button {
+                                    id: mode_button
+                                    font.family: "Verdana"
+                                    text: qsTr("Change Mode")
+                                    font.pixelSize: 13
+                                    background: Rectangle {
+                                        id: button_Background
+                                        border.width: 1
+                                        border.color: "#2a2a2a"
+                                        radius: 2
+                                        color: {
+                                            if(mouseAreaMode.enabled)
+                                            {
+                                                "#222222"
+                                            }
+                                            else "#888888"
+                                        }
+                                    }
+                                    contentItem: Text {
+                                        id: button_Text
+                                        color: {
+                                            if(mouseAreaMode.enabled)
+                                                if(userInfoModel)
+                                                {
+                                                   if(userInfoModel.hardcore)
+                                                       "#00ff00"
+                                                   else
+                                                       "#ff0000"
+                                                }
+                                                else "#000000"
+                                            else "#bbbbbb"
+
+                                        }
+                                        text: {
                                             if(userInfoModel)
                                             {
-                                               if(userInfoModel.hardcore)
-                                                   "#00ff00"
-                                               else
-                                                   "#ff0000"
+                                                if(userInfoModel.hardcore)
+                                                    qsTr("Softcore Mode")
+                                                else
+                                                    qsTr("Hardcore Mode")
                                             }
-                                            else "#000000"
-                                        else "#bbbbbb"
-
+                                            else ""
+                                        }
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
                                     }
-                                    text: {
-                                        if(userInfoModel)
+                                    MouseArea {
+                                        id: mouseAreaMode
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onClicked: {
+                                            disableModeChangeButton();
+                                            ra2snes.changeMode();
+                                        }
+                                        Component.onCompleted: {
+                                            if(!disableChange)
+                                                enableModeChangeButton();
+                                        }
+                                        onEntered: mode_button.state = "hovered"
+                                        onExited: mode_button.state = ""
+
+                                        function disableModeChangeButton()
                                         {
-                                            if(userInfoModel.hardcore)
-                                                qsTr("Softcore Mode")
-                                            else
-                                                qsTr("Hardcore Mode")
+                                            mouseAreaMode.enabled = false;
                                         }
-                                        else ""
+
+                                        function enableModeChangeButton()
+                                        {
+                                            mouseAreaMode.enabled = true;
+                                        }
                                     }
-                                    font.family: "Verdana"
-                                    font.pixelSize: 13
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
+
+                                    states: [
+                                        State {
+                                            name: "hovered"
+                                            PropertyChanges {
+                                                target: button_Background
+                                                color: "#333333"
+                                                border.color: "#c8c8c8"
+                                            }
+                                            PropertyChanges {
+                                                target: button_Text
+                                                color: "#eeeeee"
+                                            }
+                                        }
+                                    ]
+
+                                    transitions: [
+                                        Transition {
+                                            from: ""
+                                            to: "hovered"
+                                            ColorAnimation {
+                                                target: button_Background
+                                                property: "color"
+                                                duration: 200
+                                            }
+                                            ColorAnimation {
+                                                target: button_Background
+                                                property: "border.color"
+                                                duration: 200
+                                            }
+                                            ColorAnimation {
+                                                target: button_Text
+                                                property: "color"
+                                                duration: 200
+                                            }
+                                        },
+                                        Transition {
+                                            from: "hovered"
+                                            to: ""
+                                            ColorAnimation {
+                                                target: button_Background
+                                                property: "color"
+                                                duration: 200
+                                            }
+                                            ColorAnimation {
+                                                target: button_Background
+                                                property: "border.color"
+                                                duration: 200
+                                            }
+                                            ColorAnimation {
+                                                target: button_Text
+                                                property: "color"
+                                                duration: 200
+                                            }
+                                        }
+                                    ]
                                 }
-                                MouseArea {
-                                    id: mouseAreaMode
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    onClicked: {
-                                        disableModeChangeButton();
-                                        ra2snes.changeMode();
-                                    }
-                                    Component.onCompleted: {
-                                        enableModeChangeButton();
-                                    }
-                                    onEntered: mode_button.state = "hovered"
-                                    onExited: mode_button.state = ""
-
-                                    function disableModeChangeButton()
-                                    {
-                                        mouseAreaMode.enabled = false;
-                                    }
-
-                                    function enableModeChangeButton()
-                                    {
-                                        mouseAreaMode.enabled = true;
-                                    }
-                                }
-
-                                states: [
-                                    State {
-                                        name: "hovered"
-                                        PropertyChanges {
-                                            target: button_Background
-                                            color: "#333333"
-                                            border.color: "#c8c8c8"
-                                        }
-                                        PropertyChanges {
-                                            target: button_Text
-                                            color: "#eeeeee"
-                                        }
-                                    }
-                                ]
-
-                                transitions: [
-                                    Transition {
-                                        from: ""
-                                        to: "hovered"
-                                        ColorAnimation {
-                                            target: button_Background
-                                            property: "color"
-                                            duration: 200
-                                        }
-                                        ColorAnimation {
-                                            target: button_Background
-                                            property: "border.color"
-                                            duration: 200
-                                        }
-                                        ColorAnimation {
-                                            target: button_Text
-                                            property: "color"
-                                            duration: 200
-                                        }
-                                    },
-                                    Transition {
-                                        from: "hovered"
-                                        to: ""
-                                        ColorAnimation {
-                                            target: button_Background
-                                            property: "color"
-                                            duration: 200
-                                        }
-                                        ColorAnimation {
-                                            target: button_Background
-                                            property: "border.color"
-                                            duration: 200
-                                        }
-                                        ColorAnimation {
-                                            target: button_Text
-                                            property: "color"
-                                            duration: 200
-                                        }
-                                    }
-                                ]
                             }
 
                             Item {
@@ -350,7 +415,8 @@ ApplicationWindow {
                                     }
 
                                     function showErrorMessage(error, iserror) {
-                                        mouseAreaMode.enableModeChangeButton();
+                                        if(!disableChange)
+                                            mouseAreaMode.enableModeChangeButton();
                                         mainWindow.modeFailed = error;
                                         if(iserror)
                                             errorMessage.color = "#ff0000";
@@ -756,9 +822,7 @@ ApplicationWindow {
                                         Text {
                                             text: {
                                                 if(gameInfoModel)
-                                                {
                                                     gameInfoModel.completion_count
-                                                }
                                                 else ""
                                             }
                                             font.bold: true
@@ -915,7 +979,8 @@ ApplicationWindow {
                                     progressBar.value = Math.min(Math.max(val, 0), 1);
                                 else progressBar.value = 0;
                                 completionIcon.visible = true;
-                                mouseAreaMode.enableModeChangeButton();
+                                if(!disableChange)
+                                    mouseAreaMode.enableModeChangeButton();
                             }
                         }
 

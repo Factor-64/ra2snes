@@ -9,9 +9,6 @@ ra2snes::ra2snes(QObject *parent)
     usb2snes = new Usb2Snes(false);
     raclient = new RAClient(this);
     reader = new MemoryReader(this);
-    achievement_model = new AchievementModel(this);
-    gameinfo_model = new GameInfoModel(this);
-    userinfo_model = new UserInfoModel(this);
     m_currentGame = "";
     loggedin = false;
     gameSetup = false;
@@ -23,6 +20,7 @@ ra2snes::ra2snes(QObject *parent)
     reset = false;
 
     raclient->setHardcore(true);
+    raclient->setAutoHardcore(false);
     saveWindowSize(600, 600);
 
     connect(usb2snes, &Usb2Snes::connected, this, [=]() {
@@ -87,12 +85,10 @@ ra2snes::ra2snes(QObject *parent)
         raclient->startSession();
     });
     connect(raclient, &RAClient::sessionStarted, this, [=] {
-        gameinfo_model->setGameInfo(raclient->getGameInfo());
-        achievement_model->setAchievements(raclient->getAchievements());
         emit achievementModelReady();
         if(!raclient->isQueueRunning())
             raclient->startQueue();
-        reader->initTriggers(raclient->getAchievements(), raclient->getLeaderboards());
+        reader->initTriggers(raclient->getAchievementModel()->getAchievements(), raclient->getLeaderboards());
     });
 
     connect(reader, &MemoryReader::finishedMemorySetup, this, [=] { usb2snes->getAddresses(reader->getUniqueMemoryAddresses()); });
@@ -102,9 +98,6 @@ ra2snes::ra2snes(QObject *parent)
     });
 
     connect(raclient, &RAClient::awardedAchievement, this, [=](unsigned int id, QString time, unsigned int points) {
-        achievement_model->setUnlockedState(id, true, time);
-        gameinfo_model->updateCompletionCount();
-        gameinfo_model->updatePointCount(points);
     });
 
     //connect(reader, &MemoryReader::leaderboardCompleted, this, [=](unsigned int id, unsigned int score) {
@@ -133,11 +126,9 @@ ra2snes::~ra2snes()
     usb2snes->close();
     delete usb2snes;
     reader->freeConsoleMemory();
+    raclient->freeModelMemory();
     delete raclient;
     delete reader;
-    delete userinfo_model;
-    delete gameinfo_model;
-    delete achievement_model;
 }
 
 void ra2snes::signIn(const QString &username, const QString &password, bool remember)
@@ -156,10 +147,9 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
         {
             gameLoaded = false;
             raclient->setPatched(false);
-            userinfo_model->setPatched(false);
-            achievement_model->clearAchievements();
+            raclient->clearAchievements();
             emit clearedAchievements();
-            gameinfo_model->clearGame();
+            raclient->clearGame();
             reset = false;
             setCurrentConsole();
             usb2snes->getConfig();
@@ -179,6 +169,8 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
         else if (!gameLoaded && loggedin)
         {
             emit switchingMode();
+            if(raclient->getAutoHardcore() && !raclient->getHardcore())
+                changeMode();
             setCurrentConsole();
             gameSetup = true;
             emit displayMessage("Loading Game...", false);
@@ -208,8 +200,6 @@ void ra2snes::onUsb2SnesGetConfigDataReceived()
         s = !config.contains("SGBEnableState: false");
     raclient->setCheats(c);
     raclient->setSaveStates(s);
-    userinfo_model->setCheats(c);
-    userinfo_model->setSaveStates(s);
 
 
     if (c || s)
@@ -248,13 +238,11 @@ void ra2snes::onUsb2SnesGetAddressDataReceived()
     {
         qDebug() << "ROM PATCHED!";
         raclient->setPatched(true);
-        userinfo_model->setPatched(true);
         changeMode();
     }
     else
     {
         raclient->setPatched(false);
-        userinfo_model->setPatched(false);
         if (gameLoaded)
         {
             QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
@@ -269,7 +257,6 @@ void ra2snes::onLoginSuccess()
     loggedin = true;
     reset = true;
     createSettingsFile();
-    userinfo_model->setUserInfo(raclient->getUserInfo());
     tasksFinished = 5;
     onUsb2SnesStateChanged();
     emit loginSuccess();
@@ -353,22 +340,21 @@ void ra2snes::setCurrentConsole()
         raclient->setTitle("", "", "");
         raclient->setConsole("", QUrl(""));
     }
-    gameinfo_model->setGameInfo(raclient->getGameInfo());
 }
 
 AchievementModel* ra2snes::achievementModel()
 {
-    return achievement_model;
+    return raclient->getAchievementModel();
 }
 
 GameInfoModel* ra2snes::gameInfoModel()
 {
-    return gameinfo_model;
+    return raclient->getGameInfoModel();
 }
 
 UserInfoModel* ra2snes::userInfoModel()
 {
-    return userinfo_model;
+    return raclient->getUserInfoModel();
 }
 
 bool ra2snes::isRemembered()
@@ -404,12 +390,14 @@ void ra2snes::createSettingsFile()
     settings.setValue("Console", console);
     settings.setValue("Width", raclient->getWidth());
     settings.setValue("Height", raclient->getHeight());
+    settings.setValue("Auto", raclient->getAutoHardcore());
+
     if(remember_me)
     {
         QString time = QString::number(QDateTime::currentDateTime().toSecsSinceEpoch());
-        UserInfo user = raclient->getUserInfo();
-        settings.setValue("Username", user.username);
-        settings.setValue("Token", xorEncryptDecrypt(user.token, time));
+        UserInfoModel* user = raclient->getUserInfoModel();
+        settings.setValue("Username", user->username());
+        settings.setValue("Token", xorEncryptDecrypt(user->token(), time));
         settings.setValue("Time", time);
     }
     else
@@ -437,8 +425,10 @@ void ra2snes::loadSettings() {
         QString time = settings.value("Time").toString();
         int width = settings.value("Width").toInt();
         int height = settings.value("Height").toInt();
+        bool autoh = settings.value("Auto").toBool();
 
         raclient->setHardcore(hardcore);
+        raclient->setAutoHardcore(autoh);
         raclient->setWidthHeight(width, height);
         console = console_v;
 
@@ -461,9 +451,9 @@ void ra2snes::signOut()
     loggedin = false;
     gameLoaded = false;
     remember_me = false;
-    achievement_model->clearAchievements();
-    userinfo_model->clearUser();
-    gameinfo_model->clearGame();
+    raclient->clearAchievements();
+    raclient->clearUser();
+    raclient->clearGame();
     createSettingsFile();
     loadSettings();
     reset = true;
@@ -473,38 +463,36 @@ void ra2snes::signOut()
 
 void ra2snes::changeMode()
 {
-    UserInfo user = raclient->getUserInfo();
+    UserInfoModel* user = raclient->getUserInfoModel();
     QString reason = "Hardcore Disabled: ";
     bool needsChange = false;
 
-    if(user.cheats) {
+    if(user->cheats()) {
         reason += QString("Cheats Enabled");
         needsChange = true;
     }
-    if(user.savestates) {
+    if(user->savestates()) {
         reason += (QString(needsChange ? ", " : "") + "SaveStates Enabled");
         needsChange = true;
     }
-    if(user.patched) {
+    if(user->patched()) {
         reason += (QString(needsChange ? ", " : "") + "ROM Patched");
         needsChange = true;
     }
     if(!needsChange)
     {
-        raclient->setHardcore(!raclient->getHardcore());
-        userinfo_model->setHardcore(!userinfo_model->hardcore());
+        user->hardcore(!user->hardcore());
         reason = "";
     }
     else
     {
-        raclient->setHardcore(false);
-        userinfo_model->setHardcore(false);
+        user->hardcore(false);
     }
     if(gameLoaded && loggedin)
     {
         tasksFinished = 5;
         gameLoaded = false;
-        achievement_model->clearAchievements();
+        raclient->clearAchievements();
         reset = true;
         raclient->stopQueue();
         onUsb2SnesStateChanged();
@@ -514,4 +502,11 @@ void ra2snes::changeMode()
 
     if(reason != "")
         emit changeModeFailed(reason);
+}
+
+void ra2snes::autoChange(bool ac)
+{
+    raclient->setAutoHardcore(ac);
+    if(raclient->getAutoHardcore() && !raclient->getHardcore())
+        changeMode();
 }

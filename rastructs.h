@@ -51,6 +51,7 @@ struct UserInfo {
     bool savestates;
     bool cheats;
     bool patched;
+    bool autohardcore;
 };
 
 struct GameInfo {
@@ -59,8 +60,6 @@ struct GameInfo {
     unsigned int id;
     QString image_icon;
     QUrl image_icon_url;
-    QList<AchievementInfo> achievements;
-    QList<LeaderboardInfo> leaderboards;
     QUrl game_link;
     QString console;
     QUrl console_icon;

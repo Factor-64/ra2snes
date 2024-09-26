@@ -4,28 +4,15 @@ UserInfoModel::UserInfoModel(QObject *parent)
     : QObject(parent) {
 }
 
-void UserInfoModel::setUserInfo(const UserInfo &userInfo) {
-    m_userInfo = userInfo;
+void UserInfoModel::updateHardcoreScore(int score)
+{
+    m_userInfo.hardcore_score += score;
     emit dataChanged();
 }
 
-void UserInfoModel::setHardcore(bool h) {
-    m_userInfo.hardcore = h;
-    emit dataChanged();
-}
-
-void UserInfoModel::setSaveStates(bool s) {
-    m_userInfo.savestates = s;
-    emit dataChanged();
-}
-
-void UserInfoModel::setCheats(bool c) {
-    m_userInfo.cheats = c;
-    emit dataChanged();
-}
-
-void UserInfoModel::setPatched(bool p) {
-    m_userInfo.patched = p;
+void UserInfoModel::updateSoftcoreScore(int score)
+{
+    m_userInfo.softcore_score += score;
     emit dataChanged();
 }
 
@@ -75,6 +62,88 @@ bool UserInfoModel::cheats() const {
 
 bool UserInfoModel::patched() const {
     return m_userInfo.patched;
+}
+
+bool UserInfoModel::autohardcore() const {
+    return m_userInfo.autohardcore;
+}
+
+void UserInfoModel::username(QString u)
+{
+    m_userInfo.username = u;
+    emit dataChanged();
+}
+
+void UserInfoModel::token(QString t)
+{
+    m_userInfo.token = t;
+    emit dataChanged();
+}
+
+void UserInfoModel::softcore_score(int s)
+{
+    m_userInfo.softcore_score = s;
+    emit dataChanged();
+}
+
+void UserInfoModel::hardcore_score(int hs)
+{
+    m_userInfo.hardcore_score = hs;
+    emit dataChanged();
+}
+
+void UserInfoModel::pfp(QUrl p)
+{
+    m_userInfo.pfp = p;
+    emit dataChanged();
+}
+
+void UserInfoModel::hardcore(bool h)
+{
+    m_userInfo.hardcore = h;
+    emit dataChanged();
+}
+
+void UserInfoModel::link(QUrl l)
+{
+    m_userInfo.link = l;
+    emit dataChanged();
+}
+
+void UserInfoModel::width(int w)
+{
+    m_userInfo.width = w;
+    emit dataChanged();
+}
+
+void UserInfoModel::height(int h)
+{
+    m_userInfo.height = h;
+    emit dataChanged();
+}
+
+void UserInfoModel::savestates(bool s)
+{
+    m_userInfo.savestates = s;
+    emit dataChanged();
+}
+
+void UserInfoModel::cheats(bool c)
+{
+    m_userInfo.cheats = c;
+    emit dataChanged();
+}
+
+void UserInfoModel::patched(bool p)
+{
+    m_userInfo.patched = p;
+    emit dataChanged();
+}
+
+void UserInfoModel::autohardcore(bool a)
+{
+    m_userInfo.autohardcore = a;
+    emit dataChanged();
 }
 
 void UserInfoModel::clearUser() {

@@ -27,6 +27,7 @@ public:
     void setGameInfo(const GameInfo &gameInfo);
     void updateCompletionCount();
     void updatePointCount(unsigned int points);
+    void updateMissableCount();
 
     QString title() const;
     QString md5hash() const;
@@ -44,6 +45,22 @@ public:
     unsigned int missable_count() const;
     int point_count() const;
     int achievement_count() const;
+
+    void title(QString t);
+    void md5hash(QString md5);
+    void id(unsigned int i);
+    void image_icon(QString ii);
+    void image_icon_url(QUrl iu);
+    void game_link(QUrl gl);
+    void console(QString c);
+    void console_icon(QUrl ci);
+    void completion_count(unsigned int cc);
+    void beaten(bool b);
+    void mastered(bool m);
+    void point_total(int pt);
+    void missable_count(unsigned int mc);
+    void point_count(int pc);
+    void achievement_count(int ac);
 
 signals:
     void dataChanged();
