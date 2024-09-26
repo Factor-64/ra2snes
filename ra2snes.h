@@ -39,6 +39,7 @@ signals:
     void switchingMode();
     void clearedAchievements();
     void displayMessage(QString error, bool iserror);
+    void autoModeChanged();
 
 private:
     Usb2Snes *usb2snes;

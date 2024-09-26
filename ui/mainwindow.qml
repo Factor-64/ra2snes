@@ -224,8 +224,12 @@ ApplicationWindow {
                                             }
                                             ra2snes.autoChange(changeCheckBox.checked);
                                         }
+                                        Component.onCompleted: {
+                                            changeCheckBox.checked = userInfoModel.autohardcore;
+                                        }
                                     }
                                     Text {
+                                        id: autoHardcore
                                         text: qsTr("Auto Hardcore")
                                         font.family: "Verdana"
                                         font.pixelSize: 13
@@ -234,18 +238,8 @@ ApplicationWindow {
                                         MouseArea {
                                             anchors.fill: parent
                                             onClicked: {
-                                                changeCheckBox.checked = !changeCheckBox.checked
-                                            }
-                                            Component.onCompleted: {
-                                                if(userInfoModel)
-                                                {
-                                                    changeCheckBox.checked = userInfoModel.autohardcore;
-                                                    if(changeCheckBox.checked)
-                                                    {
-                                                        disableChange = true;
-                                                        mouseAreaMode.disableModeChangeButton();
-                                                    }
-                                                }
+                                                if(changeCheckBox.enabled)
+                                                    changeCheckBox.checked = !changeCheckBox.checked
                                             }
                                         }
                                     }
@@ -307,8 +301,7 @@ ApplicationWindow {
                                             ra2snes.changeMode();
                                         }
                                         Component.onCompleted: {
-                                            if(!disableChange)
-                                                enableModeChangeButton();
+                                            enableModeChangeButton();
                                         }
                                         onEntered: mode_button.state = "hovered"
                                         onExited: mode_button.state = ""
@@ -320,7 +313,8 @@ ApplicationWindow {
 
                                         function enableModeChangeButton()
                                         {
-                                            mouseAreaMode.enabled = true;
+                                            if(!disableChange)
+                                                mouseAreaMode.enabled = true;
                                         }
                                     }
 
@@ -415,11 +409,12 @@ ApplicationWindow {
                                     }
 
                                     function showErrorMessage(error, iserror) {
-                                        if(!disableChange)
-                                            mouseAreaMode.enableModeChangeButton();
                                         mainWindow.modeFailed = error;
                                         if(iserror)
+                                        {
                                             errorMessage.color = "#ff0000";
+                                            mouseAreaMode.enableModeChangeButton();
+                                        }
                                         else
                                             errorMessage.color = "#00ff00";
                                         errorMessage.opacity = 1;
@@ -964,7 +959,9 @@ ApplicationWindow {
                                 listViewLoader.active = false;
                                 completionHeader.visible = false;
                                 completionIcon.visible = false;
-                                mouseAreaMode.disableModeChangeButton()
+                                mouseAreaMode.disableModeChangeButton();
+                                changeCheckBox.enabled = false;
+                                autoHardcore.color = "#eeeeee";
                             }
                         }
 
@@ -979,8 +976,9 @@ ApplicationWindow {
                                     progressBar.value = Math.min(Math.max(val, 0), 1);
                                 else progressBar.value = 0;
                                 completionIcon.visible = true;
-                                if(!disableChange)
-                                    mouseAreaMode.enableModeChangeButton();
+                                mouseAreaMode.enableModeChangeButton();
+                                changeCheckBox.enabled = true;
+                                autoHardcore.color = "#2c97fa";
                             }
                         }
 

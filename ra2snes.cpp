@@ -198,12 +198,13 @@ void ra2snes::onUsb2SnesGetConfigDataReceived()
     raclient->setCheats(c);
     raclient->setSaveStates(s);
 
-
-    if (c || s)
+    if(c || s)
     {
-        if (raclient->getHardcore())
+        if(raclient->getHardcore())
             changeMode();
     }
+    if(raclient->getAutoHardcore())
+        changeMode();
     if(gameSetup)
         usb2snes->getFile(m_currentGame);
     else if(!gameLoaded)
@@ -311,7 +312,10 @@ void ra2snes::setCurrentConsole()
         QString icon = "https://static.retroachievements.org/assets/images/system/";
         QString extension = m_currentGame.mid(extensionIndex + 1);
         if(extension == "sfc" || extension == "smc" || extension == "swc" || extension == "bs" || extension == "fig")
+        {
             console = "SNES";
+            isGB = false;
+        }
         else if(extension == "gb")
         {
             console = "SNES";
@@ -469,7 +473,10 @@ void ra2snes::changeMode()
         needsChange = true;
     }
     if(user->savestates()) {
-        reason += (QString(needsChange ? ", " : "") + "SaveStates Enabled");
+        if(isGB)
+            reason += (QString(needsChange ? ", " : "") + "Super Game Boy SaveStates Enabled");
+        else
+            reason += (QString(needsChange ? ", " : "") + "SaveStates Enabled");
         needsChange = true;
     }
     if(user->patched()) {
@@ -478,12 +485,16 @@ void ra2snes::changeMode()
     }
     if(!needsChange)
     {
-        user->hardcore(!user->hardcore());
-        reason = "";
+        if(raclient->getAutoHardcore())
+            user->hardcore(true);
+        else
+            user->hardcore(!user->hardcore());
+        emit changeModeFailed("");
     }
     else
     {
         user->hardcore(false);
+        emit changeModeFailed(reason);
     }
     if(gameLoaded && loggedin)
     {
@@ -495,10 +506,6 @@ void ra2snes::changeMode()
         onUsb2SnesStateChanged();
         emit switchingMode();
     }
-    else emit changeModeFailed(reason);
-
-    if(reason != "")
-        emit changeModeFailed(reason);
 }
 
 void ra2snes::autoChange(bool ac)
@@ -506,4 +513,5 @@ void ra2snes::autoChange(bool ac)
     raclient->setAutoHardcore(ac);
     if(raclient->getAutoHardcore() && !raclient->getHardcore())
         changeMode();
+    emit autoModeChanged();
 }
