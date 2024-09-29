@@ -968,6 +968,9 @@ ApplicationWindow {
                         Connections {
                             target: ra2snes
                             function onAchievementModelReady() {
+                                sortedAchievementModel.clearMissableFilter();
+                                sortedAchievementModel.clearUnlockedFilter();
+                                sortedAchievementModel.sortByNormal();
                                 achievementHeaderLoader.active = true;
                                 listViewLoader.active = true;
                                 completionHeader.visible = true;
