@@ -26,6 +26,11 @@ ra2snes::ra2snes(QObject *parent)
     connect(usb2snes, &Usb2Snes::connected, this, [=]() {
         usb2snes->setAppName("ra2snes");
         qDebug() << "Connected to usb2snes server, trying to find a suitable device";
+        tasksFinished = 5;
+        gameLoaded = false;
+        raclient->clearAchievements();
+        reset = true;
+        raclient->stopQueue();
         usb2snes->deviceList();
         emit displayMessage("QUsb2Snes Connected", false);
     });
@@ -33,6 +38,12 @@ ra2snes::ra2snes(QObject *parent)
     connect(usb2snes, &Usb2Snes::disconnected, this, [=]() {
         qDebug() << "Disconnected, trying to reconnect in 1 sec";
         emit displayMessage("QUsb2Snes Not Connected", true);
+        tasksFinished = 5;
+        gameLoaded = false;
+        raclient->clearAchievements();
+        reset = true;
+        raclient->stopQueue();
+        emit switchingMode();
         QTimer::singleShot(1000, this, [=] {
             usb2snes->connect();
         });
