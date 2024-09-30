@@ -603,7 +603,7 @@ ApplicationWindow {
                                     if(gameInfoModel)
                                     {
                                         if(gameInfoModel.mastered)
-                                            "#ffd700"
+                                            "#eab308"
                                         else if(gameInfoModel.beaten)
                                             "#d4d4d4"
                                         else "#161616"
@@ -614,7 +614,12 @@ ApplicationWindow {
                                 width: 36
                                 height: 36
                                 border.width: 2
-                                border.color: "#52525b"
+                                border.color: {
+                                    if(gameInfoModel.mastered)
+                                        "#ffd700"
+                                    else
+                                        "#52525b"
+                                }
                                 visible: false
                             }
 
@@ -905,7 +910,6 @@ ApplicationWindow {
                                         return 0;
                                     }
                                 }
-                                clip: true
                                 Item {
                                     width: progressBar.width
                                     height: progressBar.height
