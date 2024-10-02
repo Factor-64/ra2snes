@@ -32,6 +32,7 @@ ApplicationWindow {
     minimumWidth: 600
     minimumHeight: 600
     title: "ra2snes"
+
     Material.theme: Material.Dark
     Material.accent: "#eab308"
     color: "#1a1a1a"
@@ -615,10 +616,14 @@ ApplicationWindow {
                                 height: 36
                                 border.width: 2
                                 border.color: {
-                                    if(gameInfoModel.mastered)
-                                        "#ffd700"
-                                    else
-                                        "#52525b"
+                                    if(gameInfoModel)
+                                    {
+                                        if(gameInfoModel.mastered)
+                                            "#ffd700"
+                                        else
+                                            "#52525b"
+                                    }
+                                    else "#000000"
                                 }
                                 visible: false
                             }

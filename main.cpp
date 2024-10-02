@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QIconEngine>
 #include "ra2snes.h"
 #include "achievementsortfilterproxymodel.h"
 

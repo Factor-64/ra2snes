@@ -5,5 +5,6 @@
         <file>ui/images/missable.svg</file>
         <file>ui/images/progression.svg</file>
         <file>ui/images/win_condition.svg</file>
+        <file>ui/images/icon64x64.png</file>
     </qresource>
 </RCC>

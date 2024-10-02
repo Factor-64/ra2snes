@@ -43,7 +43,8 @@ set(PROJECT_SOURCES
         memoryreader.cpp
         memoryreader.h
         rastructs.h
-        ui.qrc
+        ra2snes.qrc
+        ra2snes.rc
         achievementmodel.cpp
         achievementmodel.h
         achievementsortfilterproxymodel.cpp

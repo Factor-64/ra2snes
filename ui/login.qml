@@ -9,7 +9,7 @@ ApplicationWindow {
     minimumWidth: 600
     minimumHeight: 600
     visible: true
-    title: "ra2snes - login"
+    title: qsTr("ra2snes - login")
     Material.theme: Material.Dark
     Material.accent: "#ffffff"
 
