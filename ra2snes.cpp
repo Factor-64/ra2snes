@@ -15,7 +15,7 @@ ra2snes::ra2snes(QObject *parent)
     gameLoaded = false;
     isGB = false;
     tasksFinished = 0;
-    console = "SNES";
+    m_console = "SNES";
     remember_me = false;
     reset = false;
 
@@ -324,15 +324,15 @@ void ra2snes::setCurrentConsole()
         QString extension = m_currentGame.mid(extensionIndex + 1);
         if(extension == "sfc" || extension == "smc" || extension == "swc" || extension == "bs" || extension == "fig")
         {
-            console = "SNES";
+            setConsole("SNES");
             isGB = false;
         }
         else if(extension == "gb")
         {
-            console = "SNES";
+            setConsole("SNES");
             isGB = true;
         }
-        if(console == "SNES")
+        if(m_console == "SNES")
         {
             raclient->setTitle("SD2SNES Menu", "https://media.retroachievements.org/UserPic/user.png", "");
             if(isGB)
@@ -399,7 +399,7 @@ void ra2snes::createSettingsFile()
     QSettings settings(settingsFilePath, QSettings::IniFormat);
 
     settings.setValue("Hardcore", raclient->getHardcore());
-    settings.setValue("Console", console);
+    settings.setValue("Console", m_console);
     settings.setValue("Width", raclient->getWidth());
     settings.setValue("Height", raclient->getHeight());
     settings.setValue("Auto", raclient->getAutoHardcore());
@@ -442,7 +442,7 @@ void ra2snes::loadSettings() {
         raclient->setHardcore(hardcore);
         raclient->setAutoHardcore(autoh);
         raclient->setWidthHeight(width, height);
-        console = console_v;
+        setConsole(console_v);
 
         if(username != "" && token != "" && time != "")
         {
@@ -525,4 +525,17 @@ void ra2snes::autoChange(bool ac)
     if(raclient->getAutoHardcore() && !raclient->getHardcore())
         changeMode();
     emit autoModeChanged();
+}
+
+QString ra2snes::console() const
+{
+    return m_console;
+}
+
+void ra2snes::setConsole(const QString &console)
+{
+    if (m_console != console) {
+        m_console = console;
+        emit consoleChanged();
+    }
 }

@@ -40,6 +40,48 @@ ApplicationWindow {
             border.width: 2
             border.color: "#161616"
             radius: 6
+            Column {
+                spacing: 20
+                anchors.bottom: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottomMargin: 20
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottomMargin: 20
+                    height: 42
+                    spacing: 10
+                    Image {
+                        source: "./images/ra-icon.png"
+                        height: 42
+                        width: 76
+                    }
+                    Image {
+                        source: "./images/logo.png"
+                        width: 42
+                        height: 42
+                    }
+                    Image {
+                        source: {
+                            if(ra2snes)
+                            {
+                                if(ra2snes.console === "SNES")
+                                    "./images/Super_Famicom_logo.png"
+                            }
+                            else ""
+                        }
+                        width: 48
+                        height: 34
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                Text {
+                    text: "Sign in to RetroAchievements"
+                    font.family: "Verdana"
+                    font.pixelSize: 18
+                    color: "#c8c8c8"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
 
             ColumnLayout {
                 anchors.fill: parent

@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
         engine.clearComponentCache();
     });
 
-
     if (engine.rootObjects().isEmpty())
         return -1;
 

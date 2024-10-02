@@ -6,5 +6,8 @@
         <file>ui/images/progression.svg</file>
         <file>ui/images/win_condition.svg</file>
         <file>ui/images/icon64x64.png</file>
+        <file>ui/images/logo.png</file>
+        <file>ui/images/ra-icon.png</file>
+        <file>ui/images/Super_Famicom_logo.png</file>
     </qresource>
 </RCC>

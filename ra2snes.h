@@ -11,6 +11,7 @@
 class ra2snes : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString console READ console WRITE setConsole NOTIFY consoleChanged)
 
 public:
     explicit ra2snes(QObject *parent = nullptr);
@@ -21,7 +22,8 @@ public:
     UserInfoModel* userInfoModel();
     bool isRemembered();
     QString xorEncryptDecrypt(const QString &token, const QString &key);
-
+    QString console() const;
+    void setConsole(const QString &console);
 
 public slots:
     void signIn(const QString &username, const QString &password, bool remember);
@@ -40,6 +42,7 @@ signals:
     void clearedAchievements();
     void displayMessage(QString error, bool iserror);
     void autoModeChanged();
+    void consoleChanged();
 
 private:
     Usb2Snes *usb2snes;
@@ -53,7 +56,7 @@ private:
     bool gameSetup;
     bool isGB;
     QAtomicInt tasksFinished;
-    QString console;
+    QString m_console;
 
     void createSettingsFile();
     void loadSettings();
