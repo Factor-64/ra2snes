@@ -2,9 +2,6 @@
 #define ACHIEVEMENTMODEL_H
 
 #include <QAbstractListModel>
-#include <QList>
-#include <QUrl>
-#include <QDateTime>
 #include "rastructs.h"
 
 class AchievementModel : public QAbstractListModel {

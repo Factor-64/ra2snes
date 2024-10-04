@@ -1,7 +1,4 @@
 #include "ra2snes.h"
-#include <QMessageBox>
-#include <QCryptographicHash>
-#include <QThreadPool>
 //#include <QDebug>
 
 ra2snes::ra2snes(QObject *parent)
@@ -460,10 +457,10 @@ void ra2snes::loadSettings() {
             raclient->loginToken(username, xorEncryptDecrypt(token, time));
         }
     }
-    else
-    {
+    //else
+    //{
         //qDebug() << "Settings file does not exist.";
-    }
+    //}
     setCurrentConsole();
 }
 

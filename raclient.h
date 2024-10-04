@@ -1,10 +1,9 @@
 #ifndef RACLIENT_H
 #define RACLIENT_H
 
-#include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QQueue>
-#include <QJsonObject>
+
 #include "userinfomodel.h"
 #include "gameinfomodel.h"
 #include "achievementmodel.h"

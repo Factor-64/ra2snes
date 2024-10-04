@@ -1,12 +1,8 @@
 #include "raclient.h"
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QUrlQuery>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QSet>
 #include "rc_version.h"
 
 const QString RAClient::baseUrl = "https://retroachievements.org/";

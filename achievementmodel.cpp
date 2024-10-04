@@ -79,7 +79,7 @@ void AchievementModel::setUnlockedState(unsigned int id, bool unlocked, QString 
             m_achievements[i].unlocked = unlocked;
             m_achievements[i].time_unlocked = time;
             QModelIndex index = createIndex(i, 0);
-            qDebug() << "Data changed for index:" << index << "Unlocked state:" << unlocked;
+            //qDebug() << "Data changed for index:" << index << "Unlocked state:" << unlocked;
             emit dataChanged(index, index, {UnlockedRole});
             emit dataChanged(index, index, {TimeUnlockedRole});
             break;

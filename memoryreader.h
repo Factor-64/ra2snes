@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QList>
-#include <QSet>
 #include "rc_runtime_types.h"
 #include "rastructs.h"
 
