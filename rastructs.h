@@ -72,22 +72,4 @@ struct GameInfo {
     int achievement_count;
 };
 
-static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {
-    uint8_t* memory = (uint8_t*)ud;
-
-    switch (num_bytes) {
-    case 1: return memory[address];
-
-    case 2: return memory[address] |
-               memory[address + 1] << 8;
-
-    case 4: return memory[address] |
-               memory[address + 1] << 8 |
-               memory[address + 2] << 16 |
-               memory[address + 3] << 24;
-    }
-
-    return 0;
-}
-
 #endif // RASTRUCTS_H

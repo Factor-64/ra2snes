@@ -111,7 +111,7 @@ void RAClient::awardAchievement(unsigned int id, bool hardcore, QDateTime achiev
 {
     if(!gameinfo_model->leaderboards.empty() && index < gameinfo_model->leaderboards.size())
     {
-        qDebug() << "Getting Placements";
+        //qDebug() << "Getting Placements";
         QList<QPair<QString, QString>> post_content;
         post_content.append(qMakePair("i", QString::number(gameinfo_model->leaderboards.at(index).id)));
         post_content.append(qMakePair("u", userinfo_model->username));
@@ -137,7 +137,7 @@ void RAClient::queueLeaderboardRequest(unsigned int id, QDateTime achieved, unsi
 }
 
 void RAClient::runQueue() {
-    qDebug() << "Queue Size: " << queue.size();
+    //qDebug() << "Queue Size: " << queue.size();
     if(!queue.isEmpty())
     {
         RequestData data = queue.first();
@@ -167,13 +167,13 @@ bool RAClient::isQueueRunning()
 
 void RAClient::stopQueue()
 {
-    qDebug() << "Queue Stopped";
+    //qDebug() << "Queue Stopped";
     running = false;
 }
 
 void RAClient::startQueue()
 {
-    qDebug() << "Queue Started";
+    //qDebug() << "Queue Started";
     running = true;
     runQueue();
 }
@@ -310,51 +310,51 @@ void RAClient::sendRequest(const QString& request_type, const QJsonObject& post_
     QString indentString(indent, ' ');
     for (auto it = jsonObject.begin(); it != jsonObject.end(); ++it) {
         if (it.value().isObject()) {
-            qDebug() << indentString << it.key() << ": {";
+            //qDebug() << indentString << it.key() << ": {";
             printJsonObject(it.value().toObject(), indent + 4);
-            qDebug() << indentString << "}";
+            //qDebug() << indentString << "}";
         } else if (it.value().isArray()) {
-            qDebug() << indentString << it.key() << ": [";
+            //qDebug() << indentString << it.key() << ": [";
             for (const auto &value : it.value().toArray()) {
                 if (value.isObject()) {
                     printJsonObject(value.toObject(), indent + 4);
                 } else {
-                    qDebug() << indentString << "  " << value.toString();
+                    //qDebug() << indentString << "  " << value.toString();
                 }
             }
-            qDebug() << indentString << "]";
+            //qDebug() << indentString << "]";
         } else {
-            qDebug() << indentString << it.key() << ":" << it.value().toString();
+            //qDebug() << indentString << it.key() << ":" << it.value().toString();
         }
     }
 }
 
 void printAchievements(QList<AchievementInfo> list)
 {
-    qDebug() << list.size();
+    //qDebug() << list.size();
     for(const auto achievement : list)
     {
-        qDebug() << achievement.title;
-        qDebug() << achievement.flags;
+        //qDebug() << achievement.title;
+        //qDebug() << achievement.flags;
     }
 }*/
 
 void RAClient::handleNetworkReply(QNetworkReply *reply)
 {
-    qDebug() << "Latest Request: " << latestRequest;
+    //qDebug() << "Latest Request: " << latestRequest;
     QJsonObject jsonObject = QJsonDocument::fromJson(reply->readAll()).object();
     //printJsonObject(jsonObject);
 
     if (reply->error() != QNetworkReply::NoError)
     {
-        qDebug() << "Network error:" << reply->errorString();
+        //qDebug() << "Network error:" << reply->errorString();
         emit requestError();
         if(running)
             emit continueQueue();
     }
     else if (jsonObject.contains("Error"))
     {
-        qDebug() << "Error:" << jsonObject["Error"].toString();
+        //qDebug() << "Error:" << jsonObject["Error"].toString();
         emit requestFailed(jsonObject);
     }
     else
@@ -401,7 +401,7 @@ void RAClient::handleSuccessResponse(const QJsonObject& jsonObject)
     }
     else
     {
-        qDebug() << "Unexpected response:" << jsonObject;
+        //qDebug() << "Unexpected response:" << jsonObject;
         emit requestError();
     }
 }
@@ -414,7 +414,7 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
         {
             achievement_model->setUnlockedState(achievement.id, true, queue.first().unlock_time.toString("MMMM d yyyy, h:mmap"));
             gameinfo_model->updatePointCount(achievement.points);
-            qDebug() << "AWARDED";
+            //qDebug() << "AWARDED";
             gameinfo_model->updateCompletionCount();
         }
     }
@@ -515,7 +515,7 @@ void RAClient::handleUnlocksResponse(const QJsonObject& jsonObject)
 
 void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
 {
-    qDebug() << jsonObject;
+    //qDebug() << jsonObject;
     QJsonArray unlock_data;
     if(userinfo_model->hardcore())
     {

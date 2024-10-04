@@ -16,10 +16,10 @@
 
 #include "usb2snes.h"
 #include <QUrl>
-#include <QDebug>
+//#include <QDebug>
 
 Q_LOGGING_CATEGORY(log_Usb2snes, "USB2SNES")
-#define sDebug() qCDebug(log_Usb2snes)
+//#define //sDebug() qCDebug(log_Usb2snes)
 
 Usb2Snes::Usb2Snes(bool autoAttach) : QObject()
 {
@@ -72,7 +72,7 @@ void Usb2Snes::attach(QString deviceName)
 
 void Usb2Snes::onWebSocketConnected()
 {
-    sDebug() << "Websocket connected";
+    //sDebug() << "Websocket connected";
     changeState(Connected);
     emit connected();
     m_istate = IConnected;
@@ -85,7 +85,7 @@ void Usb2Snes::onWebSocketConnected()
 
 void Usb2Snes::onWebSocketDisconnected()
 {
-    sDebug() << "Websocket disconnected";
+    //sDebug() << "Websocket disconnected";
     changeState(None);
     m_istate = INone;
     lastBinaryMessage = "";
@@ -110,10 +110,10 @@ QStringList Usb2Snes::getJsonResults(QString json)
 
 void Usb2Snes::onWebSocketTextReceived(QString message)
 {
-    sDebug() << "istate: " << m_istate;
-    sDebug() << "state: " << m_state;
-    sDebug() << "Command: " << m_currentCommand;
-    sDebug() << "Message: " << message;
+    //sDebug() << "istate: " << m_istate;
+    //sDebug() << "state: " << m_state;
+    //sDebug() << "Command: " << m_currentCommand;
+    //sDebug() << "Message: " << message;
     lastTextMessage = message;
     switch (m_istate)
     {
@@ -151,13 +151,13 @@ void Usb2Snes::onWebSocketTextReceived(QString message)
                     {
                         int npos = m_firmwareString.indexOf("-v");
                         npos += 2;
-                        sDebug() << "Firmware is : " << m_firmwareString << "Version" << m_firmwareString.mid(npos);
+                        //sDebug() << "Firmware is : " << m_firmwareString << "Version" << m_firmwareString.mid(npos);
                         m_firmwareVersion = QVersionNumber(m_firmwareString.mid(npos).toInt());
                     } else { // oficial sd2snes
                         m_firmwareVersion = QVersionNumber(QVersionNumber::fromString(m_firmwareString).minorVersion());
                     }
                 }
-                sDebug() << "Firmware Version: " << m_firmwareVersion;
+                //sDebug() << "Firmware Version: " << m_firmwareVersion;
                 m_istate = ServerVersionRequested;
                 sendRequest(AppVersion);
             }
@@ -218,7 +218,7 @@ void Usb2Snes::onWebSocketTextReceived(QString message)
             QStringList result = getJsonResults(message);
             bool    ok;
             requestedBinaryReadSize = result.at(0).toUInt(&ok, 16);
-            sDebug() << "File Size:" << requestedBinaryReadSize;
+            //sDebug() << "File Size:" << requestedBinaryReadSize;
             emit getFileSizeGet(requestedBinaryReadSize);
             if(m_state != GettingConfig)
                 changeState(ReceivingFile);
@@ -232,13 +232,13 @@ void Usb2Snes::onWebSocketTextReceived(QString message)
 
 void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
 {
-    sDebug() << "Binary Received";
+    //sDebug() << "Binary Received";
     static QByteArray buffer;
     buffer.append(message);
-    if (message.size() < 100)
-        sDebug() << "<<B" << message.toHex('-') << message;
-    else
-        sDebug() << "<<B" << "Received " << message.size() << " byte of data " << buffer.size() << requestedBinaryReadSize;
+    //if (message.size() < 100)
+        //sDebug() << "<<B" << message.toHex('-') << message;
+    //else
+        //sDebug() << "<<B" << "Received " << message.size() << " byte of data " << buffer.size() << requestedBinaryReadSize;
     if ((unsigned int) buffer.size() == requestedBinaryReadSize)
     {
         lastBinaryMessage = buffer;
@@ -264,7 +264,7 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
             default:
                 break;
         }
-        sDebug() << "Finish Binary";
+        //sDebug() << "Finish Binary";
         buffer.clear();
         m_istate = IReady;
         changeState(Ready);
@@ -273,7 +273,7 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
 
 void Usb2Snes::onWebSocketError(QAbstractSocket::SocketError error)
 {
-    sDebug() << "Error " << error;
+    //sDebug() << "Error " << error;
 }
 
 void Usb2Snes::onTimerTick()
@@ -308,7 +308,7 @@ void Usb2Snes::sendRequest(Usb2SnesCommand opCode, QStringList operands, Space s
         jObj["Operands"] = jOp;
 
     QString jsonString = QJsonDocument(jObj).toJson();
-    sDebug() << ">>" << jsonString;
+    //sDebug() << ">>" << jsonString;
 
     m_webSocket.sendTextMessage(jsonString);
 }
@@ -316,7 +316,7 @@ void Usb2Snes::sendRequest(Usb2SnesCommand opCode, QStringList operands, Space s
 void Usb2Snes::changeState(Usb2Snes::State s)
 {
     m_state = s;
-    sDebug() << "State changed to " << s;
+    //sDebug() << "State changed to " << s;
     emit stateChanged();
 }
 
@@ -330,7 +330,7 @@ QByteArray Usb2Snes::getAddressSync(unsigned int addr, unsigned int size, Space 
     QObject::connect(this, SIGNAL(disconnected()), &loop, SLOT(quit()));
     loop.exec();
     requestedBinaryReadSize = 0;
-    sDebug() << "Getting data,  size : " << lastBinaryMessage.size() << "- MD5 : " << QCryptographicHash::hash(lastBinaryMessage, QCryptographicHash::Md5).toHex();
+    //sDebug() << "Getting data,  size : " << lastBinaryMessage.size() << "- MD5 : " << QCryptographicHash::hash(lastBinaryMessage, QCryptographicHash::Md5).toHex();
     m_istate = IReady;
     return lastBinaryMessage;
 }
@@ -372,7 +372,7 @@ void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
 //To see if any NMI hook patch is applied you could technically look at $002A90 to see if it's $60 (RTS) = no patch.
 void Usb2Snes::isPatchedROM()
 {
-    sDebug() << "Checking for patched rom";
+    //sDebug() << "Checking for patched rom";
     if (m_firmwareVersion > QVersionNumber(7))
         getAddress(0xFC0000, 4, CMD);
     else
@@ -391,7 +391,7 @@ void Usb2Snes::setAddress(unsigned int addr, QByteArray data, Space space)
     m_istate = IBusy;
     sendRequest(PutAddress, QStringList() << QString::number(addr, 16) << QString::number(data.size(), 16), space);
     //Dumb shit for bad win7 C# websocket api
-    sDebug() << "Sending data,  size : " << data.size() << "- MD5 : " << QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
+    //sDebug() << "Sending data,  size : " << data.size() << "- MD5 : " << QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
     if (data.size() <= 1024)
         m_webSocket.sendBinaryMessage(data);
     else
@@ -403,7 +403,7 @@ void Usb2Snes::setAddress(unsigned int addr, QByteArray data, Space space)
         }
     }
     m_istate = IReady;
-    sDebug() << "Done sending data for setAddress " + QString::number(addr, 16);
+    //sDebug() << "Done sending data for setAddress " + QString::number(addr, 16);
 }
 
 void Usb2Snes::sendFile(QString path, QByteArray data)

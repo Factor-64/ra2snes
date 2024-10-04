@@ -1,7 +1,6 @@
 #ifndef RACLIENT_H
 #define RACLIENT_H
 
-#include <QDebug>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QQueue>

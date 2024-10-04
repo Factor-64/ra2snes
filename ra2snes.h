@@ -57,6 +57,8 @@ private:
     bool isGB;
     QAtomicInt tasksFinished;
     QString m_console;
+    unsigned int framesPassed;
+    QDateTime millisecPassed;
 
     void createSettingsFile();
     void loadSettings();

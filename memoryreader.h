@@ -18,8 +18,8 @@ public:
     void setupConsoleMemory();
     uint8_t* getConsoleMemory();
     QList<QPair<int, int>> getUniqueMemoryAddresses();
-    void checkAchievements();
-    void checkLeaderboards();
+    void checkAchievements(unsigned int frames);
+    void checkLeaderboards(unsigned int frames);
     void freeConsoleMemory();
 
 signals:
