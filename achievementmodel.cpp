@@ -43,6 +43,8 @@ QVariant AchievementModel::data(const QModelIndex &index, int role) const {
         return achievement.author;
     case TimeUnlockedRole:
         return achievement.time_unlocked;
+    case TimeUnlockedStringRole:
+        return achievement.time_unlocked_string;
     case UnlockedRole:
         return achievement.unlocked;
     case AchievementLinkRole:
@@ -68,20 +70,23 @@ QHash<int, QByteArray> AchievementModel::roleNames() const {
     roles[TypeRole] = "type";
     roles[AuthorRole] = "author";
     roles[TimeUnlockedRole] = "timeUnlocked";
+    roles[TimeUnlockedStringRole] = "timeUnlockedString";
     roles[UnlockedRole] = "unlocked";
     roles[AchievementLinkRole] = "achievementLink";
     return roles;
 }
 
-void AchievementModel::setUnlockedState(unsigned int id, bool unlocked, QString time) {
+void AchievementModel::setUnlockedState(unsigned int id, bool unlocked, QDateTime time) {
     for (int i = 0; i < m_achievements.size(); ++i) {
         if (m_achievements[i].id == id) {
             m_achievements[i].unlocked = unlocked;
             m_achievements[i].time_unlocked = time;
+            m_achievements[i].time_unlocked_string = time.toString("MMMM d yyyy, h:mmap");
             QModelIndex index = createIndex(i, 0);
             //qDebug() << "Data changed for index:" << index << "Unlocked state:" << unlocked;
             emit dataChanged(index, index, {UnlockedRole});
             emit dataChanged(index, index, {TimeUnlockedRole});
+            emit dataChanged(index, index, {TimeUnlockedStringRole});
             break;
         }
     }

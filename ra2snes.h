@@ -24,6 +24,7 @@ public:
     QString xorEncryptDecrypt(const QString &token, const QString &key);
     QString console() const;
     void setConsole(const QString &console);
+    void runChecks();
 
 public slots:
     void signIn(const QString &username, const QString &password, bool remember);

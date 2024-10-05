@@ -20,7 +20,8 @@ struct AchievementInfo {
     QString title;
     QString type;
     QString author;
-    QString time_unlocked;
+    QString time_unlocked_string;
+    QDateTime time_unlocked;
     bool unlocked;
     QUrl achievement_link;
 };

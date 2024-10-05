@@ -16,7 +16,7 @@
 
 #include "usb2snes.h"
 #include <QUrl>
-//#include <QDebug>
+#include <QDebug>
 
 Q_LOGGING_CATEGORY(log_Usb2snes, "USB2SNES")
 //#define //sDebug() qCDebug(log_Usb2snes)

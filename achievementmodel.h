@@ -23,6 +23,7 @@ public:
         TypeRole,
         AuthorRole,
         TimeUnlockedRole,
+        TimeUnlockedStringRole,
         UnlockedRole,
         AchievementLinkRole
     };
@@ -35,7 +36,7 @@ public:
 
     QHash<int, QByteArray> roleNames() const override;
 
-    void setUnlockedState(unsigned int id, bool unlocked, QString time);
+    void setUnlockedState(unsigned int id, bool unlocked, QDateTime time);
 
     void clearAchievements();
 

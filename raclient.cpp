@@ -408,7 +408,7 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
     {
         if (achievement.id == jsonObject["AchievementID"].toInt())
         {
-            achievement_model->setUnlockedState(achievement.id, true, queue.first().unlock_time.toString("MMMM d yyyy, h:mmap"));
+            achievement_model->setUnlockedState(achievement.id, true, queue.first().unlock_time);
             gameinfo_model->updatePointCount(achievement.points);
             //qDebug() << "AWARDED";
             gameinfo_model->updateCompletionCount();
@@ -473,7 +473,8 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
             info.type = data["Type"].toString();
             info.author = data["Author"].toString();
             info.unlocked = false;
-            info.time_unlocked = "";
+            info.time_unlocked_string = "";
+            info.time_unlocked = QDateTime(QDate(1990, 11, 21), QTime(0, 0, 0));
             info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
             if(info.type == "missable")
                 missables++;
@@ -529,7 +530,7 @@ void RAClient::handleStartSessionResponse(const QJsonObject& jsonObject)
                 progressionMap[achievement.id] = achievement.unlocked;
             if (unlock["ID"].toInt() == achievement.id)
             {
-                achievement_model->setUnlockedState(achievement.id, true, QDateTime::fromSecsSinceEpoch(unlock["When"].toInt()).toString("MMMM d yyyy, h:mmap"));
+                achievement_model->setUnlockedState(achievement.id, true, QDateTime::fromSecsSinceEpoch(unlock["When"].toInt()));
                 gameinfo_model->updatePointCount(achievement.points);
                 if(userinfo_model->hardcore())
                     userinfo_model->updateHardcoreScore(achievement.points);

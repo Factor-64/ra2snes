@@ -1526,7 +1526,7 @@ ApplicationWindow {
                             model: sortedAchievementModel
                             clip: true
                             delegate: Rectangle {
-                                height: Math.max(72, descriptionText.implicitHeight + (model.timeUnlocked !== "" ? unlockedTime.implicitHeight + 8 : 0) + 24)
+                                height: Math.max(72, descriptionText.implicitHeight + (model.timeUnlockedString !== "" ? unlockedTime.implicitHeight + 8 : 0) + 24)
                                 id: achievement
                                 Component.onCompleted: {
                                     if (parent !== null)
@@ -1638,8 +1638,8 @@ ApplicationWindow {
                                             id: unlockedTime
                                             color: "#7e7e7e"
                                             text: {
-                                                if(model.timeUnlocked !== "")
-                                                    "Unlocked " + model.timeUnlocked
+                                                if(model.timeUnlockedString !== "")
+                                                    "Unlocked " + model.timeUnlockedString
                                                 else ""
                                             }
                                             font.family: "Verdana"
