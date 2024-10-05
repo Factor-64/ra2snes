@@ -222,18 +222,7 @@ void ra2snes::onUsb2SnesGetAddressesDataReceived()
     //qDebug() << tempConsoleMemory;
     //qDebug() << "Queue Size: " << reader->achievementQueueSize();
     if(reader->achievementQueueSize() == 1)
-    {
         QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
-    }
-}
-
-void ra2snes::runChecks()
-{
-    //qDebug() << "Starting Threads";
-    millisecPassed = QDateTime::currentDateTime();
-    //qDebug() << "Init Time:" << millisecPassed;
-    //qDebug() << "Getting Addresses";
-    usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
 }
 
 void ra2snes::onUsb2SnesGetAddressDataReceived()
