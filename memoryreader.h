@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QList>
+#include <QQueue>
 #include "rc_runtime_types.h"
 #include "rastructs.h"
 
@@ -14,12 +15,12 @@ public:
 
     void initTriggers(const QList<AchievementInfo> achievements, const QList<LeaderboardInfo> leaderboards);
     void remapTriggerAddresses();
-    void setupConsoleMemory();
-    uint8_t* getConsoleMemory();
     QList<QPair<int, int>> getUniqueMemoryAddresses();
-    void checkAchievements(unsigned int frames);
-    void checkLeaderboards(unsigned int frames);
+    void checkAchievements();
+    void checkLeaderboards();
     void freeConsoleMemory();
+    void addFrameToQueues(QByteArray data, int frames);
+    int achievementQueueSize();
 
 signals:
     void finishedMemorySetup();
@@ -33,8 +34,8 @@ private:
     QMap<unsigned int, rc_trigger_t*> achievementTriggers;
     QMap<unsigned int, rc_lboard_t*> leaderboardTriggers;
     QList<unsigned int> achievementsToRemove;
-    uint8_t* consoleMemory;
-    unsigned int consoleMemorySize;
+    QQueue<QPair<QByteArray, int>> achievementFrames;
+    //QQueue<QPair<QByteArray, int>> leaderboardFrames;
 };
 
 

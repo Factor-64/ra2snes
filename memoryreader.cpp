@@ -3,14 +3,13 @@
 //#include <QDebug>
 
 MemoryReader::MemoryReader(QObject *parent) : QObject(parent) {
-    consoleMemory = nullptr;
 }
 
 void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const QList<LeaderboardInfo> leaderboards) {
     uniqueMemoryAddresses.clear();
     achievementTriggers.clear();
     leaderboardTriggers.clear();
-    consoleMemorySize = 0;
+    achievementFrames.clear();
     QMap<int, int> uniqueAddresses;
     for(const AchievementInfo& achievement : achievements)
     {
@@ -54,13 +53,10 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
         }
     }
 
-    //qDebug() << uniqueAddresses;
-
     for(auto it = uniqueAddresses.begin(); it != uniqueAddresses.end(); ++it)
-    {
         uniqueMemoryAddresses.append(qMakePair(it.key(), it.value()));
-        consoleMemorySize += it.value();
-    }
+
+    //qDebug() << uniqueMemoryAddresses << uniqueMemoryAddresses.size() << consoleMemorySize;
 
     remapTriggerAddresses();
 }
@@ -82,6 +78,7 @@ void MemoryReader::remapTriggerAddresses()
                     nextref->address = memoryOffset;
                     //qDebug() << "Memory Offset: " << memoryOffset;
                     //qDebug() << "New Trigger Address: " << nextref->address;
+                    break;
                 }
                 memoryOffset += pair.second;
             }
@@ -106,6 +103,7 @@ void MemoryReader::remapTriggerAddresses()
                         nextref->address = memoryOffset;
                         //qDebug() << "Memory Offset: " << memoryOffset;
                         //qDebug() << "New Trigger Address: " << nextref->address;
+                        break;
                     }
                     memoryOffset += pair.second;
                 }
@@ -114,20 +112,19 @@ void MemoryReader::remapTriggerAddresses()
         }
     }
 
-    setupConsoleMemory();
-}
-
-void MemoryReader::setupConsoleMemory()
-{
-    delete[] consoleMemory;
-    consoleMemory = (consoleMemorySize != 0) ? new uint8_t[consoleMemorySize] : nullptr;
-
+    qDebug() << "Setup Finished";
     emit finishedMemorySetup();
 }
 
-uint8_t* MemoryReader::getConsoleMemory()
+void MemoryReader::addFrameToQueues(QByteArray data, int frames)
 {
-    return consoleMemory;
+    achievementFrames.enqueue(qMakePair(data, frames));
+    //LeaderBoardFramesToCheck.enqueue(qMakePair(data, frames))
+}
+
+int MemoryReader::achievementQueueSize()
+{
+    return achievementFrames.size();
 }
 
 QList<QPair<int, int>> MemoryReader::getUniqueMemoryAddresses()
@@ -153,40 +150,35 @@ static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {
     return 0;
 }
 
-void MemoryReader::checkAchievements(unsigned int frames)
+void MemoryReader::checkAchievements()
 {
     //qDebug() << "Frames:" << frames;
-    while(frames > 0)
+    //qDebug() << achievementFrames;
+    while(achievementFrames.size() > 0)
     {
-        QList<unsigned int> ids;
-        for(auto it = achievementTriggers.cbegin(); it != achievementTriggers.cend(); ++it)
+        for(int frame = 0; frame < achievementFrames.first().second; frame++)
         {
-            const auto& trigger = it.value();
-            rc_test_trigger(trigger, peek, consoleMemory, nullptr);
-            if (trigger->state == RC_TRIGGER_STATE_TRIGGERED)
+            QList<unsigned int> ids;
+            for(auto it = achievementTriggers.cbegin(); it != achievementTriggers.cend(); ++it)
             {
-                //qDebug() << "Achievement Unlocked: " << it.key();
-                ids.append(it.key());
-                emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
+                const auto& trigger = it.value();
+                rc_test_trigger(trigger, peek, achievementFrames.first().first.data(), nullptr);
+                if (trigger->state == RC_TRIGGER_STATE_TRIGGERED)
+                {
+                    //qDebug() << "Achievement Unlocked: " << it.key();
+                    ids.append(it.key());
+                    emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
+                }
             }
+            for(const auto& id : ids)
+                achievementTriggers.remove(id);
         }
-        for(const auto& id : ids)
-            achievementTriggers.remove(id);
-        frames--;
+        achievementFrames.dequeue();
     }
-    emit achievementsChecked();
+    //qDebug() << "Achievements Checked";
 }
 
-void MemoryReader::checkLeaderboards(unsigned int frames)
+void MemoryReader::checkLeaderboards()
 {
-    while(frames > 0)
-    {
-        frames--;
-    }
     emit leaderboardsChecked();
-}
-
-void MemoryReader::freeConsoleMemory()
-{
-    delete[] consoleMemory;
 }

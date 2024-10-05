@@ -120,14 +120,14 @@ void RAClient::awardAchievement(unsigned int id, bool hardcore, QDateTime achiev
 
 void RAClient::queueAchievementRequest(unsigned int id, QDateTime achieved) {
     RequestData data = {AchievementRequest, id, userinfo_model->hardcore(), achieved, 0};
-    queue.append(data);
+    queue.enqueue(data);
     if(!running)
         startQueue();
 }
 
 void RAClient::queueLeaderboardRequest(unsigned int id, QDateTime achieved, unsigned int score) {
     RequestData data = {LeaderboardRequest, id, true, achieved, score};
-    queue.append(data);
+    queue.enqueue(data);
     if(!running)
         startQueue();
 }

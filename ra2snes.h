@@ -56,7 +56,7 @@ private:
     bool reset;
     bool gameSetup;
     bool isGB;
-    QAtomicInt tasksFinished;
+    unsigned int tasksFinished;
     QString m_console;
     unsigned int framesPassed;
     QDateTime millisecPassed;
