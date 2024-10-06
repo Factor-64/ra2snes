@@ -153,17 +153,6 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
             setCurrentConsole();
             usb2snes->getConfig();
         }
-        else if (gameLoaded && loggedin)
-        {
-            tasksFinished++;
-            if(!raclient->getHardcore() || isGB)
-            {
-                millisecPassed = QDateTime::currentDateTime();
-                usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
-            }
-            else
-                usb2snes->isPatchedROM();
-        }
         else if (!gameLoaded && loggedin)
         {
             emit switchingMode();
@@ -218,8 +207,8 @@ void ra2snes::onUsb2SnesGetAddressesDataReceived()
     //qDebug() << "Current Time:" << QDateTime::currentDateTime();
     framesPassed = std::round(std::abs(millisecPassed.msecsTo(QDateTime::currentDateTime())) * 0.06009);
     //qDebug() << "Frames: " << framesPassed;
+    millisecPassed = QDateTime::currentDateTime();
     reader->addFrameToQueues(usb2snes->getBinaryData(), framesPassed);
-    //qDebug() << tempConsoleMemory;
     //qDebug() << "Queue Size: " << reader->achievementQueueSize();
     if(reader->achievementQueueSize() == 1)
         QThreadPool::globalInstance()->start([=] { reader->checkAchievements(); });
@@ -245,11 +234,7 @@ void ra2snes::onUsb2SnesGetAddressDataReceived()
         changeMode();
     }
     else
-    {
         raclient->setPatched(false);
-        if(gameLoaded)
-            tasksFinished++;
-    }
     //qDebug() << "Finished Patch Check";
 }
 
@@ -297,14 +282,21 @@ void ra2snes::onUsb2SnesStateChanged()
             switch(tasksFinished)
             {
                 case 1:
+                    tasksFinished++;
                     usb2snes->infos();
                     break;
                 case 2:
-                    usb2snes->isPatchedROM();
+                    tasksFinished++;
+                    if(raclient->getHardcore())
+                        usb2snes->isPatchedROM();
+                    else
+                    {
+                        tasksFinished = 0;
+                        usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
+                    }
                     break;
                 case 3:
                     tasksFinished = 0;
-                    millisecPassed = QDateTime::currentDateTime();
                     usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
                     break;
                 default:

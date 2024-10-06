@@ -112,7 +112,7 @@ void MemoryReader::remapTriggerAddresses()
         }
     }
 
-    qDebug() << "Setup Finished";
+    //qDebug() << "Setup Finished";
     emit finishedMemorySetup();
 }
 
