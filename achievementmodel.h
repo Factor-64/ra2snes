@@ -44,6 +44,9 @@ public:
 
     void appendAchievement(AchievementInfo a);
 
+signals:
+    void unlockedChanged();
+
 private:
     QList<AchievementInfo> m_achievements;
 };

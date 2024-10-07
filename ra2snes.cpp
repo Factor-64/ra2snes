@@ -12,10 +12,10 @@ ra2snes::ra2snes(QObject *parent)
     gameSetup = false;
     gameLoaded = false;
     isGB = false;
-    tasksFinished = 0;
+    reset = false;
+    doThisTaskNext = None;
     m_console = "SNES";
     remember_me = false;
-    reset = false;
     framesPassed = 0;
 
     raclient->setHardcore(true);
@@ -25,10 +25,7 @@ ra2snes::ra2snes(QObject *parent)
     connect(usb2snes, &Usb2Snes::connected, this, [=]() {
         usb2snes->setAppName("ra2snes");
         //qDebug() << "Connected to usb2snes server, trying to find a suitable device";
-        tasksFinished = 5;
-        gameLoaded = false;
         raclient->clearAchievements();
-        reset = true;
         raclient->stopQueue();
         usb2snes->deviceList();
         emit displayMessage("QUsb2Snes Connected", false);
@@ -37,10 +34,7 @@ ra2snes::ra2snes(QObject *parent)
     connect(usb2snes, &Usb2Snes::disconnected, this, [=]() {
         //qDebug() << "Disconnected, trying to reconnect in 1 sec";
         emit displayMessage("QUsb2Snes Not Connected", true);
-        tasksFinished = 5;
-        gameLoaded = false;
         raclient->clearAchievements();
-        reset = true;
         raclient->stopQueue();
         emit switchingMode();
         QTimer::singleShot(1000, this, [=] {
@@ -53,6 +47,7 @@ ra2snes::ra2snes(QObject *parent)
         {
             usb2snes->attach(devices.at(0));
             usb2snes->infos(true);
+            reset = true;
             emit displayMessage("Console Connected", false);
         }
         else
@@ -102,7 +97,7 @@ ra2snes::ra2snes(QObject *parent)
     });
 
     connect(reader, &MemoryReader::finishedMemorySetup, this, [=] {
-        tasksFinished = 0;
+        doThisTaskNext = None;
         millisecPassed = QDateTime::currentDateTime();
         usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
     });
@@ -144,14 +139,20 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
         m_currentGame.replace("?", " ");
         if (m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin") || reset)
         {
-            gameLoaded = false;
-            raclient->setPatched(false);
-            raclient->clearAchievements();
-            emit clearedAchievements();
-            raclient->clearGame();
             reset = false;
-            setCurrentConsole();
-            usb2snes->getConfig();
+            if(gameLoaded)
+                doThisTaskNext = Reset;
+            else
+            {
+                gameSetup = false;
+                raclient->setPatched(false);
+                raclient->clearAchievements();
+                emit clearedAchievements();
+                raclient->clearGame();
+                setCurrentConsole();
+                //qDebug() << "Menu";
+                usb2snes->getConfig();
+            }
         }
         else if (!gameLoaded && loggedin)
         {
@@ -160,7 +161,7 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
                 changeMode();
             setCurrentConsole();
             gameSetup = true;
-            emit displayMessage("Loading Game...", false);
+            emit displayMessage("Loading... Do Not Turn Off Console!", false);
             usb2snes->getConfig();
         }
     }
@@ -196,14 +197,14 @@ void ra2snes::onUsb2SnesGetConfigDataReceived()
     if(raclient->getAutoHardcore())
         changeMode();
     if(gameSetup)
-        usb2snes->getFile(m_currentGame);
+        doThisTaskNext = GetCurrentGameFile;
     else if(!gameLoaded)
         usb2snes->infos();
 }
 
 void ra2snes::onUsb2SnesGetAddressesDataReceived()
 {
-    tasksFinished++;
+    doThisTaskNext = GetConsoleInfo;
     //qDebug() << "Current Time:" << QDateTime::currentDateTime();
     framesPassed = std::round(std::abs(millisecPassed.msecsTo(QDateTime::currentDateTime())) * 0.06009);
     //qDebug() << "Frames: " << framesPassed;
@@ -241,9 +242,8 @@ void ra2snes::onUsb2SnesGetAddressDataReceived()
 void ra2snes::onLoginSuccess()
 {
     loggedin = true;
-    reset = true;
     createSettingsFile();
-    tasksFinished = 5;
+    reset = true;
     onUsb2SnesStateChanged();
     emit loginSuccess();
 }
@@ -270,48 +270,56 @@ void ra2snes::onRequestError()
 
 void ra2snes::onUsb2SnesStateChanged()
 {
-    //qDebug() << "Tasks Finished: " << tasksFinished;
+    //qDebug() << "Tasks Finished: " << doThisTaskNext;
     //qDebug() << "State: " << usb2snes->state();
     //qDebug() << "Reset? " << reset;
     if(usb2snes->state() == Usb2Snes::Ready)
     {
         if(reset)
-            usb2snes->infos();
-        else
+            doThisTaskNext = Reset;
+        switch(doThisTaskNext)
         {
-            switch(tasksFinished)
-            {
-                case 1:
-                    tasksFinished++;
-                    usb2snes->infos();
-                    break;
-                case 2:
-                    tasksFinished++;
-                    if(raclient->getHardcore())
-                        usb2snes->isPatchedROM();
-                    else
-                    {
-                        tasksFinished = 0;
-                        usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
-                    }
-                    break;
-                case 3:
-                    tasksFinished = 0;
+            case GetConsoleInfo:
+                doThisTaskNext = CheckPatched;
+                usb2snes->infos();
+                break;
+            case CheckPatched:
+                doThisTaskNext = GetConsoleAddresses;
+                if(raclient->getHardcore())
+                    usb2snes->isPatchedROM();
+                else
+                {
+                    doThisTaskNext = GetConsoleInfo;
                     usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
-                    break;
-                default:
-                    break;
-            }
+                }
+                break;
+            case GetConsoleAddresses:
+                doThisTaskNext = GetConsoleInfo;
+                usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
+                break;
+            case GetCurrentGameFile:
+                doThisTaskNext = None;
+                usb2snes->getFile(m_currentGame);
+                break;
+            case Reset:
+                doThisTaskNext = None;
+                gameLoaded = false;
+                usb2snes->infos();
+                break;
+            default:
+                break;
         }
 
     }
     else if(usb2snes->state() == Usb2Snes::None)
     {
+        doThisTaskNext = None;
+        gameLoaded = false;
         m_currentGame = "";
         setCurrentConsole();
     }
     else if(usb2snes->state() == Usb2Snes::ReceivingFile)
-        emit displayMessage("Loading Game...", false);
+        emit displayMessage("Loading... Do Not Turn Off Console!", false);
 }
 
 void ra2snes::setCurrentConsole()
@@ -451,7 +459,7 @@ void ra2snes::loadSettings() {
     }
     //else
     //{
-        //qDebug() << "Settings file does not exist.";
+      //qDebug() << "Settings file does not exist.";
     //}
     setCurrentConsole();
 }
@@ -462,12 +470,12 @@ void ra2snes::signOut()
     loggedin = false;
     gameLoaded = false;
     remember_me = false;
+    reset = true;
     raclient->clearAchievements();
     raclient->clearUser();
     raclient->clearGame();
     createSettingsFile();
     loadSettings();
-    reset = true;
     onUsb2SnesStateChanged();
     emit signedOut();
 }
@@ -508,10 +516,8 @@ void ra2snes::changeMode()
     }
     if(gameLoaded && loggedin)
     {
-        tasksFinished = 5;
-        gameLoaded = false;
-        raclient->clearAchievements();
         reset = true;
+        raclient->clearAchievements();
         raclient->stopQueue();
         onUsb2SnesStateChanged();
         emit switchingMode();

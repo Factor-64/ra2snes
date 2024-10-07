@@ -87,6 +87,7 @@ void AchievementModel::setUnlockedState(unsigned int id, bool unlocked, QDateTim
             emit dataChanged(index, index, {UnlockedRole});
             emit dataChanged(index, index, {TimeUnlockedRole});
             emit dataChanged(index, index, {TimeUnlockedStringRole});
+            emit unlockedChanged();
             break;
         }
     }

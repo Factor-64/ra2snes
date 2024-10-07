@@ -234,6 +234,8 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
 {
     //sDebug() << "Binary Received";
     static QByteArray buffer;
+    if ((unsigned int) buffer.size() > requestedBinaryReadSize)
+        buffer.clear();
     buffer.append(message);
     //if (message.size() < 100)
         //sDebug() << "<<B" << message.toHex('-') << message;

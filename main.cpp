@@ -13,11 +13,11 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
     ra2snes ra2snesInstance;
-
     engine.rootContext()->setContextProperty("ra2snes", &ra2snesInstance);
     engine.rootContext()->setContextProperty("achievementModel", ra2snesInstance.achievementModel());
     engine.rootContext()->setContextProperty("gameInfoModel", ra2snesInstance.gameInfoModel());
     engine.rootContext()->setContextProperty("userInfoModel", ra2snesInstance.userInfoModel());
+    engine.rootContext()->setContextProperty("appDirPath", QCoreApplication::applicationDirPath());
     engine.load(QUrl(QStringLiteral("qrc:/ui/login.qml")));
 
     QObject::connect(&ra2snesInstance, &ra2snes::loginSuccess, &engine, [&engine]() {

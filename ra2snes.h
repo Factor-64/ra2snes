@@ -14,6 +14,17 @@ class ra2snes : public QObject
     Q_PROPERTY(QString console READ console WRITE setConsole NOTIFY consoleChanged)
 
 public:
+    enum Task {
+        None,
+        GetConsoleInfo,
+        GetConsoleAddresses,
+        GetConsoleConfig,
+        GetCurrentGameFile,
+        CheckPatched,
+        ClearLeftOverData,
+        Reset
+    };
+
     explicit ra2snes(QObject *parent = nullptr);
     ~ra2snes();
 
@@ -52,13 +63,13 @@ private:
     bool loggedin;
     bool gameLoaded;
     bool remember_me;
-    bool reset;
     bool gameSetup;
     bool isGB;
-    unsigned int tasksFinished;
+    bool reset;
     QString m_console;
     unsigned int framesPassed;
     QDateTime millisecPassed;
+    Task doThisTaskNext;
 
     void createSettingsFile();
     void loadSettings();

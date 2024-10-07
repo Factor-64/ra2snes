@@ -2,6 +2,8 @@ import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
 import CustomModels 1.0
+import QtMultimedia
+import Qt.labs.folderlistmodel
 
 // I apologize to anyone looking at this
 
@@ -41,6 +43,7 @@ ApplicationWindow {
     property int windowHeight: height
     property string modeFailed: ""
     property bool disableChange: false
+    property bool setupFinished: false
 
     onWidthChanged: windowWidth = width
     onHeightChanged: windowHeight = height
@@ -48,6 +51,79 @@ ApplicationWindow {
     AchievementSortFilterProxyModel {
         id: sortedAchievementModel
         sourceModel: achievementModel
+    }
+
+    Item {
+        id: unlockSounds
+
+        property var soundQueue: []
+
+        SoundEffect {
+            id: unlockSound
+            source: ""
+            onPlayingChanged: {
+                if (!playing) {
+                    console.log("Playin Next");
+                    unlockSounds.playNextSound();
+                }
+                else
+                    console.log("Playing...", source);
+            }
+            onStatusChanged: {
+                console.log("Status", status, SoundEffect.Ready)
+                if(status === SoundEffect.Ready)
+                    play();
+            }
+
+            onSourceChanged: {
+                console.log("Source:", unlockSound.source)
+            }
+        }
+
+        FolderListModel {
+            id: folderModel
+            nameFilters: ["*.mp3", "*.wav", "*.ogg", "*.flac"]
+            folder: "file:///" + appDirPath + "/sounds"
+        }
+
+        function queueSound(filePath) {
+            soundQueue.push(filePath);
+            if (unlockSound.status === SoundEffect.Null) {
+                playNextSound();
+            }
+        }
+
+        function playNextSound() {
+            if (soundQueue.length > 0) {
+                console.log("Sounds:", soundQueue);
+                unlockSound.source = unlockSounds.soundQueue.shift();
+            }
+            else
+                unlockSound.source = "";
+        }
+
+        function getRandomSound() {
+            if (folderModel.count > 0) {
+                var now = new Date().getTime();
+                var randomIndex = Math.floor(Math.random() * now % folderModel.count);
+                var fileUrl = folderModel.get(randomIndex, "fileURL").toString();
+                return fileUrl;
+            }
+            return "";
+        }
+
+        Connections {
+            target: achievementModel
+            function onUnlockedChanged() {
+                if(mainWindow.setupFinished)
+                {
+                    var randomSound = unlockSounds.getRandomSound();
+                    if (randomSound) {
+                        unlockSounds.queueSound(randomSound);
+                    }
+                }
+            }
+        }
     }
 
     Flickable {
@@ -991,6 +1067,7 @@ ApplicationWindow {
                                 mouseAreaMode.enableModeChangeButton();
                                 changeCheckBox.enabled = true;
                                 autoHardcore.color = "#2c97fa";
+                                mainWindow.setupFinished = true;
                             }
                         }
 
