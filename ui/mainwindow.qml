@@ -103,7 +103,7 @@ ApplicationWindow {
         Connections {
             target: achievementModel
             function onUnlockedChanged() {
-                if(mainWindow.setupFinished)
+                if(setupFinished)
                 {
                     var randomSound = unlockSounds.getRandomSound();
                     if (randomSound) {
@@ -287,6 +287,7 @@ ApplicationWindow {
                                                 disableChange = false;
                                                 mouseAreaMode.enableModeChangeButton();
                                             }
+                                            setupFinished = false;
                                             ra2snes.autoChange(changeCheckBox.checked);
                                         }
                                         Component.onCompleted: {
@@ -363,6 +364,7 @@ ApplicationWindow {
                                         hoverEnabled: true
                                         onClicked: {
                                             disableModeChangeButton();
+                                            mainWindow.setupFinished = false;
                                             ra2snes.changeMode();
                                         }
                                         Component.onCompleted: {
