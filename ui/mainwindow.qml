@@ -58,25 +58,15 @@ ApplicationWindow {
 
         property var soundQueue: []
 
-        SoundEffect {
+        MediaPlayer {
             id: unlockSound
             source: ""
-            onPlayingChanged: {
-                if (!playing) {
-                    console.log("Playin Next");
-                    unlockSounds.playNextSound();
-                }
-                else
-                    console.log("Playing...", source);
-            }
-            onStatusChanged: {
-                console.log("Status", status, SoundEffect.Ready)
-                if(status === SoundEffect.Ready)
+            audioOutput: AudioOutput {}
+            onMediaStatusChanged: {
+                if(mediaStatus === MediaPlayer.LoadedMedia)
                     play();
-            }
-
-            onSourceChanged: {
-                console.log("Source:", unlockSound.source)
+                else if(mediaStatus === MediaPlayer.EndOfMedia)
+                    unlockSounds.playNextSound();
             }
         }
 
@@ -88,16 +78,14 @@ ApplicationWindow {
 
         function queueSound(filePath) {
             soundQueue.push(filePath);
-            if (unlockSound.status === SoundEffect.Null) {
+            if (unlockSound.mediaStatus === MediaPlayer.NoMedia) {
                 playNextSound();
             }
         }
 
         function playNextSound() {
-            if (soundQueue.length > 0) {
-                console.log("Sounds:", soundQueue);
-                unlockSound.source = unlockSounds.soundQueue.shift();
-            }
+            if (soundQueue.length > 0)
+                unlockSound.source = soundQueue.shift();
             else
                 unlockSound.source = "";
         }
