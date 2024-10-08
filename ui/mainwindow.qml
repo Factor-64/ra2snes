@@ -86,7 +86,7 @@ ApplicationWindow {
 
         function playMasteredSound()
         {
-            if (folderModel2.count > 0)
+            if (folderModelMastered.count > 0)
             {
                 var now = new Date().getTime();
                 var randomIndex = Math.floor(Math.random() * now % folderModelMastered.count);
