@@ -22,7 +22,8 @@ public:
         GetCurrentGameFile,
         CheckPatched,
         ClearLeftOverData,
-        Reset
+        Reset,
+        NoChecksNeeded
     };
 
     explicit ra2snes(QObject *parent = nullptr);
@@ -66,6 +67,7 @@ private:
     bool gameSetup;
     bool isGB;
     bool reset;
+    bool noChecks;
     QString m_console;
     unsigned int framesPassed;
     QDateTime millisecPassed;

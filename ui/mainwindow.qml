@@ -54,6 +54,90 @@ ApplicationWindow {
     }
 
     Item {
+        id: masteredFanfare
+
+        property var fanfareQueue: []
+
+        MediaPlayer {
+            id: fanfare
+            source: ""
+            audioOutput: AudioOutput {}
+            onMediaStatusChanged: {
+                if(mediaStatus === MediaPlayer.LoadedMedia)
+                    play();
+                else if(mediaStatus === MediaPlayer.EndOfMedia)
+                    source = "";
+            }
+        }
+
+        FolderListModel {
+            id: folderModel2
+            nameFilters: ["*.mp3", "*.wav", "*.ogg", "*.flac"]
+            folder: "file:///" + appDirPath + "/fanfares/beaten"
+        }
+
+        function playRandomSound() {
+            if (folderModel2.count > 0) {
+                var now = new Date().getTime();
+                var randomIndex = Math.floor(Math.random() * now % folderModel2.count);
+                var fileUrl = folderModel2.get(randomIndex, "fileURL").toString();
+                fanfare.source = fileUrl;
+            }
+            return "";
+        }
+
+        Connections {
+            target: gameInfoModel
+            function onMasteredGame() {
+                if(setupFinished)
+                    masteredFanfare.playRandomSound();
+            }
+        }
+    }
+
+    Item {
+        id: beatenFanfare
+
+        property var fanfareQueue: []
+
+        MediaPlayer {
+            id: fanfare2
+            source: ""
+            audioOutput: AudioOutput {}
+            onMediaStatusChanged: {
+                if(mediaStatus === MediaPlayer.LoadedMedia)
+                    play();
+                else if(mediaStatus === MediaPlayer.EndOfMedia)
+                    source = "";
+            }
+        }
+
+        FolderListModel {
+            id: folderModel3
+            nameFilters: ["*.mp3", "*.wav", "*.ogg", "*.flac"]
+            folder: "file:///" + appDirPath + "/fanfares/mastered"
+        }
+
+        function playRandomSound() {
+            if (folderModel3.count > 0) {
+                var now = new Date().getTime();
+                var randomIndex = Math.floor(Math.random() * now % folderModel3.count);
+                var fileUrl = folderModel3.get(randomIndex, "fileURL").toString();
+                fanfare2.source = fileUrl;
+            }
+            return "";
+        }
+
+        Connections {
+            target: gameInfoModel
+            function onBeatenGame() {
+                if(setupFinished)
+                    beatenFanfare.playRandomSound();
+            }
+        }
+    }
+
+    Item {
         id: unlockSounds
 
         property var soundQueue: []

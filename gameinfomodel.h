@@ -64,6 +64,8 @@ public:
 
 signals:
     void dataChanged();
+    void masteredGame();
+    void beatenGame();
 
 private:
     GameInfo m_gameInfo;

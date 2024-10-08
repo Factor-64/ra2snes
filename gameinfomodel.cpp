@@ -133,12 +133,16 @@ void GameInfoModel::completion_count(unsigned int cc)
 void GameInfoModel::beaten(bool b)
 {
     m_gameInfo.beaten = b;
+    if(b)
+        emit beatenGame();
     emit dataChanged();
 }
 
 void GameInfoModel::mastered(bool m)
 {
     m_gameInfo.mastered = m;
+    if(m)
+        emit masteredGame();
     emit dataChanged();
 }
 
