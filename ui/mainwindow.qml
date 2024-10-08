@@ -56,41 +56,53 @@ ApplicationWindow {
     Item {
         id: masteredFanfare
 
-        property var fanfareQueue: []
+        property var mfanfareQueue: []
 
         MediaPlayer {
-            id: fanfare
+            id: mfanfare
             source: ""
             audioOutput: AudioOutput {}
             onMediaStatusChanged: {
-                if(mediaStatus === MediaPlayer.LoadedMedia)
+                if (mediaStatus === MediaPlayer.EndOfMedia)
+                {
+                   if (masteredFanfare.mfanfareQueue.length > 0)
+                   {
+                       source = "";
+                       source = masteredFanfare.mfanfareQueue.shift();
+                   }
+                }
+                else if(mediaStatus === MediaPlayer.LoadedMedia)
                     play();
-                else if(mediaStatus === MediaPlayer.EndOfMedia)
+                else if(mediaStatus === MediaPlayer.InvalidMedia)
                     source = "";
             }
         }
 
         FolderListModel {
-            id: folderModel2
+            id: folderModelMastered
             nameFilters: ["*.mp3", "*.wav", "*.ogg", "*.flac"]
-            folder: "file:///" + appDirPath + "/fanfares/beaten"
+            folder: "file:///" + appDirPath + "/fanfares/mastered"
         }
 
-        function playRandomSound() {
-            if (folderModel2.count > 0) {
+        function playMasteredSound()
+        {
+            if (folderModel2.count > 0)
+            {
                 var now = new Date().getTime();
-                var randomIndex = Math.floor(Math.random() * now % folderModel2.count);
-                var fileUrl = folderModel2.get(randomIndex, "fileURL").toString();
-                fanfare.source = fileUrl;
+                var randomIndex = Math.floor(Math.random() * now % folderModelMastered.count);
+                var fileUrl = folderModelMastered.get(randomIndex, "fileURL").toString();
+                if (mfanfare.mediaStatus === MediaPlayer.EndOfMedia || mfanfare.mediaStatus === MediaPlayer.NoMedia)
+                    mfanfare.source = fileUrl;
+                else
+                    mfanfareQueue.push(fileUrl);
             }
-            return "";
         }
 
         Connections {
             target: gameInfoModel
             function onMasteredGame() {
                 if(setupFinished)
-                    masteredFanfare.playRandomSound();
+                    masteredFanfare.playMasteredSound();
             }
         }
     }
@@ -98,41 +110,53 @@ ApplicationWindow {
     Item {
         id: beatenFanfare
 
-        property var fanfareQueue: []
+        property var bfanfareQueue: []
 
         MediaPlayer {
-            id: fanfare2
+            id: bfanfare
             source: ""
             audioOutput: AudioOutput {}
             onMediaStatusChanged: {
-                if(mediaStatus === MediaPlayer.LoadedMedia)
+                if (mediaStatus === MediaPlayer.EndOfMedia)
+                {
+                   if (beatenFanfare.bfanfareQueue.length > 0)
+                   {
+                       source = "";
+                       source = beatenFanfare.bfanfareQueue.shift();
+                   }
+                }
+                else if(mediaStatus === MediaPlayer.LoadedMedia)
                     play();
-                else if(mediaStatus === MediaPlayer.EndOfMedia)
+                else if(mediaStatus === MediaPlayer.InvalidMedia)
                     source = "";
             }
         }
 
         FolderListModel {
-            id: folderModel3
+            id: folderModelBeaten
             nameFilters: ["*.mp3", "*.wav", "*.ogg", "*.flac"]
-            folder: "file:///" + appDirPath + "/fanfares/mastered"
+            folder: "file:///" + appDirPath + "/fanfares/beaten"
         }
 
-        function playRandomSound() {
-            if (folderModel3.count > 0) {
+        function playBeatenSound()
+        {
+            if (folderModelBeaten.count > 0)
+            {
                 var now = new Date().getTime();
-                var randomIndex = Math.floor(Math.random() * now % folderModel3.count);
-                var fileUrl = folderModel3.get(randomIndex, "fileURL").toString();
-                fanfare2.source = fileUrl;
+                var randomIndex = Math.floor(Math.random() * now % folderModelBeaten.count);
+                var fileUrl = folderModelBeaten.get(randomIndex, "fileURL").toString();
+                if (bfanfare.mediaStatus === MediaPlayer.EndOfMedia || bfanfare.mediaStatus === MediaPlayer.NoMedia)
+                    bfanfare.source = fileUrl;
+                else
+                    bfanfareQueue.push(fileUrl);
             }
-            return "";
         }
 
         Connections {
             target: gameInfoModel
             function onBeatenGame() {
                 if(setupFinished)
-                    beatenFanfare.playRandomSound();
+                    beatenFanfare.playBeatenSound();
             }
         }
     }
@@ -147,10 +171,18 @@ ApplicationWindow {
             source: ""
             audioOutput: AudioOutput {}
             onMediaStatusChanged: {
-                if(mediaStatus === MediaPlayer.LoadedMedia)
+                if (mediaStatus === MediaPlayer.EndOfMedia)
+                {
+                    if (unlockSounds.soundQueue.length > 0)
+                    {
+                        source = "";
+                        source = unlockSounds.soundQueue.shift();
+                    }
+                }
+                else if(mediaStatus === MediaPlayer.LoadedMedia)
                     play();
-                else if(mediaStatus === MediaPlayer.EndOfMedia)
-                    unlockSounds.playNextSound();
+                else if(mediaStatus === MediaPlayer.InvalidMedia)
+                    source = "";
             }
         }
 
@@ -160,26 +192,17 @@ ApplicationWindow {
             folder: "file:///" + appDirPath + "/sounds"
         }
 
-        function queueSound(filePath) {
-            soundQueue.push(filePath);
-            if (unlockSound.mediaStatus === MediaPlayer.NoMedia) {
-                playNextSound();
-            }
-        }
-
-        function playNextSound() {
-            if (soundQueue.length > 0)
-                unlockSound.source = soundQueue.shift();
-            else
-                unlockSound.source = "";
-        }
-
-        function getRandomSound() {
-            if (folderModel.count > 0) {
+        function playRandomSound()
+        {
+            if (folderModel.count > 0)
+            {
                 var now = new Date().getTime();
                 var randomIndex = Math.floor(Math.random() * now % folderModel.count);
                 var fileUrl = folderModel.get(randomIndex, "fileURL").toString();
-                return fileUrl;
+                if (unlockSound.mediaStatus === MediaPlayer.EndOfMedia || unlockSound.mediaStatus === MediaPlayer.NoMedia)
+                    unlockSound.source = fileUrl;
+                else
+                    soundQueue.push(fileUrl);
             }
             return "";
         }
@@ -188,12 +211,7 @@ ApplicationWindow {
             target: achievementModel
             function onUnlockedChanged() {
                 if(setupFinished)
-                {
-                    var randomSound = unlockSounds.getRandomSound();
-                    if (randomSound) {
-                        unlockSounds.queueSound(randomSound);
-                    }
-                }
+                    unlockSounds.playRandomSound();
             }
         }
     }
