@@ -173,7 +173,7 @@ ApplicationWindow {
             onMediaStatusChanged: {
                 if (mediaStatus === MediaPlayer.EndOfMedia)
                 {
-                    console.log("Queue:", unlockSounds.soundQueue);
+                    //console.log("Queue:", unlockSounds.soundQueue);
                     if (unlockSounds.soundQueue.length > 0)
                     {
                         source = "";
@@ -182,7 +182,7 @@ ApplicationWindow {
                 }
                 else if(mediaStatus === MediaPlayer.LoadedMedia)
                 {
-                    console.log("Playing:", source)
+                    //console.log("Playing:", source)
                     play();
                 }
                 else if(mediaStatus === MediaPlayer.InvalidMedia)
@@ -203,7 +203,7 @@ ApplicationWindow {
                 var now = new Date().getTime();
                 var randomIndex = Math.floor(Math.random() * now % folderModel.count);
                 var fileUrl = folderModel.get(randomIndex, "fileURL").toString();
-                console.log("File:", fileUrl);
+                //console.log("File:", fileUrl);
                 if (unlockSound.mediaStatus === MediaPlayer.EndOfMedia || unlockSound.mediaStatus === MediaPlayer.NoMedia)
                     unlockSound.source = fileUrl;
                 else
@@ -229,7 +229,7 @@ ApplicationWindow {
 
         ColumnLayout {
             id: infoColumn
-            width: Math.min(parent.width,840)
+            width: Math.min(parent.width,900)
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 10
 
@@ -442,7 +442,7 @@ ApplicationWindow {
                                                 if(userInfoModel)
                                                 {
                                                    if(userInfoModel.hardcore)
-                                                       "#00b200"
+                                                       "#00ff00"
                                                    else
                                                        "#ff0000"
                                                 }
@@ -590,7 +590,7 @@ ApplicationWindow {
                                             mouseAreaMode.enableModeChangeButton();
                                         }
                                         else
-                                            errorMessage.color = "#00b200";
+                                            errorMessage.color = "#00ff00";
                                         errorMessage.opacity = 1;
                                         fadeOutTimer.restart();
                                     }
@@ -735,7 +735,7 @@ ApplicationWindow {
                                                     if(userInfoModel.hardcore)
                                                         "#ff0000"
                                                     else
-                                                        "#00b200"
+                                                        "#00ff00"
                                                 }
                                                 else "#000000"
                                             }
@@ -1633,6 +1633,62 @@ ApplicationWindow {
                                             }
                                         ]
                                     }
+                                    Text{
+                                        text: "-"
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                    Text{
+                                        id: progress
+                                        text: qsTr("Progress")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#cc9900"
+                                        Layout.fillWidth: true
+                                        MouseArea {
+                                            id: mouseAreaProgress
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                sortedAchievementModel.sortByPercent()
+                                            }
+                                            onEntered: progress.state = "hovered"
+                                            onExited: progress.state = ""
+                                        }
+
+                                        states: [
+                                            State {
+                                                name: "hovered"
+                                                PropertyChanges {
+                                                    target: progress
+                                                    color: "#c8c8c8"
+                                                }
+                                            }
+                                        ]
+
+                                        transitions: [
+                                            Transition {
+                                                from: ""
+                                                to: "hovered"
+                                                ColorAnimation {
+                                                    target: progress
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            },
+                                            Transition {
+                                                from: "hovered"
+                                                to: ""
+                                                ColorAnimation {
+                                                    target: progress
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            }
+                                        ]
+                                    }
                                 }
 
                                 Item {
@@ -1864,22 +1920,69 @@ ApplicationWindow {
                                         Item {
                                             height: 8
                                         }
-                                        Text {
-                                            id: unlockedTime
-                                            color: "#7e7e7e"
-                                            text: {
-                                                if(model.timeUnlockedString !== "")
-                                                    "Unlocked " + model.timeUnlockedString
-                                                else ""
+                                        Row {
+                                            Text {
+                                                id: unlockedTime
+                                                color: "#7e7e7e"
+                                                text: {
+                                                    if(model.timeUnlockedString !== "")
+                                                        "Unlocked " + model.timeUnlockedString
+                                                    else ""
+                                                }
+                                                font.family: "Verdana"
+                                                font.pixelSize: 10
+                                                Layout.alignment: Qt.AlignBottom
+                                                Layout.fillWidth: true
                                             }
-                                            font.family: "Verdana"
-                                            font.pixelSize: 10
-                                            Layout.alignment: Qt.AlignBottom
-                                            Layout.fillWidth: true
+                                            ProgressBar {
+                                                id: achievementProgressBar
+                                                width: 200
+                                                height: 6
+                                                value: model.percent / 100
+                                                visible: model.target > 1
+                                                Item {
+                                                    width: achievementProgressBar.width
+                                                    height: achievementProgressBar.height
+                                                    Rectangle {
+                                                        radius: 6
+                                                        width: parent.width
+                                                        height: parent.height
+                                                        color: index % 2 == 0 ? "#222222" : "#282828"
+                                                        anchors.bottom: parent.bottom
+                                                    }
+                                                }
+                                                Item {
+                                                    width: achievementProgressBar.width * achievementProgressBar.value
+                                                    height: achievementProgressBar.height
+                                                    Rectangle {
+                                                        width: parent.width
+                                                        height: parent.height
+                                                        color: "#eab308"
+                                                        radius: 6
+                                                        anchors.bottom: parent.bottom
+                                                    }
+                                                }
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    onPositionChanged: {
+                                                        if(model.value > 0)
+                                                            progressToolTip.text = model.value + "/" + model.target
+                                                        else progressToolTip.text = model.percent + "%"
+                                                    }
+                                                    onEntered: progressToolTip.visible = true
+                                                    onExited: progressToolTip.visible = false
+
+                                                    ToolTip {
+                                                        id: progressToolTip
+                                                        text: ""
+                                                        visible: false
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
-
                                 Rectangle {
                                     id: primedRectangle
                                     anchors.right: parent.right

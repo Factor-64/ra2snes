@@ -36,6 +36,11 @@ void AchievementSortFilterProxyModel::sortByTime() {
     sort(0, Qt::DescendingOrder);
 }
 
+void AchievementSortFilterProxyModel::sortByPercent() {
+    setSortRole(AchievementModel::PercentRole);
+    sort(0, Qt::DescendingOrder);
+}
+
 void AchievementSortFilterProxyModel::showOnlyMissable() {
     missableFilterEnabled = true;
     invalidateFilter();

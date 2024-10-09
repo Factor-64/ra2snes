@@ -376,14 +376,15 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     else
     {
         handleSuccessResponse(jsonObject);
-    }
-    if(running)
-    {
-        queue.removeFirst();
-        if(!gameinfo_model->mastered())
-            if(!isGameMastered())
-                isGameBeaten();
-        emit continueQueue();
+        if(running)
+        {
+            queue.removeFirst();
+            if(!gameinfo_model->mastered())
+                if(!isGameMastered())
+                    if(!gameinfo_model->beaten())
+                        isGameBeaten();
+            emit continueQueue();
+        }
     }
     reply->deleteLater();
 }
@@ -486,8 +487,8 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
             info.id = data["ID"].toInt();
             info.mem_addr = data["MemAddr"].toString();
             info.points = data["Points"].toInt();
-            info.rarity = data["Rarity"].toInt();
-            info.rarity_hardcore = data["RarityHardcore"].toInt();
+            //info.rarity = data["Rarity"].toInt();
+            //info.rarity_hardcore = data["RarityHardcore"].toInt();
             info.title = data["Title"].toString();
             info.type = data["Type"].toString();
             info.author = data["Author"].toString();

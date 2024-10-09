@@ -172,7 +172,7 @@ void MemoryReader::checkAchievements()
 
                 old_measured_value = trigger->measured_value;
                 old_state = trigger->state;
-                rc_test_trigger(trigger, peek, achievementFrames.first().first.data(), nullptr);
+                rc_evaluate_trigger(trigger, peek, achievementFrames.first().first.data(), nullptr);
                 new_state = trigger->state;
 
                 /* if the measured value changed and the achievement hasn't triggered, send a notification */
@@ -187,18 +187,16 @@ void MemoryReader::checkAchievements()
                     if (trigger->measured_as_percent)
                     {
                         /* if reporting measured value as a percentage, only send the notification if the percentage changes */
-                        const int32_t old_percent = (int32_t)(((unsigned long long)old_measured_value * 100) / trigger->measured_target);
                         const int32_t new_percent = (int32_t)(((unsigned long long)trigger->measured_value * 100) / trigger->measured_target);
-                        if (old_percent != new_percent)
-                        {
-                            qDebug() << "Percent: " << new_percent;
-                            emit updateAchievementInfo(it.key(), Percent, new_percent);
-                        }
+                        //qDebug() << "Percent: " << new_percent;
+                        emit updateAchievementInfo(it.key(), Percent, new_percent);
                     }
                     else
                     {
-                        qDebug() << "Values: " << trigger->measured_value;
+                        const int32_t new_percent = (int32_t)(((unsigned long long)trigger->measured_value * 100) / trigger->measured_target);
+                        //qDebug() << "Values: " << trigger->measured_value;
                         emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
+                        emit updateAchievementInfo(it.key(), Percent, new_percent);
                     }
                 }
 

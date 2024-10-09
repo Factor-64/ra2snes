@@ -18,6 +18,7 @@ public:
     Q_INVOKABLE void sortByType();
     Q_INVOKABLE void sortByTime();
     Q_INVOKABLE void sortByPrimed();
+    Q_INVOKABLE void sortByPercent();
 
 protected:
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;

@@ -22,8 +22,8 @@ struct AchievementInfo {
     QString mem_addr;
     //QDateTime modified;
     unsigned int points;
-    unsigned int rarity;
-    unsigned int rarity_hardcore;
+    //unsigned int rarity;
+    //unsigned int rarity_hardcore;
     QString title;
     QString type;
     QString author;
