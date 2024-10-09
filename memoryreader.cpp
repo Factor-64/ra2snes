@@ -13,14 +13,17 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
     QMap<int, int> uniqueAddresses;
     for(const AchievementInfo& achievement : achievements)
     {
+
+        QByteArray data = achievement.mem_addr.toLocal8Bit();
+        const char* mem_addr = data.constData();
+        rc_trigger_t* trigger;
+        size_t trigger_size = rc_trigger_size(mem_addr);
+        void* trigger_buffer = malloc(trigger_size);
+        trigger = rc_parse_trigger(trigger_buffer, mem_addr, NULL, 0);
+        if(trigger->measured_target != 0)
+            emit updateAchievementInfo(achievement.id, Target, trigger->measured_target);
         if(!achievement.unlocked)
         {
-            QByteArray data = achievement.mem_addr.toLocal8Bit();
-            const char* mem_addr = data.constData();
-            rc_trigger_t* trigger;
-            size_t trigger_size = rc_trigger_size(mem_addr);
-            void* trigger_buffer = malloc(trigger_size);
-            trigger = rc_parse_trigger(trigger_buffer, mem_addr, NULL, 0);
             achievementTriggers[achievement.id] = trigger;
             rc_memref_t* nextref = trigger->memrefs;
             while(nextref != nullptr)
@@ -29,8 +32,16 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
                     uniqueAddresses[nextref->address] = nextref->value.size + 1;
                 nextref = nextref->next;
             }
+
+        }
+        else
+        {
             if(trigger->measured_target != 0)
-                emit updateAchievementInfo(achievement.id, Target, trigger->measured_target);
+            {
+                emit updateAchievementInfo(achievement.id, Percent, 100);
+                if (!trigger->measured_as_percent)
+                    emit updateAchievementInfo(achievement.id, Value, trigger->measured_target);
+            }
         }
     }
 
@@ -184,20 +195,10 @@ void MemoryReader::checkAchievements()
                     new_state != RC_TRIGGER_STATE_INACTIVE &&
                     new_state != RC_TRIGGER_STATE_WAITING)
                 {
-                    if (trigger->measured_as_percent)
-                    {
-                        /* if reporting measured value as a percentage, only send the notification if the percentage changes */
-                        const int32_t new_percent = (int32_t)(((unsigned long long)trigger->measured_value * 100) / trigger->measured_target);
-                        //qDebug() << "Percent: " << new_percent;
-                        emit updateAchievementInfo(it.key(), Percent, new_percent);
-                    }
-                    else
-                    {
-                        const int32_t new_percent = (int32_t)(((unsigned long long)trigger->measured_value * 100) / trigger->measured_target);
-                        //qDebug() << "Values: " << trigger->measured_value;
-                        emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
-                        emit updateAchievementInfo(it.key(), Percent, new_percent);
-                    }
+                    const int32_t new_percent = (int32_t)(((unsigned long long)trigger->measured_value * 100) / trigger->measured_target);
+                    emit updateAchievementInfo(it.key(), Percent, new_percent);
+                    if (!trigger->measured_as_percent)
+                         emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
                 }
 
                 /* if the state hasn't changed, there won't be any events raised */
@@ -207,6 +208,7 @@ void MemoryReader::checkAchievements()
                 /* raise an UNPRIMED event when changing from PRIMED to anything else */
                 if (old_state == RC_TRIGGER_STATE_PRIMED) {
                     emit updateAchievementInfo(it.key(), Primed, false);
+                    emit updateAchievementInfo(it.key(), Target, trigger->measured_target);
                 }
 
                 /* raise events for each of the possible new states */
