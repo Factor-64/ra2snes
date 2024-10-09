@@ -285,6 +285,26 @@ void RAClient::setConsole(const QString& c, const QUrl& icon)
     gameinfo_model->console_icon(icon);
 }
 
+void RAClient::setAchievementInfo(unsigned int id, AchievementInfoType infotype, int value)
+{
+    switch(infotype)
+    {
+        case Value:
+            achievement_model->updateAchievementValue(id, value);
+            break;
+        case Percent:
+            achievement_model->updateAchievementPercent(id, value);
+            break;
+        case Primed:
+            achievement_model->primeAchievement(id, value);
+            break;
+        case Target:
+            achievement_model->updateAchievementTarget(id, value);
+            break;
+
+    }
+}
+
 void RAClient::sendRequest(const QString& request_type, const QJsonObject& post_content)
 {
     QNetworkRequest request{QUrl(baseUrl + "dorequest.php")};
@@ -360,10 +380,9 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
     if(running)
     {
         queue.removeFirst();
-        if(!gameinfo_model->beaten())
-            isGameBeaten();
-        else if(!gameinfo_model->mastered())
-            isGameMastered();
+        if(!gameinfo_model->mastered())
+            if(!isGameMastered())
+                isGameBeaten();
         emit continueQueue();
     }
     reply->deleteLater();
@@ -476,6 +495,10 @@ void RAClient::handlePatchResponse(const QJsonObject& jsonObject)
             info.time_unlocked_string = "";
             info.time_unlocked = QDateTime(QDate(1990, 11, 21), QTime(0, 0, 0));
             info.achievement_link = QUrl(baseUrl + "achievement/" + QString::number(info.id));
+            info.primed = false;
+            info.value = 0;
+            info.target = 0;
+            info.percent = 0;
             if(info.type == "missable")
                 missables++;
             total += info.points;

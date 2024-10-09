@@ -24,6 +24,12 @@ void AchievementSortFilterProxyModel::sortByType() {
     sort(0, Qt::AscendingOrder);
 }
 
+void AchievementSortFilterProxyModel::sortByPrimed() {
+    sort(-1);
+    setSortRole(AchievementModel::PrimedRole);
+    sort(0, Qt::DescendingOrder);
+}
+
 void AchievementSortFilterProxyModel::sortByTime() {
     sort(-1);
     setSortRole(AchievementModel::TimeUnlockedRole);

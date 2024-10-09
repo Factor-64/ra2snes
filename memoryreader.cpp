@@ -1,5 +1,5 @@
 #include "memoryreader.h"
-//#include "rc_internal.h"
+#include "rc_internal.h"
 //#include <QDebug>
 
 MemoryReader::MemoryReader(QObject *parent) : QObject(parent) {
@@ -29,6 +29,8 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
                     uniqueAddresses[nextref->address] = nextref->value.size + 1;
                 nextref = nextref->next;
             }
+            if(trigger->measured_target != 0)
+                emit updateAchievementInfo(achievement.id, Target, trigger->measured_target);
         }
     }
 
@@ -158,16 +160,72 @@ void MemoryReader::checkAchievements()
     {
         for(int frame = 0; frame < achievementFrames.first().second; frame++)
         {
-            QList<unsigned int> ids;
-            for(auto it = achievementTriggers.cbegin(); it != achievementTriggers.cend(); ++it)
+            QList<int> ids;
+            for(auto it = achievementTriggers.begin(); it != achievementTriggers.end(); ++it)
             {
-                const auto& trigger = it.value();
+                rc_trigger_t* trigger = it.value();
+                int old_state, new_state;
+                uint32_t old_measured_value;
+
+                if (!trigger)
+                    continue;
+
+                old_measured_value = trigger->measured_value;
+                old_state = trigger->state;
                 rc_test_trigger(trigger, peek, achievementFrames.first().first.data(), nullptr);
-                if (trigger->state == RC_TRIGGER_STATE_TRIGGERED)
+                new_state = trigger->state;
+
+                /* if the measured value changed and the achievement hasn't triggered, send a notification */
+                if (trigger->measured_value != old_measured_value &&
+                    old_measured_value != RC_MEASURED_UNKNOWN &&
+                    trigger->measured_target != 0 &&
+                    trigger->measured_value <= trigger->measured_target &&
+                    new_state != RC_TRIGGER_STATE_TRIGGERED &&
+                    new_state != RC_TRIGGER_STATE_INACTIVE &&
+                    new_state != RC_TRIGGER_STATE_WAITING)
                 {
-                    //qDebug() << "Achievement Unlocked: " << it.key();
-                    ids.append(it.key());
-                    emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
+                    if (trigger->measured_as_percent)
+                    {
+                        /* if reporting measured value as a percentage, only send the notification if the percentage changes */
+                        const int32_t old_percent = (int32_t)(((unsigned long long)old_measured_value * 100) / trigger->measured_target);
+                        const int32_t new_percent = (int32_t)(((unsigned long long)trigger->measured_value * 100) / trigger->measured_target);
+                        if (old_percent != new_percent)
+                        {
+                            qDebug() << "Percent: " << new_percent;
+                            emit updateAchievementInfo(it.key(), Percent, new_percent);
+                        }
+                    }
+                    else
+                    {
+                        qDebug() << "Values: " << trigger->measured_value;
+                        emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
+                    }
+                }
+
+                /* if the state hasn't changed, there won't be any events raised */
+                if(new_state == old_state)
+                    continue;
+
+                /* raise an UNPRIMED event when changing from PRIMED to anything else */
+                if (old_state == RC_TRIGGER_STATE_PRIMED) {
+                    emit updateAchievementInfo(it.key(), Primed, false);
+                }
+
+                /* raise events for each of the possible new states */
+                switch (new_state)
+                {
+                    case RC_TRIGGER_STATE_TRIGGERED:
+                        //qDebug() << "Achievement Unlocked: " << it.key();
+                        ids.append(it.key());
+                        emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
+                        break;
+
+                    case RC_TRIGGER_STATE_PRIMED:
+                        emit updateAchievementInfo(it.key(), Primed, true);
+                        break;
+
+                    default:
+                        break;
                 }
             }
             for(const auto& id : ids)

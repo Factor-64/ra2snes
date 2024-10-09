@@ -17,6 +17,7 @@ public:
     Q_INVOKABLE void clearUnlockedFilter();
     Q_INVOKABLE void sortByType();
     Q_INVOKABLE void sortByTime();
+    Q_INVOKABLE void sortByPrimed();
 
 protected:
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;

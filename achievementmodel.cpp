@@ -49,6 +49,14 @@ QVariant AchievementModel::data(const QModelIndex &index, int role) const {
         return achievement.unlocked;
     case AchievementLinkRole:
         return achievement.achievement_link;
+    case PrimedRole:
+        return achievement.primed;
+    case ValueRole:
+        return achievement.value;
+    case PercentRole:
+        return achievement.percent;
+    case TargetRole:
+        return achievement.target;
     default:
         return QVariant();
     }
@@ -73,6 +81,10 @@ QHash<int, QByteArray> AchievementModel::roleNames() const {
     roles[TimeUnlockedStringRole] = "timeUnlockedString";
     roles[UnlockedRole] = "unlocked";
     roles[AchievementLinkRole] = "achievementLink";
+    roles[PrimedRole] = "primed";
+    roles[ValueRole] = "value";
+    roles[PercentRole] = "percent";
+    roles[TargetRole] = "target";
     return roles;
 }
 
@@ -84,10 +96,56 @@ void AchievementModel::setUnlockedState(unsigned int id, bool unlocked, QDateTim
             m_achievements[i].time_unlocked_string = time.toString("MMMM d yyyy, h:mmap");
             QModelIndex index = createIndex(i, 0);
             //qDebug() << "Data changed for index:" << index << "Unlocked state:" << unlocked;
-            emit dataChanged(index, index, {UnlockedRole});
-            emit dataChanged(index, index, {TimeUnlockedRole});
-            emit dataChanged(index, index, {TimeUnlockedStringRole});
+            emit dataChanged(index, index, {UnlockedRole, TimeUnlockedRole, TimeUnlockedStringRole});
             emit unlockedChanged();
+            break;
+        }
+    }
+}
+
+void AchievementModel::primeAchievement(unsigned int id, bool p)
+{
+    for (int i = 0; i < m_achievements.size(); ++i) {
+        if (m_achievements[i].id == id) {
+            m_achievements[i].primed = p;
+            QModelIndex index = createIndex(i, 0);
+            emit dataChanged(index, index, {PrimedRole});
+            break;
+        }
+    }
+}
+
+void AchievementModel::updateAchievementValue(unsigned int id, int value)
+{
+    for (int i = 0; i < m_achievements.size(); ++i) {
+        if (m_achievements[i].id == id) {
+            m_achievements[i].value = value;
+            QModelIndex index = createIndex(i, 0);
+            emit dataChanged(index, index, {ValueRole});
+            break;
+        }
+    }
+}
+
+void AchievementModel::updateAchievementPercent(unsigned int id, int percent)
+{
+    for (int i = 0; i < m_achievements.size(); ++i) {
+        if (m_achievements[i].id == id) {
+            m_achievements[i].percent = percent;
+            QModelIndex index = createIndex(i, 0);
+            emit dataChanged(index, index, {PercentRole});
+            break;
+        }
+    }
+}
+
+void AchievementModel::updateAchievementTarget(unsigned int id, int target)
+{
+    for (int i = 0; i < m_achievements.size(); ++i) {
+        if (m_achievements[i].id == id) {
+            m_achievements[i].target = target;
+            QModelIndex index = createIndex(i, 0);
+            emit dataChanged(index, index, {TargetRole});
             break;
         }
     }

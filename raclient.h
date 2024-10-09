@@ -66,6 +66,7 @@ public:
     void clearUser();
     void setAutoHardcore(bool ac);
     bool getAutoHardcore();
+    void setAchievementInfo(unsigned int id, AchievementInfoType infotype, int value);
 
 signals:
     void loginSuccess();

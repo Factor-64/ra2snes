@@ -28,6 +28,7 @@ signals:
     void achievementUnlocked(unsigned int id, QDateTime time);
     void leaderboardsChecked();
     void leaderboardCompleted(unsigned int id, QDateTime time);
+    void updateAchievementInfo(unsigned int id, AchievementInfoType infotype, int value);
 
 private:
     QList<QPair<int, int>> uniqueMemoryAddresses;

@@ -173,6 +173,7 @@ ApplicationWindow {
             onMediaStatusChanged: {
                 if (mediaStatus === MediaPlayer.EndOfMedia)
                 {
+                    console.log("Queue:", unlockSounds.soundQueue);
                     if (unlockSounds.soundQueue.length > 0)
                     {
                         source = "";
@@ -180,7 +181,10 @@ ApplicationWindow {
                     }
                 }
                 else if(mediaStatus === MediaPlayer.LoadedMedia)
+                {
+                    console.log("Playing:", source)
                     play();
+                }
                 else if(mediaStatus === MediaPlayer.InvalidMedia)
                     source = "";
             }
@@ -199,6 +203,7 @@ ApplicationWindow {
                 var now = new Date().getTime();
                 var randomIndex = Math.floor(Math.random() * now % folderModel.count);
                 var fileUrl = folderModel.get(randomIndex, "fileURL").toString();
+                console.log("File:", fileUrl);
                 if (unlockSound.mediaStatus === MediaPlayer.EndOfMedia || unlockSound.mediaStatus === MediaPlayer.NoMedia)
                     unlockSound.source = fileUrl;
                 else
@@ -437,7 +442,7 @@ ApplicationWindow {
                                                 if(userInfoModel)
                                                 {
                                                    if(userInfoModel.hardcore)
-                                                       "#00ff00"
+                                                       "#00b200"
                                                    else
                                                        "#ff0000"
                                                 }
@@ -585,7 +590,7 @@ ApplicationWindow {
                                             mouseAreaMode.enableModeChangeButton();
                                         }
                                         else
-                                            errorMessage.color = "#00ff00";
+                                            errorMessage.color = "#00b200";
                                         errorMessage.opacity = 1;
                                         fadeOutTimer.restart();
                                     }
@@ -730,7 +735,7 @@ ApplicationWindow {
                                                     if(userInfoModel.hardcore)
                                                         "#ff0000"
                                                     else
-                                                        "#00ff00"
+                                                        "#00b200"
                                                 }
                                                 else "#000000"
                                             }
@@ -1556,7 +1561,7 @@ ApplicationWindow {
                                                 from: ""
                                                 to: "hovered"
                                                 ColorAnimation {
-                                                    target: type
+                                                    target: time
                                                     property: "color"
                                                     duration: 200
                                                 }
@@ -1566,6 +1571,62 @@ ApplicationWindow {
                                                 to: ""
                                                 ColorAnimation {
                                                     target: time
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            }
+                                        ]
+                                    }
+                                    Text{
+                                        text: "-"
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#2c97fa"
+                                        Layout.fillWidth: true
+                                    }
+                                    Text{
+                                        id: primed
+                                        text: qsTr("Primed")
+                                        font.family: "Verdana"
+                                        font.pixelSize: 13
+                                        color: "#cc9900"
+                                        Layout.fillWidth: true
+                                        MouseArea {
+                                            id: mouseAreaPrime
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                sortedAchievementModel.sortByPrimed()
+                                            }
+                                            onEntered: primed.state = "hovered"
+                                            onExited: primed.state = ""
+                                        }
+
+                                        states: [
+                                            State {
+                                                name: "hovered"
+                                                PropertyChanges {
+                                                    target: primed
+                                                    color: "#c8c8c8"
+                                                }
+                                            }
+                                        ]
+
+                                        transitions: [
+                                            Transition {
+                                                from: ""
+                                                to: "hovered"
+                                                ColorAnimation {
+                                                    target: primed
+                                                    property: "color"
+                                                    duration: 200
+                                                }
+                                            },
+                                            Transition {
+                                                from: "hovered"
+                                                to: ""
+                                                ColorAnimation {
+                                                    target: primed
                                                     property: "color"
                                                     duration: 200
                                                 }
@@ -1818,6 +1879,106 @@ ApplicationWindow {
                                         }
                                     }
                                 }
+
+                                Rectangle {
+                                    id: primedRectangle
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.topMargin: 4
+                                    anchors.rightMargin: 4
+                                    width: 28
+                                    height: 28
+                                    radius: 50
+                                    color: "#161616"
+                                    visible: model.primed
+                                    z: 2
+
+                                    Text {
+                                        z: 3
+                                        id: primedText
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 20
+                                        font.bold: true
+                                        font.family: "Verdana"
+                                        font.pixelSize: 10
+                                        text: "Primed"
+                                        color: "#e5e5e5"
+                                        visible: false
+                                        opacity: 0.0
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: 250
+                                            }
+                                        }
+
+                                        Behavior on anchors.leftMargin {
+                                            NumberAnimation {
+                                                duration: 250
+                                            }
+                                        }
+                                    }
+
+                                    Image {
+                                        z: 4
+                                        id: svgPrimed
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.rightMargin: 5
+                                        width: 18
+                                        height: 18
+                                        source: "./images/primed"
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onEntered: primedRectangle.state = "hovered"
+                                        onExited: primedRectangle.state = ""
+                                        hoverEnabled: true
+                                    }
+
+                                    states: [
+                                        State {
+                                            name: "hovered"
+                                            PropertyChanges {
+                                                target: primedRectangle
+                                                width: primedText.width + 38
+                                            }
+                                            PropertyChanges {
+                                                target: primedText
+                                                visible: true
+                                                anchors.leftMargin: 10
+                                                opacity: 1.0
+                                            }
+                                            PropertyChanges {
+                                                target: svgPrimed
+                                            }
+                                        }
+                                    ]
+
+                                    transitions: [
+                                        Transition {
+                                            from: ""
+                                            to: "hovered"
+                                            PropertyAnimation {
+                                                target: typeRectangle
+                                                property: "width"
+                                                duration: 50
+                                            }
+                                        },
+                                        Transition {
+                                            from: "hovered"
+                                            to: ""
+                                            PropertyAnimation {
+                                                target: typeRectangle
+                                                property: "width"
+                                                duration: 200
+                                            }
+                                        }
+                                    ]
+                                }
+
                                 Rectangle {
                                     id: typeRectangle
                                     anchors.right: parent.right
@@ -1828,7 +1989,7 @@ ApplicationWindow {
                                     height: 28
                                     radius: 50
                                     color: "#161616"
-                                    visible: model.type !== "" ? true : false
+                                    visible: model.type !== ""
                                     z: 2
 
                                     Text {

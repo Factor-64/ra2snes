@@ -4,6 +4,13 @@
 #include <QUrl>
 #include <QDateTime>
 
+enum AchievementInfoType {
+    Primed,
+    Value,
+    Percent,
+    Target
+};
+
 struct AchievementInfo {
     QUrl badge_locked_url;
     QString badge_name;
@@ -24,6 +31,10 @@ struct AchievementInfo {
     QDateTime time_unlocked;
     bool unlocked;
     QUrl achievement_link;
+    bool primed;
+    int value;
+    int percent;
+    int target;
 };
 
 struct LeaderboardInfo {

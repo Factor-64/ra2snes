@@ -25,7 +25,11 @@ public:
         TimeUnlockedRole,
         TimeUnlockedStringRole,
         UnlockedRole,
-        AchievementLinkRole
+        AchievementLinkRole,
+        PrimedRole,
+        ValueRole,
+        PercentRole,
+        TargetRole
     };
 
     AchievementModel(QObject *parent = nullptr);
@@ -37,6 +41,14 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void setUnlockedState(unsigned int id, bool unlocked, QDateTime time);
+
+    void primeAchievement(unsigned int id, bool p);
+
+    void updateAchievementValue(unsigned int id, int value);
+
+    void updateAchievementPercent(unsigned int id, int percent);
+
+    void updateAchievementTarget(unsigned int id, int target);
 
     void clearAchievements();
 

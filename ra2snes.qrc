@@ -9,5 +9,6 @@
         <file>ui/images/logo.png</file>
         <file>ui/images/ra-icon.png</file>
         <file>ui/images/Super_Famicom_logo.png</file>
+        <file>ui/images/primed.svg</file>
     </qresource>
 </RCC>
