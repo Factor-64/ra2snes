@@ -432,6 +432,10 @@ void RAClient::handleAwardAchievementResponse(const QJsonObject& jsonObject)
             gameinfo_model->updatePointCount(achievement.points);
             //qDebug() << "AWARDED";
             gameinfo_model->updateCompletionCount();
+            if(userinfo_model->hardcore())
+                userinfo_model->updateHardcoreScore(achievement.points);
+            else
+                userinfo_model->updateSoftcoreScore(achievement.points);
         }
     }
 }

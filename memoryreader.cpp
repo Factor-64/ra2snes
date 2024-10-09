@@ -39,13 +39,12 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
             if(trigger->measured_target != 0)
             {
                 emit updateAchievementInfo(achievement.id, Percent, 100);
-                if (!trigger->measured_as_percent)
-                    emit updateAchievementInfo(achievement.id, Value, trigger->measured_target);
+                emit updateAchievementInfo(achievement.id, Value, trigger->measured_target);
             }
         }
     }
 
-    if(!leaderboards.empty())
+    /*if(!leaderboards.empty())
     {
         for(const LeaderboardInfo& leaderboard : leaderboards)
         {
@@ -64,7 +63,7 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
                 nextref = nextref->next;
             }
         }
-    }
+    }*/
 
     for(auto it = uniqueAddresses.begin(); it != uniqueAddresses.end(); ++it)
         uniqueMemoryAddresses.append(qMakePair(it.key(), it.value()));
@@ -197,8 +196,7 @@ void MemoryReader::checkAchievements()
                 {
                     const int32_t new_percent = (int32_t)(((unsigned long long)trigger->measured_value * 100) / trigger->measured_target);
                     emit updateAchievementInfo(it.key(), Percent, new_percent);
-                    if (!trigger->measured_as_percent)
-                         emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
+                    emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
                 }
 
                 /* if the state hasn't changed, there won't be any events raised */
@@ -206,10 +204,8 @@ void MemoryReader::checkAchievements()
                     continue;
 
                 /* raise an UNPRIMED event when changing from PRIMED to anything else */
-                if (old_state == RC_TRIGGER_STATE_PRIMED) {
+                if (old_state == RC_TRIGGER_STATE_PRIMED)
                     emit updateAchievementInfo(it.key(), Primed, false);
-                    emit updateAchievementInfo(it.key(), Target, trigger->measured_target);
-                }
 
                 /* raise events for each of the possible new states */
                 switch (new_state)
@@ -217,6 +213,7 @@ void MemoryReader::checkAchievements()
                     case RC_TRIGGER_STATE_TRIGGERED:
                         //qDebug() << "Achievement Unlocked: " << it.key();
                         ids.append(it.key());
+                        emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
                         emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
                         break;
 

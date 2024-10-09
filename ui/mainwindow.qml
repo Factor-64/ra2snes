@@ -1815,13 +1815,9 @@ ApplicationWindow {
                                 height: {
                                     var h = descriptionText.implicitHeight + 24;
                                     if(model.timeUnlockedString !== "")
-                                        h += 8
-                                    else if(model.target !== 0)
-                                        h += 18
-                                    if(model.timeUnlockedString !== "")
-                                        h += unlockedTime.implicitHeight;
-                                    if(model.target !== 0)
-                                        h += achievementProgressBar.implicitHeight;
+                                        h += 24
+                                    else
+                                        h += unlockedTime.implicitHeight + 8;
                                     return Math.max(72, h);
                                 }
                                 id: achievement
@@ -1930,7 +1926,7 @@ ApplicationWindow {
                                             Layout.preferredWidth: achievement.width - 120
                                         }
                                         Item {
-                                            height: unlockedTime.text !== "" ? 18 : 8
+                                            height: 8
                                         }
                                         Text {
                                             id: unlockedTime
@@ -1945,57 +1941,65 @@ ApplicationWindow {
                                         }
                                     }
                                 }
-                                ProgressBar {
-                                    id: achievementProgressBar
-                                    width: 200
-                                    height: 6
+                                Column {
+                                    id: achievementProgressColumn
                                     anchors.top: parent.top
                                     anchors.right: parent.right
                                     anchors.rightMargin: 42
-                                    anchors.topMargin: parent.height - 16
-                                    value: model.percent / 100
-                                    visible: {
-                                        if(model.target > 0)
-                                            true
-                                        else false
+                                    anchors.topMargin: parent.height - achievementProgressText.implicitHeight - achievementProgressBar.implicitHeight - 10
+                                    visible: model.target > 0
+                                    Text {
+                                        id: achievementProgressText
+                                        anchors.right: parent.right
+                                        text: model.value + "/" + model.target + " (" + percent + "%)"
+                                        color: "#eab308"
+                                        font.pixelSize: 10
+                                        font.bold: true
+                                        visible: model.value !== 0 ? true : false
                                     }
-                                    Item {
-                                        width: achievementProgressBar.width
-                                        height: achievementProgressBar.height
-                                        Rectangle {
-                                            radius: 6
-                                            width: parent.width
-                                            height: parent.height
-                                            color: index % 2 == 0 ? "#222222" : "#282828"
-                                            anchors.bottom: parent.bottom
+                                    ProgressBar {
+                                        id: achievementProgressBar
+                                        width: 200
+                                        height: 6
+                                        value: model.percent / 100
+                                        Item {
+                                            width: achievementProgressBar.width
+                                            height: achievementProgressBar.height
+                                            Rectangle {
+                                                radius: 6
+                                                width: parent.width
+                                                height: parent.height
+                                                color: index % 2 == 0 ? "#222222" : "#282828"
+                                                anchors.bottom: parent.bottom
+                                            }
                                         }
-                                    }
-                                    Item {
-                                        width: achievementProgressBar.width * achievementProgressBar.value
-                                        height: achievementProgressBar.height
-                                        Rectangle {
-                                            width: parent.width
-                                            height: parent.height
-                                            color: "#eab308"
-                                            radius: 6
-                                            anchors.bottom: parent.bottom
+                                        Item {
+                                            width: achievementProgressBar.width * achievementProgressBar.value
+                                            height: achievementProgressBar.height
+                                            Rectangle {
+                                                width: parent.width
+                                                height: parent.height
+                                                color: "#eab308"
+                                                radius: 6
+                                                anchors.bottom: parent.bottom
+                                            }
                                         }
-                                    }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onPositionChanged: {
-                                            if(model.value > 0)
-                                                progressToolTip.text = model.value + "/" + model.target
-                                            else progressToolTip.text = model.percent + "%"
-                                        }
-                                        onEntered: progressToolTip.visible = true
-                                        onExited: progressToolTip.visible = false
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onPositionChanged: {
+                                                if(model.value > 0)
+                                                    progressToolTip.text = model.value + "/" + model.target
+                                                else progressToolTip.text = model.percent + "%"
+                                            }
+                                            onEntered: progressToolTip.visible = true
+                                            onExited: progressToolTip.visible = false
 
-                                        ToolTip {
-                                            id: progressToolTip
-                                            text: ""
-                                            visible: false
+                                            ToolTip {
+                                                id: progressToolTip
+                                                text: ""
+                                                visible: false
+                                            }
                                         }
                                     }
                                 }
