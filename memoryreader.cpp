@@ -164,7 +164,6 @@ static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {
 
 void MemoryReader::checkAchievements()
 {
-    //qDebug() << "Frames:" << frames;
     //qDebug() << achievementFrames;
     while(achievementFrames.size() > 0)
     {
@@ -214,6 +213,7 @@ void MemoryReader::checkAchievements()
                         //qDebug() << "Achievement Unlocked: " << it.key();
                         ids.append(it.key());
                         emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
+                        emit updateAchievementInfo(it.key(), Percent, 100);
                         emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
                         break;
 

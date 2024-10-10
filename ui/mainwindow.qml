@@ -56,22 +56,12 @@ ApplicationWindow {
     Item {
         id: masteredFanfare
 
-        property var mfanfareQueue: []
-
         MediaPlayer {
             id: mfanfare
             source: ""
             audioOutput: AudioOutput {}
             onMediaStatusChanged: {
-                if (mediaStatus === MediaPlayer.EndOfMedia)
-                {
-                   if (masteredFanfare.mfanfareQueue.length > 0)
-                   {
-                       source = "";
-                       source = masteredFanfare.mfanfareQueue.shift();
-                   }
-                }
-                else if(mediaStatus === MediaPlayer.LoadedMedia)
+                if(mediaStatus === MediaPlayer.LoadedMedia)
                     play();
                 else if(mediaStatus === MediaPlayer.InvalidMedia)
                     source = "";
@@ -91,10 +81,8 @@ ApplicationWindow {
                 var now = new Date().getTime();
                 var randomIndex = Math.floor(Math.random() * now % folderModelMastered.count);
                 var fileUrl = folderModelMastered.get(randomIndex, "fileURL").toString();
-                if (mfanfare.mediaStatus === MediaPlayer.EndOfMedia || mfanfare.mediaStatus === MediaPlayer.NoMedia)
+                if (mfanfare.mediaStatus === MediaPlayer.NoMedia)
                     mfanfare.source = fileUrl;
-                else
-                    mfanfareQueue.push(fileUrl);
             }
         }
 
@@ -110,22 +98,12 @@ ApplicationWindow {
     Item {
         id: beatenFanfare
 
-        property var bfanfareQueue: []
-
         MediaPlayer {
             id: bfanfare
             source: ""
             audioOutput: AudioOutput {}
             onMediaStatusChanged: {
-                if (mediaStatus === MediaPlayer.EndOfMedia)
-                {
-                   if (beatenFanfare.bfanfareQueue.length > 0)
-                   {
-                       source = "";
-                       source = beatenFanfare.bfanfareQueue.shift();
-                   }
-                }
-                else if(mediaStatus === MediaPlayer.LoadedMedia)
+                if(mediaStatus === MediaPlayer.LoadedMedia)
                     play();
                 else if(mediaStatus === MediaPlayer.InvalidMedia)
                     source = "";
@@ -145,10 +123,8 @@ ApplicationWindow {
                 var now = new Date().getTime();
                 var randomIndex = Math.floor(Math.random() * now % folderModelBeaten.count);
                 var fileUrl = folderModelBeaten.get(randomIndex, "fileURL").toString();
-                if (bfanfare.mediaStatus === MediaPlayer.EndOfMedia || bfanfare.mediaStatus === MediaPlayer.NoMedia)
+                if (bfanfare.mediaStatus === MediaPlayer.NoMedia)
                     bfanfare.source = fileUrl;
-                else
-                    bfanfareQueue.push(fileUrl);
             }
         }
 
@@ -179,14 +155,17 @@ ApplicationWindow {
                         source = "";
                         source = unlockSounds.soundQueue.shift();
                     }
+                    else
+                        source = "";
                 }
-                else if(mediaStatus === MediaPlayer.LoadedMedia)
+                else if(mediaStatus === MediaPlayer.InvalidMedia)
+                    source = "";
+                else if(mediaStatus === MediaPlayer.LoadedMedia && source !== "")
                 {
                     //console.log("Playing:", source)
                     play();
                 }
-                else if(mediaStatus === MediaPlayer.InvalidMedia)
-                    source = "";
+
             }
         }
 
@@ -204,7 +183,7 @@ ApplicationWindow {
                 var randomIndex = Math.floor(Math.random() * now % folderModel.count);
                 var fileUrl = folderModel.get(randomIndex, "fileURL").toString();
                 //console.log("File:", fileUrl);
-                if (unlockSound.mediaStatus === MediaPlayer.EndOfMedia || unlockSound.mediaStatus === MediaPlayer.NoMedia)
+                if (unlockSound.mediaStatus === MediaPlayer.NoMedia)
                     unlockSound.source = fileUrl;
                 else
                     soundQueue.push(fileUrl);
@@ -1813,11 +1792,11 @@ ApplicationWindow {
                             clip: true
                             delegate: Rectangle {
                                 height: {
-                                    var h = descriptionText.implicitHeight + 24;
-                                    if(model.timeUnlockedString !== "")
-                                        h += 24
+                                    var h = descriptionText.implicitHeight + 28;
+                                    if(achievementProgressColumn.visible)
+                                        h += achievementProgressColumn.implicitHeight;
                                     else
-                                        h += unlockedTime.implicitHeight + 8;
+                                        h += unlockedTime.implicitHeight;
                                     return Math.max(72, h);
                                 }
                                 id: achievement
@@ -1925,28 +1904,29 @@ ApplicationWindow {
                                             wrapMode: Text.WordWrap
                                             Layout.preferredWidth: achievement.width - 120
                                         }
-                                        Item {
-                                            height: 8
-                                        }
-                                        Text {
-                                            id: unlockedTime
-                                            color: "#7e7e7e"
-                                            text: {
-                                                if(model.timeUnlockedString !== "")
-                                                    "Unlocked " + model.timeUnlockedString
-                                                else ""
-                                            }
-                                            font.family: "Verdana"
-                                            font.pixelSize: 10
-                                        }
                                     }
+                                }
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 10
+                                    anchors.leftMargin: badge.width + 20
+                                    id: unlockedTime
+                                    color: "#7e7e7e"
+                                    text: {
+                                        if(model.timeUnlockedString !== "")
+                                            "Unlocked " + model.timeUnlockedString
+                                        else ""
+                                    }
+                                    font.family: "Verdana"
+                                    font.pixelSize: 10
                                 }
                                 Column {
                                     id: achievementProgressColumn
-                                    anchors.top: parent.top
+                                    anchors.bottom:  parent.bottom
                                     anchors.right: parent.right
+                                    anchors.bottomMargin: 10
                                     anchors.rightMargin: 42
-                                    anchors.topMargin: parent.height - achievementProgressText.implicitHeight - achievementProgressBar.implicitHeight - 10
                                     visible: model.target > 0
                                     Text {
                                         id: achievementProgressText
