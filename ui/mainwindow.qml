@@ -723,7 +723,6 @@ ApplicationWindow {
                                 }
                             }
                         }
-
                         Text {
                             Layout.topMargin: 8
                             Layout.leftMargin: 20
@@ -736,7 +735,6 @@ ApplicationWindow {
                             font.pixelSize: 13
                             text: qsTr("Currently Playing")
                         }
-
                         Rectangle {
                             color: "#161616"
                             Layout.leftMargin: 20
@@ -918,14 +916,12 @@ ApplicationWindow {
                                 }
                             }
                         }
-
                         Loader {
                             id: achievementHeaderLoader
                             Layout.fillWidth: true
                             Layout.leftMargin: 20
                             Layout.bottomMargin: 10
                             Layout.rightMargin: 20
-                            Layout.topMargin: 10
                             sourceComponent: achievementHeader
                             active: false
                         }
@@ -1932,10 +1928,13 @@ ApplicationWindow {
                                         id: achievementProgressText
                                         anchors.right: parent.right
                                         text: model.value + "/" + model.target + " (" + percent + "%)"
-                                        color: "#eab308"
+                                        color: {
+                                            if(model.value > 0)
+                                                "#eab308"
+                                            else index % 2 == 0 ? "#222222" : "#282828"
+                                        }
                                         font.pixelSize: 10
                                         font.bold: true
-                                        visible: model.value !== 0 ? true : false
                                     }
                                     ProgressBar {
                                         id: achievementProgressBar
@@ -1962,23 +1961,6 @@ ApplicationWindow {
                                                 color: "#eab308"
                                                 radius: 6
                                                 anchors.bottom: parent.bottom
-                                            }
-                                        }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            onPositionChanged: {
-                                                if(model.value > 0)
-                                                    progressToolTip.text = model.value + "/" + model.target
-                                                else progressToolTip.text = model.percent + "%"
-                                            }
-                                            onEntered: progressToolTip.visible = true
-                                            onExited: progressToolTip.visible = false
-
-                                            ToolTip {
-                                                id: progressToolTip
-                                                text: ""
-                                                visible: false
                                             }
                                         }
                                     }

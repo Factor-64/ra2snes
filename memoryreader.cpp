@@ -5,11 +5,12 @@
 MemoryReader::MemoryReader(QObject *parent) : QObject(parent) {
 }
 
-void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const QList<LeaderboardInfo> leaderboards) {
+void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const QList<LeaderboardInfo> leaderboards, unsigned int ramSize) {
     uniqueMemoryAddresses.clear();
     achievementTriggers.clear();
     leaderboardTriggers.clear();
     achievementFrames.clear();
+    modified = false;
     QMap<int, int> uniqueAddresses;
     for(const AchievementInfo& achievement : achievements)
     {
@@ -28,8 +29,15 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
             rc_memref_t* nextref = trigger->memrefs;
             while(nextref != nullptr)
             {
+                if(nextref->address > 0x1FFFF) //sram check
+                    nextref->address = (nextref->address % ramSize) + 0xE00000;
+                else
+                    nextref->address += 0xF50000;
+                //qDebug() << nextref->address;
                 if(uniqueAddresses[nextref->address] < nextref->value.size + 1)
                     uniqueAddresses[nextref->address] = nextref->value.size + 1;
+                addressMap[nextref->address] = 0;
+                uniqueMemoryAddressesCounts[nextref->address]++;
                 nextref = nextref->next;
             }
 
@@ -68,7 +76,8 @@ void MemoryReader::initTriggers(const QList<AchievementInfo> achievements, const
     for(auto it = uniqueAddresses.begin(); it != uniqueAddresses.end(); ++it)
         uniqueMemoryAddresses.append(qMakePair(it.key(), it.value()));
 
-    //qDebug() << uniqueMemoryAddresses << uniqueMemoryAddresses.size() << consoleMemorySize;
+    //qDebug() << uniqueMemoryAddresses << uniqueMemoryAddresses.size();
+    //qDebug() << uniqueMemoryAddressesCounts;
 
     remapTriggerAddresses();
 }
@@ -87,6 +96,7 @@ void MemoryReader::remapTriggerAddresses()
                 {
                     //qDebug() << "Unique Address: " << pair.first;
                     //qDebug() << "Trigger Address:" << nextref->address;
+                    addressMap[memoryOffset] = nextref->address;
                     nextref->address = memoryOffset;
                     //qDebug() << "Memory Offset: " << memoryOffset;
                     //qDebug() << "New Trigger Address: " << nextref->address;
@@ -125,7 +135,9 @@ void MemoryReader::remapTriggerAddresses()
     }
 
     //qDebug() << "Setup Finished";
-    emit finishedMemorySetup();
+    if(!modified)
+        emit finishedMemorySetup();
+    modified = false;
 }
 
 void MemoryReader::addFrameToQueues(QByteArray data, int frames)
@@ -162,6 +174,35 @@ static uint32_t peek(uint32_t address, uint32_t num_bytes, void* ud) {
     return 0;
 }
 
+void MemoryReader::decrementAddressCounts(rc_memref_t* nextref)
+{
+    //qDebug() << "Decrementing Address Counts";
+    while(nextref != nullptr)
+    {
+        //qDebug() << "Address:" << nextref->address;
+        //qDebug() << "Mapped:" << addressMap[nextref->address];
+        //qDebug() << "Address Mapped:" << uniqueMemoryAddressesCounts[addressMap[nextref->address]];
+        if(uniqueMemoryAddressesCounts[addressMap[nextref->address]]-- < 1)
+        {
+            for(int i = 0; i < uniqueMemoryAddresses.size(); i++)
+            {
+                if(addressMap[nextref->address] == uniqueMemoryAddresses[i].first)
+                {
+                    modified = true;
+                    uniqueMemoryAddresses.removeAt(i);
+                    break;
+                }
+            }
+            uniqueMemoryAddressesCounts.remove(nextref->address);
+        }
+        nextref = nextref->next;
+    }
+    //qDebug() << uniqueMemoryAddressesCounts;
+    //qDebug() << "Modified:" << modified;
+    if(modified)
+        emit modifiedAddresses();
+}
+
 void MemoryReader::checkAchievements()
 {
     //qDebug() << achievementFrames;
@@ -184,7 +225,6 @@ void MemoryReader::checkAchievements()
                 rc_evaluate_trigger(trigger, peek, achievementFrames.first().first.data(), nullptr);
                 new_state = trigger->state;
 
-                /* if the measured value changed and the achievement hasn't triggered, send a notification */
                 if (trigger->measured_value != old_measured_value &&
                     old_measured_value != RC_MEASURED_UNKNOWN &&
                     trigger->measured_target != 0 &&
@@ -215,6 +255,7 @@ void MemoryReader::checkAchievements()
                         emit updateAchievementInfo(it.key(), Value, trigger->measured_value);
                         emit updateAchievementInfo(it.key(), Percent, 100);
                         emit achievementUnlocked(it.key(), QDateTime::currentDateTime());
+                        decrementAddressCounts(trigger->memrefs);
                         break;
 
                     case RC_TRIGGER_STATE_PRIMED:
@@ -227,10 +268,11 @@ void MemoryReader::checkAchievements()
             }
             for(const auto& id : ids)
                 achievementTriggers.remove(id);
+            if(modified)
+                remapTriggerAddresses();
         }
         achievementFrames.dequeue();
     }
-    //qDebug() << "Achievements Checked";
 }
 
 void MemoryReader::checkLeaderboards()

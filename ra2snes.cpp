@@ -9,7 +9,6 @@ ra2snes::ra2snes(QObject *parent)
     reader = new MemoryReader(this);
     m_currentGame = "";
     loggedin = false;
-    gameSetup = false;
     gameLoaded = false;
     isGB = false;
     reset = false;
@@ -18,6 +17,7 @@ ra2snes::ra2snes(QObject *parent)
     remember_me = false;
     noChecks = false;
     framesPassed = 0;
+    updateAddresses = false;
 
     raclient->setHardcore(true);
     raclient->setAutoHardcore(false);
@@ -69,6 +69,8 @@ ra2snes::ra2snes(QObject *parent)
     connect(usb2snes, &Usb2Snes::getConfigDataReceived, this, &ra2snes::onUsb2SnesGetConfigDataReceived);
     connect(usb2snes, &Usb2Snes::getAddressesDataReceived, this, &ra2snes::onUsb2SnesGetAddressesDataReceived);
     connect(usb2snes, &Usb2Snes::getAddressDataReceived, this, &ra2snes::onUsb2SnesGetAddressDataReceived);
+    connect(usb2snes, &Usb2Snes::getRomTypeDataReceived, this, [=] { doThisTaskNext = GetRamSize; });
+    connect(usb2snes, &Usb2Snes::retryRomType, this, [=] { doThisTaskNext = GetRomType; });
 
     QTimer::singleShot(0, this, [=] { usb2snes->connect(); });
 
@@ -77,7 +79,6 @@ ra2snes::ra2snes(QObject *parent)
     connect(raclient, &RAClient::requestFailed, this, &ra2snes::onRequestFailed);
     connect(raclient, &RAClient::requestError, this, &ra2snes::onRequestError);
     connect(raclient, &RAClient::gotGameID, this, [=] (int id){
-        gameSetup = false;
         gameLoaded = true;
         emit displayMessage("Game Loaded", false);
         raclient->getAchievements(id);
@@ -94,20 +95,22 @@ ra2snes::ra2snes(QObject *parent)
         emit achievementModelReady();
         if(!raclient->isQueueRunning())
             raclient->startQueue();
-        reader->initTriggers(raclient->getAchievementModel()->getAchievements(), raclient->getLeaderboards());
+        reader->initTriggers(raclient->getAchievementModel()->getAchievements(), raclient->getLeaderboards(), usb2snes->getRamSizeData());
     });
 
     connect(reader, &MemoryReader::finishedMemorySetup, this, [=] {
         doThisTaskNext = None;
         millisecPassed = QDateTime::currentDateTime();
-        if(reader->getUniqueMemoryAddresses().empty())
+        uniqueMemoryAddresses = reader->getUniqueMemoryAddresses();
+        //qDebug() << "Unique Addresses:" << uniqueMemoryAddresses;
+        if(uniqueMemoryAddresses.empty())
         {
             noChecks = true;
             doThisTaskNext = NoChecksNeeded;
             usb2snes->infos();
         }
         else
-            usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
+            usb2snes->getAddresses(uniqueMemoryAddresses);
     });
 
     connect(reader, &MemoryReader::achievementUnlocked, this, [=](unsigned int id, QDateTime time) {
@@ -116,6 +119,11 @@ ra2snes::ra2snes(QObject *parent)
 
     connect(reader, &MemoryReader::updateAchievementInfo, this, [=](unsigned int id, AchievementInfoType infotype, int value) {
         raclient->setAchievementInfo(id, infotype, value);
+    });
+
+    connect(reader, &MemoryReader::modifiedAddresses, this, [=] {
+        updateAddresses = true;
+        qDebug() << "Time to update";
     });
 
     //connect(reader, &MemoryReader::leaderboardCompleted, this, [=](unsigned int id, unsigned int score) {
@@ -156,7 +164,6 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
                 doThisTaskNext = Reset;
             else
             {
-                gameSetup = false;
                 raclient->setPatched(false);
                 raclient->clearAchievements();
                 emit clearedAchievements();
@@ -168,13 +175,14 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
         }
         else if (!gameLoaded && loggedin)
         {
+
             emit switchingMode();
             if(raclient->getAutoHardcore() && !raclient->getHardcore())
                 changeMode();
             setCurrentConsole();
-            gameSetup = true;
             emit displayMessage("Loading... Do Not Turn Off Console!", false);
-            usb2snes->getConfig();
+            doThisTaskNext = None;
+            usb2snes->getRomType();
         }
     }
 }
@@ -208,9 +216,7 @@ void ra2snes::onUsb2SnesGetConfigDataReceived()
     }
     if(raclient->getAutoHardcore())
         changeMode();
-    if(gameSetup)
-        doThisTaskNext = GetCurrentGameFile;
-    else if(!gameLoaded)
+    if(doThisTaskNext != GetCurrentGameFile)
         usb2snes->infos();
 }
 
@@ -302,19 +308,18 @@ void ra2snes::onUsb2SnesStateChanged()
                 else
                 {
                     doThisTaskNext = GetConsoleInfo;
-                    usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
+                    checkUpdateAddresses();
+                    usb2snes->getAddresses(uniqueMemoryAddresses);
                 }
                 break;
-            case GetConsoleAddresses:               
+            case GetConsoleAddresses:
                 doThisTaskNext = GetConsoleInfo;
-                usb2snes->getAddresses(reader->getUniqueMemoryAddresses());
-                break;
-            case GetCurrentGameFile:
-                doThisTaskNext = None;
-                usb2snes->getFile(m_currentGame);
+                checkUpdateAddresses();
+                usb2snes->getAddresses(uniqueMemoryAddresses);
                 break;
             case Reset:
                 doThisTaskNext = None;
+                emit displayIncompatibleMessage(false);
                 gameLoaded = false;
                 noChecks = false;
                 usb2snes->infos();
@@ -322,6 +327,23 @@ void ra2snes::onUsb2SnesStateChanged()
             case NoChecksNeeded:
                 doThisTaskNext = NoChecksNeeded;
                 usb2snes->infos();
+                break;
+            case GetConsoleConfig:
+                doThisTaskNext = GetCurrentGameFile;
+                usb2snes->getConfig();
+                break;
+            case GetCurrentGameFile:
+                doThisTaskNext = None;
+                usb2snes->getFile(m_currentGame);
+                break;
+            case GetRomType:
+                doThisTaskNext = None;
+                usb2snes->getRomType();
+                break;
+            case GetRamSize:
+                doThisTaskNext = GetConsoleConfig;
+                usb2snes->getRamSize();
+                break;
             default:
                 break;
         }
@@ -331,6 +353,7 @@ void ra2snes::onUsb2SnesStateChanged()
     {
         doThisTaskNext = None;
         noChecks = false;
+        emit displayIncompatibleMessage(false);
         gameLoaded = false;
         m_currentGame = "";
         setCurrentConsole();
@@ -485,6 +508,7 @@ void ra2snes::signOut()
 {
     raclient->clearQueue();
     loggedin = false;
+    emit displayIncompatibleMessage(false);
     gameLoaded = false;
     remember_me = false;
     noChecks = false;
@@ -560,5 +584,15 @@ void ra2snes::setConsole(const QString &console)
     if (m_console != console) {
         m_console = console;
         emit consoleChanged();
+    }
+}
+
+void ra2snes::checkUpdateAddresses()
+{
+    if(updateAddresses)
+    {
+        updateAddresses = false;
+        uniqueMemoryAddresses = reader->getUniqueMemoryAddresses();
+        //qDebug() << "New Unique Addresses:" << uniqueMemoryAddresses;
     }
 }

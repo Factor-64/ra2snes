@@ -16,7 +16,7 @@
 
 #include "usb2snes.h"
 #include <QUrl>
-#include <QDebug>
+//#include <QDebug>
 
 Q_LOGGING_CATEGORY(log_Usb2snes, "USB2SNES")
 //#define //sDebug() qCDebug(log_Usb2snes)
@@ -25,6 +25,8 @@ Usb2Snes::Usb2Snes(bool autoAttach) : QObject()
 {
     m_state = None;
     m_istate = INone;
+    romType = 0x7FD5;
+    ramSize = 0;
 
     QObject::connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &Usb2Snes::onWebSocketTextReceived);
     QObject::connect(&m_webSocket, &QWebSocket::connected, this, &Usb2Snes::onWebSocketConnected);
@@ -247,6 +249,14 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
         emit binaryMessageReceived();
         switch(m_state)
         {
+            case GettingAddresses: {
+                emit getAddressesDataReceived();
+                break;
+            }
+            case GettingAddress: {
+                emit getAddressDataReceived();
+                break;
+            }
             case GettingConfig: {
                 emit getConfigDataReceived();
                 break;
@@ -255,12 +265,32 @@ void Usb2Snes::onWebSocketBinaryReceived(QByteArray message)
                 emit getFileDataReceived();
                 break;
             }
-            case GettingAddress: {
-                emit getAddressDataReceived();
+            case GettingRomType: {
+                //sDebug() << "RomType:" << romType;
+                bool retry = false;
+                if(romType == 0x7FD5)
+                {
+                    if((lastBinaryMessage[0] & 0x0F) != 0)
+                    {
+                        retry = true;
+                        romType = 0xFFD5;
+                    }
+                }
+                else if(romType == 0xFFD5)
+                {
+                    if((lastBinaryMessage[0] & 0x0F) != 1)
+                        romType = 0x40FFD5;
+                }
+                if(retry)
+                    emit retryRomType();
+                else
+                    emit getRomTypeDataReceived();
                 break;
             }
-            case GettingAddresses: {
-                emit getAddressesDataReceived();
+            case GettingRamSize: {
+                ramSize = (1 << (((lastBinaryMessage[0] - 1) & 7) + 1)) << 10;
+                //sDebug() << "Ram Size:" << ramSize;
+                emit getRamSizeDataReceived();
                 break;
             }
             default:
@@ -358,7 +388,7 @@ void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
     {
         unsigned int size = pair.second;
         total_size += size;
-        operands.append(QString::number(pair.first + 0xF50000, 16));
+        operands.append(QString::number(pair.first, 16));
         operands.append(QString::number(size, 16));
         if (operands.size() == 16)
         {
@@ -369,6 +399,24 @@ void Usb2Snes::getAddresses(QList<QPair<int,int>> addresses)
     if(operands.isEmpty() == false)
         sendRequest(GetAddress, operands);
     requestedBinaryReadSize = total_size;
+}
+
+void Usb2Snes::getRomType()
+{
+    m_istate = IBusy;
+    changeState(GettingRomType);
+    binaryDataSent = 0;
+    requestedBinaryReadSize = 1;
+    sendRequest(GetAddress, QStringList() << QString::number(romType, 16) << QString::number(1, 16));
+}
+
+void Usb2Snes::getRamSize()
+{
+    m_istate = IBusy;
+    changeState(GettingRamSize);
+    binaryDataSent = 0;
+    requestedBinaryReadSize = 1;
+    sendRequest(GetAddress, QStringList() << QString::number((romType + 3), 16) << QString::number(1, 16));
 }
 
 //To see if any NMI hook patch is applied you could technically look at $002A90 to see if it's $60 (RTS) = no patch.
@@ -538,4 +586,14 @@ QVersionNumber Usb2Snes::serverVersion()
 QByteArray Usb2Snes::getBinaryData()
 {
     return lastBinaryMessage;
+}
+
+unsigned int Usb2Snes::getRomTypeData()
+{
+    return romType;
+}
+
+unsigned int Usb2Snes::getRamSizeData()
+{
+    return ramSize;
 }

@@ -23,7 +23,9 @@ public:
         CheckPatched,
         ClearLeftOverData,
         Reset,
-        NoChecksNeeded
+        NoChecksNeeded,
+        GetRamSize,
+        GetRomType
     };
 
     explicit ra2snes(QObject *parent = nullptr);
@@ -55,6 +57,7 @@ signals:
     void displayMessage(QString error, bool iserror);
     void autoModeChanged();
     void consoleChanged();
+    void displayIncompatibleMessage(bool display);
 
 private:
     Usb2Snes *usb2snes;
@@ -64,14 +67,15 @@ private:
     bool loggedin;
     bool gameLoaded;
     bool remember_me;
-    bool gameSetup;
     bool isGB;
     bool reset;
     bool noChecks;
+    QAtomicInt updateAddresses;
     QString m_console;
     unsigned int framesPassed;
     QDateTime millisecPassed;
     Task doThisTaskNext;
+    QList<QPair<int, int>> uniqueMemoryAddresses;
 
     void createSettingsFile();
     void loadSettings();
@@ -85,6 +89,7 @@ private:
     void onUsb2SnesGetFileDataReceived();
     void onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos);
     void setCurrentConsole();
+    void checkUpdateAddresses();
 };
 
 #endif // RA2SNES_H

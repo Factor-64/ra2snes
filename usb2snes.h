@@ -43,7 +43,9 @@ public:
         GettingAddresses,
         CheckingReset,
         GettingInfo,
-        GettingConfig
+        GettingConfig,
+        GettingRomType,
+        GettingRamSize
     };
     enum sd2snesState {
         sd2menu,
@@ -131,6 +133,10 @@ public:
     QByteArray              getBinaryData();
     void                    getConfig();
     void                    isPatchedROM();
+    void                    getRomType();
+    void                    getRamSize();
+    unsigned int            getRomTypeData();
+    unsigned int            getRamSizeData();
 
 signals:
     void    stateChanged();
@@ -154,6 +160,9 @@ signals:
     void    doFrame();
     void    getConfigDataReceived();
     void    gotServerVersion();
+    void    getRomTypeDataReceived();
+    void    getRamSizeDataReceived();
+    void    retryRomType();
 
 private slots:
     void    onWebSocketConnected();
@@ -181,6 +190,8 @@ private:
     QString         lastTextMessage;
     unsigned int    requestedBinaryReadSize;
     QMetaEnum       metaCommands;
+    unsigned int    romType;
+    unsigned int    ramSize;
 
     QByteArray      fileDataToSend;
 
