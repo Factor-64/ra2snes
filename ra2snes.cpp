@@ -269,7 +269,7 @@ void ra2snes::onLoginSuccess()
 void ra2snes::onRequestFailed(QJsonObject error)
 {
     QString errorMessage = error["Error"].toString();
-    //qDebug() << "Code:" << error["Code"].toString() << "Error:" << errorMessage;
+    qDebug() << "Code:" << error["Code"].toString() << "Error:" << errorMessage;
     if(error["Code"].toString() == "invalid_credentials")
     {
         if(errorMessage.contains("token"))
@@ -281,9 +281,22 @@ void ra2snes::onRequestFailed(QJsonObject error)
     }
 }
 
-void ra2snes::onRequestError()
+void ra2snes::onRequestError(bool net)
 {
+    if(net)
+    {
+        emit displayMessage("Network Error!", true);
+        reset = true;
+        onUsb2SnesStateChanged();
+    }
+    else
+    {
+        emit displayMessage("Game Hash does not exist!", true);
+        doThisTaskNext = NoChecksNeeded;
+        onUsb2SnesStateChanged();
+    }
     //qDebug() << "request error";
+
 }
 
 void ra2snes::onUsb2SnesStateChanged()
@@ -319,7 +332,6 @@ void ra2snes::onUsb2SnesStateChanged()
                 break;
             case Reset:
                 doThisTaskNext = None;
-                emit displayIncompatibleMessage(false);
                 gameLoaded = false;
                 noChecks = false;
                 usb2snes->infos();
@@ -353,7 +365,6 @@ void ra2snes::onUsb2SnesStateChanged()
     {
         doThisTaskNext = None;
         noChecks = false;
-        emit displayIncompatibleMessage(false);
         gameLoaded = false;
         m_currentGame = "";
         setCurrentConsole();
@@ -508,7 +519,6 @@ void ra2snes::signOut()
 {
     raclient->clearQueue();
     loggedin = false;
-    emit displayIncompatibleMessage(false);
     gameLoaded = false;
     remember_me = false;
     noChecks = false;

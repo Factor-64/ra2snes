@@ -71,7 +71,7 @@ public:
 signals:
     void loginSuccess();
     void requestFailed(QJsonObject error);
-    void requestError();
+    void requestError(bool net);
     void gotGameID(int gameid);
     void finishedGameSetup();
     void finishedUnlockSetup();

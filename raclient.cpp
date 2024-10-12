@@ -363,8 +363,13 @@ void RAClient::handleNetworkReply(QNetworkReply *reply)
 
     if (reply->error() != QNetworkReply::NoError)
     {
-        //qDebug() << "Network error:" << reply->errorString();
-        emit requestError();
+        if(reply->errorString().contains("server replied"))
+            emit requestError(false);
+        else
+        {
+            //qDebug() << "Network error:" << reply->errorString();
+            emit requestError(true);
+        }
         if(running)
             emit continueQueue();
     }
@@ -418,7 +423,7 @@ void RAClient::handleSuccessResponse(const QJsonObject& jsonObject)
     else
     {
         //qDebug() << "Unexpected response:" << jsonObject;
-        emit requestError();
+        emit requestError(false);
     }
 }
 

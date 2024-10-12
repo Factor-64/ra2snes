@@ -1119,6 +1119,7 @@ ApplicationWindow {
                                 mouseAreaMode.disableModeChangeButton();
                                 changeCheckBox.enabled = false;
                                 autoHardcore.color = "#eeeeee";
+                                mainWindow.setupFinished = false;
                             }
                         }
 

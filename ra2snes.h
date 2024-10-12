@@ -57,7 +57,6 @@ signals:
     void displayMessage(QString error, bool iserror);
     void autoModeChanged();
     void consoleChanged();
-    void displayIncompatibleMessage(bool display);
 
 private:
     Usb2Snes *usb2snes;
@@ -81,7 +80,7 @@ private:
     void loadSettings();
     void onLoginSuccess();
     void onRequestFailed(QJsonObject error);
-    void onRequestError();
+    void onRequestError(bool net);
     void onUsb2SnesStateChanged();
     void onUsb2SnesGetAddressDataReceived();
     void onUsb2SnesGetAddressesDataReceived();
