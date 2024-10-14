@@ -15,7 +15,6 @@ ra2snes::ra2snes(QObject *parent)
     doThisTaskNext = None;
     m_console = "SNES";
     remember_me = false;
-    noChecks = false;
     framesPassed = 0;
     updateAddresses = false;
 
@@ -105,7 +104,6 @@ ra2snes::ra2snes(QObject *parent)
         //qDebug() << "Unique Addresses:" << uniqueMemoryAddresses;
         if(uniqueMemoryAddresses.empty())
         {
-            noChecks = true;
             doThisTaskNext = NoChecksNeeded;
             usb2snes->infos();
         }
@@ -160,7 +158,7 @@ void ra2snes::onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos)
         if (m_currentGame.contains("m3nu.bin") || m_currentGame.contains("menu.bin") || reset)
         {
             reset = false;
-            if(gameLoaded || noChecks)
+            if(gameLoaded)
                 doThisTaskNext = Reset;
             else
             {
@@ -319,21 +317,14 @@ void ra2snes::onUsb2SnesStateChanged()
                 if(raclient->getHardcore())
                     usb2snes->isPatchedROM();
                 else
-                {
-                    doThisTaskNext = GetConsoleInfo;
-                    checkUpdateAddresses();
-                    usb2snes->getAddresses(uniqueMemoryAddresses);
-                }
+                    runAddressesLogic();
                 break;
             case GetConsoleAddresses:
-                doThisTaskNext = GetConsoleInfo;
-                checkUpdateAddresses();
-                usb2snes->getAddresses(uniqueMemoryAddresses);
+                runAddressesLogic();
                 break;
             case Reset:
                 doThisTaskNext = None;
                 gameLoaded = false;
-                noChecks = false;
                 usb2snes->infos();
                 break;
             case NoChecksNeeded:
@@ -364,7 +355,6 @@ void ra2snes::onUsb2SnesStateChanged()
     else if(usb2snes->state() == Usb2Snes::None)
     {
         doThisTaskNext = None;
-        noChecks = false;
         gameLoaded = false;
         m_currentGame = "";
         setCurrentConsole();
@@ -521,7 +511,6 @@ void ra2snes::signOut()
     loggedin = false;
     gameLoaded = false;
     remember_me = false;
-    noChecks = false;
     reset = true;
     raclient->clearAchievements();
     raclient->clearUser();
@@ -597,12 +586,20 @@ void ra2snes::setConsole(const QString &console)
     }
 }
 
-void ra2snes::checkUpdateAddresses()
+void ra2snes::runAddressesLogic()
 {
+    doThisTaskNext = GetConsoleInfo;
     if(updateAddresses)
     {
         updateAddresses = false;
         uniqueMemoryAddresses = reader->getUniqueMemoryAddresses();
         //qDebug() << "New Unique Addresses:" << uniqueMemoryAddresses;
+        if(uniqueMemoryAddresses.empty())
+        {
+            doThisTaskNext = NoChecksNeeded;
+            usb2snes->infos();
+            return;
+        }
     }
+    usb2snes->getAddresses(uniqueMemoryAddresses);
 }

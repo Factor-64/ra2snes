@@ -68,7 +68,6 @@ private:
     bool remember_me;
     bool isGB;
     bool reset;
-    bool noChecks;
     QAtomicInt updateAddresses;
     QString m_console;
     unsigned int framesPassed;
@@ -88,7 +87,7 @@ private:
     void onUsb2SnesGetFileDataReceived();
     void onUsb2SnesInfoDone(Usb2Snes::DeviceInfo infos);
     void setCurrentConsole();
-    void checkUpdateAddresses();
+    void runAddressesLogic();
 };
 
 #endif // RA2SNES_H
