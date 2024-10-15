@@ -46,6 +46,19 @@ See [FUTURE.md](FUTURE.md)
 
 See [COMPILING.md](COMPILING.md)
 
+## Credits
+
+* [Skarsnik](https://github.com/Skarsnik) for QUsb2Snes, usb2snes client, and helping with various implementations used in RA2Snes (Check out their sister project [TCheeve](https://github.com/Skarsnik/TCheeve)!)
+* [rcheevos](https://github.com/RetroAchievements/rcheevos) and its [contributors](https://github.com/RetroAchievements/rcheevos/graphs/contributors)
+* Many users in the RetroAchievements' [Discord](https://discord.gg/dq2E4hE)'s coding channel for helping answer any questions I had.
+
+### Icons
+
+* [RetroAchievements' Logo](https://retroachievements.org/)
+* RetroAchievements' SVG Icons
+* Wikipedia's [Famicom SVG](https://en.wikipedia.org/wiki/File:Super_Famicom_logo.svg)
+* Famicom Logo by Nintendo
+
 ## License
 
 RA2Snes is available under the GPL V3 license.  Full text here: <http://www.gnu.org/licenses/gpl-3.0.en.html>
@@ -64,11 +77,3 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-## Icons
-
-* [RetroAchievements' Logo](https://retroachievements.org/)
-* RetroAchievements' SVG Icons
-* Wikipedia's [Famicom SVG](https://en.wikipedia.org/wiki/File:Super_Famicom_logo.svg)
-* Famicom Logo by Nintendo
-* Artwork by Factor
