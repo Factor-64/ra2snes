@@ -18,7 +18,7 @@ Run both QUsb2Snes and RA2Snes.
 
 ### Configuration Files
 
-The settings.ini is created in the same directory as RA2Snes once RA2Snes has been launched. This file holds all settings for the program including your saved login information.
+The settings.ini is created in the same directory as RA2Snes once RA2Snes has been run for the first time. This file holds all settings for the program including your saved login information.
 
 ### Currently Unsupported Games
 
