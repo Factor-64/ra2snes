@@ -67,7 +67,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Icons
 
-* RetroAchievements' Logo
+* [RetroAchievements' Logo](https://retroachievements.org/)
 * RetroAchievements' SVG Icons
-* [Famicom Logo/SVG](https://en.wikipedia.org/wiki/File:Super_Famicom_logo.svg)
+* Wikipedia's [Famicom SVG](https://en.wikipedia.org/wiki/File:Super_Famicom_logo.svg)
+* Famicom Logo by Nintendo
 * Artwork by Factor
