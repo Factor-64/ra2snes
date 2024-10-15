@@ -4,15 +4,15 @@ RA2Snes is a program built on the Qt framework in C++ and C that bridges the QUs
 
 ## Usage
 
-Download the latest firmware for your [SD2Snes](https://sd2snes.de/blog/downloads)
-Download the latest version of [QUsb2Snes](https://github.com/Skarsnik/QUsb2snes/releases)
-Plug the SD2Snes into your computer (Linux users may need to allow Serial Port communications to allow communication between QUsb2Snes and SD2Snes)
-Run both QUsb2Snes and RA2Snes
+* Download the latest firmware for your [SD2Snes](https://sd2snes.de/blog/downloads).
+Download the latest version of [QUsb2Snes](https://github.com/Skarsnik/QUsb2snes/releases).
+Plug the SD2Snes into your computer (Linux users may need to allow Serial Port communications to allow communication between QUsb2Snes and SD2Snes).
+Run both QUsb2Snes and RA2Snes.
 
 ## Currently Unsupported Games
 
-SD2Snes cannot currently read the memory of games with [enhancement chips](https://en.wikipedia.org/wiki/List_of_Super_NES_enhancement_chips)
-SD2Snes cannot currently read the memory of Super Game Boy
+SD2Snes cannot currently read the memory of games with [enhancement chips](https://en.wikipedia.org/wiki/List_of_Super_NES_enhancement_chips).
+SD2Snes cannot currently read the memory of the Super Game Boy.
 
 ## Limitations and Common Issues
 
