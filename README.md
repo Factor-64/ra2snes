@@ -23,6 +23,7 @@ The settings.ini is created in the same directory as RA2Snes once RA2Snes has be
 ### Currently Unsupported Games
 
 SD2Snes cannot currently read the memory of games with [enhancement chips](https://en.wikipedia.org/wiki/List_of_Super_NES_enhancement_chips).
+
 SD2Snes cannot currently read the memory of the Super Game Boy.
 
 ### Limitations and Common Issues
