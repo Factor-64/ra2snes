@@ -2,16 +2,20 @@
 
 RA2Snes is a program built on the Qt framework in C++ and C that bridges the QUsb2Snes webserver & rcheevos client to allow unlocking Achievements on real Super Nintendo Hardware through SD2Snes' USB port.
 
----
-
-## Usage
-
-### How To Setup
+## Installation 
 
 Download the latest firmware for your [SD2Snes](https://sd2snes.de/blog/downloads).
 Download the latest version of [QUsb2Snes](https://github.com/Skarsnik/QUsb2snes/releases).
 Plug the SD2Snes into your computer (Linux users may need to allow Serial Port communications to allow communication between QUsb2Snes and SD2Snes).
 Run both QUsb2Snes and RA2Snes.
+
+---
+
+## Usage
+
+### Configuration Files
+
+The settings.ini is created in the same directory as RA2Snes once RA2Snes has been launched. This file holds all settings for the program including your saved login information.
 
 ### Currently Unsupported Games
 
