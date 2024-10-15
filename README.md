@@ -5,8 +5,11 @@ RA2Snes is a program built on the Qt framework in C++ and C that bridges the QUs
 ## Installation 
 
 Download the latest firmware for your [SD2Snes](https://sd2snes.de/blog/downloads).
+
 Download the latest version of [QUsb2Snes](https://github.com/Skarsnik/QUsb2snes/releases).
+
 Plug the SD2Snes into your computer (Linux users may need to allow Serial Port communications to allow communication between QUsb2Snes and SD2Snes).
+
 Run both QUsb2Snes and RA2Snes.
 
 ---
@@ -25,8 +28,11 @@ SD2Snes cannot currently read the memory of the Super Game Boy.
 ### Limitations and Common Issues
 
 Achievements might have a tight frame window. This may cause achievements not to activate due to reading the memory of SD2Snes not being frame-perfect. 
+
 I recommend unlocking more achievements before retrying an achievement as the fewer achievements there are to check the fewer memory values are needed to be read from SD2Snes.
+
 If an achievement will not trigger at all please see my RetroAchievements [profile](https://retroachievements.org/user/Factor64) for the SNES games I have completed (all SNES games supported will be completed on RA2Snes) or the Tips and Tricks Section of the manual.
+
 In the case of an achievement not triggering and the achievement is not completed on my profile or in the Tips and Tricks Section you can send proof of you meeting the requirements for an achievement in the Manual Unlocks thread in the RetroAchievements [Discord](https://discord.gg/dq2E4hE) and put in an [issue](https://github.com/Factor-64/ra2snes/issues) so I can look into it.
 
 ---
