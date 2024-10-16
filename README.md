@@ -67,6 +67,8 @@ See [COMPILING.md](COMPILING.md)
 * Wikipedia's [Famicom SVG](https://en.wikipedia.org/wiki/File:Super_Famicom_logo.svg)
 * Famicom Logo by Nintendo
 
+---
+
 ## License
 
 RA2Snes is available under the GPL V3 license.  Full text here: <http://www.gnu.org/licenses/gpl-3.0.en.html>
