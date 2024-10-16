@@ -28,21 +28,21 @@ SD2Snes cannot currently read the memory of the Super Game Boy.
 
 ---
 
-## Limitations and Common Issues
+## Limitations and Issues
 
 ### Preemptive Unlocks
 
-Some achievements may activate without the requirement being met. This happens due to a memory address not being overwritten before it is checked (SD2Snes only updates RAM addresses if they are written to so some values bleed over since they arent updated). This case is extremely rare (I know of only 1 achievement that had this happen).
+Some achievements may activate without the requirement being met. This happens because a memory address is not overwritten before it is checked (SD2Snes only updates RAM addresses if they are written to so some values bleed over since they aren't updated). This case is extremely rare (I know of only 1 achievement that had this happen).
 
 ### Achievement Won't Trigger
 
-Achievements might have a tight frame window. This may cause achievements not to activate due to reading the memory of SD2Snes not being frame-perfect. 
+Achievements might have a tight frame window. This may cause achievements not to activate because reading the memory of SD2Snes is not frame-perfect. 
 
 I recommend unlocking more achievements before retrying an achievement as the fewer achievements there are to check the fewer memory values are needed to be read from SD2Snes.
 
 If an achievement will not trigger at all please see my RetroAchievements [profile](https://retroachievements.org/user/Factor64) for the SNES games I have completed (all SNES games supported will be completed on RA2Snes).
 
-In the case of an achievement not triggering and the achievement is not completed on my profile you can send proof of you meeting the requirements for an achievement in the Manual Unlocks thread in the RetroAchievements [Discord](https://discord.gg/dq2E4hE) and put in an [issue](https://github.com/Factor-64/ra2snes/issues) so I can look into it.
+If an achievement does not trigger and is not completed on my profile, you can send proof of meeting the requirements for an achievement in the Manual Unlocks thread in the RetroAchievements [Discord](https://discord.gg/dq2E4hE) and put in an [issue](https://github.com/Factor-64/ra2snes/issues) so I can look into it.
 
 ---
 
