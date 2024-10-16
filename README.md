@@ -26,9 +26,15 @@ SD2Snes cannot currently read the memory of games with [enhancement chips](https
 
 SD2Snes cannot currently read the memory of the Super Game Boy.
 
-### Limitations and Common Issues
+---
+
+## Limitations and Common Issues
+
+### Preemptive Unlocks
 
 Some achievements may activate without the requirement being met. This happens due to a memory address not being overwritten before it is checked (SD2Snes only updates RAM addresses if they are written to so some values bleed over since they arent updated). This case is extremely rare (I know of only 1 achievement that had this happen).
+
+### Achievement Won't Trigger
 
 Achievements might have a tight frame window. This may cause achievements not to activate due to reading the memory of SD2Snes not being frame-perfect. 
 
