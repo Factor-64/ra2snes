@@ -46,16 +46,16 @@ See [FUTURE.md](FUTURE.md)
 
 See [COMPILING.md](COMPILING.md)
 
-## Credits
+## Credits & Thanks
 
 * [Skarsnik](https://github.com/Skarsnik) for QUsb2Snes, usb2snes client, and helping with various implementations used in RA2Snes (Check out their sister project [TCheeve](https://github.com/Skarsnik/TCheeve)!)
 * [rcheevos](https://github.com/RetroAchievements/rcheevos) and its [contributors](https://github.com/RetroAchievements/rcheevos/graphs/contributors)
-* Many users in the RetroAchievements' [Discord](https://discord.gg/dq2E4hE)'s coding channel for helping answer any questions I had.
+* Many users in the RetroAchievements [Discord](https://discord.gg/dq2E4hE)'s coding channel for helping answer any questions I had.
 
 ### Icons
 
-* [RetroAchievements' Logo](https://retroachievements.org/)
-* RetroAchievements' SVG Icons
+* [RetroAchievements Logo](https://retroachievements.org/)
+* RetroAchievements SVG Icons
 * Wikipedia's [Famicom SVG](https://en.wikipedia.org/wiki/File:Super_Famicom_logo.svg)
 * Famicom Logo by Nintendo
 
